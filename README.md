@@ -32,5 +32,5 @@ docker ps
     ```
 
 5. Pra tentar acessar o banco de dados precisa ser por algum programa de administrar banco de dados 
-    - se souber como configura é na porta http://localhost:3000
-    - se não souber me dá um toque
+    - Se souber como configura é na porta http://localhost:3306
+    - Se não souber, me dá um toque
