@@ -1,10 +1,9 @@
 services:
   db-mysql:
     image: mysql:8
-    container_name: database
     restart: always
     environment:
-      MYSQL_DATABASE: mysql_db
+      MYSQL_DATABASE: classify
       MYSQL_USER: user
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: root
@@ -22,7 +21,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/classify
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/classify
       - SPRING_DATASOURCE_USERNAME=user
       - SPRING_DATASOURCE_PASSWORD=password
     depends_on:
@@ -46,4 +45,5 @@ volumes:
 
 networks:
   private_network:
+    name: private_network
     driver: bridge
