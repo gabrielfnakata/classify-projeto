@@ -2,25 +2,26 @@ package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
 
+import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-public class Aluno extends Usuario {
+public class Aluno extends Usuario implements Serializable {
 
     @Column(nullable = false)
     private LocalDate dataMatricula;
-
     private String nomeResponsavel;
     private String telefoneResponsavel;
 
     @ManyToMany
     @JoinTable(
-            name = "idAluno",
+            name = "ALUNO_AULA",
             joinColumns = @JoinColumn(name = "idAluno"),
             inverseJoinColumns = @JoinColumn(name = "idAula")
     )
-    Set<Aula> aulas;
+    private List<Aula> aulas = new ArrayList<>();
 
     public LocalDate getDataMatricula() {
         return dataMatricula;
@@ -44,5 +45,13 @@ public class Aluno extends Usuario {
 
     public void setTelefoneResponsavel(String telefoneResponsavel) {
         this.telefoneResponsavel = telefoneResponsavel;
+    }
+
+    public List<Aula> getAulas() {
+        return aulas;
+    }
+
+    public void setAulas(List<Aula> aulas) {
+        this.aulas = aulas;
     }
 }

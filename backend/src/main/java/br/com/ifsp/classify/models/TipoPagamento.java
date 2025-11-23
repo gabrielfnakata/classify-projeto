@@ -2,9 +2,11 @@ package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
 
+import java.io.Serializable;
+
 @Entity
 @Table(name = "TIPO_PAGAMENTO")
-public class TipoPagamento {
+public class TipoPagamento implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

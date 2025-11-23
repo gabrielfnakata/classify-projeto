@@ -2,8 +2,10 @@ package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
 
+import java.io.Serializable;
+
 @Entity
-public class Cargo {
+public class Cargo implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

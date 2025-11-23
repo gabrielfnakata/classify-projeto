@@ -2,11 +2,13 @@ package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-public class Aula {
+public class Aula implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +26,7 @@ public class Aula {
     private LocalDateTime horarioFim;
 
     @ManyToMany(mappedBy = "aulas")
-    private Set<Aluno> alunos;
+    private List<Aluno> alunos = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -66,11 +68,11 @@ public class Aula {
         this.horarioFim = horarioFim;
     }
 
-    public Set<Aluno> getAlunos() {
+    public List<Aluno> getAlunos() {
         return alunos;
     }
 
-    public void setAlunos(Set<Aluno> alunos) {
+    public void setAlunos(List<Aluno> alunos) {
         this.alunos = alunos;
     }
 }

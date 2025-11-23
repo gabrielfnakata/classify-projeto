@@ -5,8 +5,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
+import java.io.Serializable;
+
 @Entity
-public class Funcionario extends Usuario {
+public class Funcionario extends Usuario implements Serializable {
 
     @Column(unique = true, nullable = false)
     private String cpf;
