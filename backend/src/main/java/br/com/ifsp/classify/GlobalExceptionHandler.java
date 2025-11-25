@@ -1,6 +1,6 @@
 package br.com.ifsp.classify;
 
-import br.com.ifsp.classify.dtos.exception.ExceptionDTO;
+import br.com.ifsp.classify.dtos.ExceptionDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
