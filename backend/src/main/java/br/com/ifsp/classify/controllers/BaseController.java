@@ -1,6 +1,6 @@
 package br.com.ifsp.classify.controllers;
 
-import br.com.ifsp.classify.services.BaseService;
+import br.com.ifsp.classify.services.InterfaceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,9 +9,9 @@ import java.util.List;
 
 public abstract class BaseController<T, ID> {
 
-    protected final BaseService<T, ID> service;
+    protected final InterfaceService<T, ID> service;
 
-    protected BaseController(BaseService<T, ID> service) {
+    protected BaseController(InterfaceService<T, ID> service) {
         this.service = service;
     }
 

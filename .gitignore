@@ -13,8 +13,10 @@ yarn-error.log*
 
 # IDEs
 /.idea/
+/backend/.idea/
 /*.iml
 /.vscode/
+/frontend/.vscode/
 
 # Env / secrets
 .env
