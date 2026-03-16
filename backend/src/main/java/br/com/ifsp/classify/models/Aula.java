@@ -15,11 +15,11 @@ public class Aula implements Serializable {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "idProfessorDisciplina")
+    @JoinColumn(name = "id")
     private ProfessorDisciplina professorDisciplina;
 
     @ManyToOne
-    @JoinColumn(name = "idSala")
+    @JoinColumn(name = "id_sala")
     private Sala sala;
 
     private LocalDateTime horarioInicio;

@@ -21,7 +21,7 @@ public class Sala implements Serializable {
     private Integer capacidade;
 
     @Column(nullable = false)
-    private Boolean estaDisponivel;
+    private Boolean estaDesativada;
 
     public Integer getId() {
         return id;
@@ -55,11 +55,11 @@ public class Sala implements Serializable {
         this.capacidade = capacidade;
     }
 
-    public Boolean getEstaDisponivel() {
-        return estaDisponivel;
+    public Boolean getEstaDesativada() {
+        return estaDesativada;
     }
 
-    public void setEstaDisponivel(Boolean estaDisponivel) {
-        this.estaDisponivel = estaDisponivel;
+    public void setEstaDesativada(Boolean estaDesativada) {
+        this.estaDesativada = estaDesativada;
     }
 }

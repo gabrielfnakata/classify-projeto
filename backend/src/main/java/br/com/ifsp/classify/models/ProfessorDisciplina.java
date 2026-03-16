@@ -13,11 +13,11 @@ public class ProfessorDisciplina implements Serializable {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "idFuncionario")
+    @JoinColumn(name = "id_funcionario")
     private Funcionario funcionario;
 
     @ManyToOne
-    @JoinColumn(name = "idDisciplina")
+    @JoinColumn(name = "id_disciplina")
     private Disciplina disciplina;
 
     public Long getId() {

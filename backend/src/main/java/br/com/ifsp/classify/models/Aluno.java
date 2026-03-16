@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-public class Aluno extends Usuario implements Serializable {
+public class Aluno extends Pessoa implements Serializable {
 
     @Column(nullable = false)
     private LocalDate dataMatricula;
@@ -18,8 +18,8 @@ public class Aluno extends Usuario implements Serializable {
     @ManyToMany
     @JoinTable(
             name = "ALUNO_AULA",
-            joinColumns = @JoinColumn(name = "idAluno"),
-            inverseJoinColumns = @JoinColumn(name = "idAula")
+            joinColumns = @JoinColumn(name = "id_aluno"),
+            inverseJoinColumns = @JoinColumn(name = "id_aula")
     )
     private List<Aula> aulas = new ArrayList<>();
 

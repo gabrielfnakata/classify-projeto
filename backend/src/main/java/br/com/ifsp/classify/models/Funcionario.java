@@ -8,17 +8,14 @@ import jakarta.persistence.ManyToOne;
 import java.io.Serializable;
 
 @Entity
-public class Funcionario extends Usuario implements Serializable {
+public class Funcionario extends Pessoa implements Serializable {
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
     private String cpf;
 
     @ManyToOne
-    @JoinColumn(name = "idCargo")
+    @JoinColumn(name = "id_cargo")
     private Cargo cargo;
-
-    @Column(nullable = false)
-    private Boolean isAdministrador;
 
     public String getCpf() {
         return cpf;
@@ -34,13 +31,5 @@ public class Funcionario extends Usuario implements Serializable {
 
     public void setCargo(Cargo cargo) {
         this.cargo = cargo;
-    }
-
-    public Boolean getAdministrador() {
-        return isAdministrador;
-    }
-
-    public void setAdministrador(Boolean administrador) {
-        isAdministrador = administrador;
     }
 }
