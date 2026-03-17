@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/sala", produces = "application/json")
-public class SalaController extends BaseController<SalaDTO, Integer> {
+public class SalaController extends AbstractController<SalaDTO, Integer> {
 
     public SalaController(SalaService service) {
         super(service);

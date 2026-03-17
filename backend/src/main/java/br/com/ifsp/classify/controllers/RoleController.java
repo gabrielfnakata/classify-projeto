@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/cargo", produces = "application/json")
-public class CargoController extends BaseController<CargoDTO, Integer> {
+@RequestMapping(value = "/role", produces = "application/json")
+public class RoleController extends AbstractController<CargoDTO, Integer> {
 
-    public CargoController(CargoService service) {
+    public RoleController(CargoService service) {
         super(service);
     }
 }

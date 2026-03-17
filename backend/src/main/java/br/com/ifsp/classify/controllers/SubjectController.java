@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/disciplina", produces = "application/json")
-public class DisciplinaController extends BaseController<DisciplinaDTO, Integer> {
+@RequestMapping(value = "/subject", produces = "application/json")
+public class SubjectController extends AbstractController<DisciplinaDTO, Integer> {
 
-    public DisciplinaController(DisciplinaService service) {
+    public SubjectController(DisciplinaService service) {
         super(service);
     }
 }

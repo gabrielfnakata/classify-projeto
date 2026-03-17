@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-public abstract class BaseController<T, ID> {
+public abstract class AbstractController<T, ID> {
 
     protected final InterfaceService<T, ID> service;
 
-    protected BaseController(InterfaceService<T, ID> service) {
+    protected AbstractController(InterfaceService<T, ID> service) {
         this.service = service;
     }
 

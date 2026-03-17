@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/aluno", produces = "application/json")
-public class AlunoController extends BaseController<AlunoDTO, Long> {
+@RequestMapping(value = "/student", produces = "application/json")
+public class StudentController extends AbstractController<AlunoDTO, Long> {
 
-    public AlunoController(AlunoService service) {
+    public StudentController(AlunoService service) {
         super(service);
     }
 }

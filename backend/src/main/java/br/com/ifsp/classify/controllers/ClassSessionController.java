@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/aula", produces = "application/json")
-public class AulaController extends BaseController<AulaDTO, Long> {
+@RequestMapping(value = "/classsession", produces = "application/json")
+public class ClassSessionController extends AbstractController<AulaDTO, Long> {
 
-    public AulaController(AulaService service) {
+    public ClassSessionController(AulaService service) {
         super(service);
     }
 }

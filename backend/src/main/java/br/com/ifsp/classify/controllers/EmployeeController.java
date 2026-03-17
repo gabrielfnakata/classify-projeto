@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/funcionario", produces = "application/json")
-public class FuncionarioController extends BaseController<FuncionarioDTO, Long> {
+@RequestMapping(value = "/employee", produces = "application/json")
+public class EmployeeController extends AbstractController<FuncionarioDTO, Long> {
 
-    public FuncionarioController(FuncionarioService service) {
+    public EmployeeController(FuncionarioService service) {
         super(service);
     }
 }
