@@ -2,31 +2,31 @@ package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.AlunoDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
-import br.com.ifsp.classify.models.Aluno;
+import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.utils.Utils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AlunoService extends BaseService<Aluno, AlunoDTO, Long> {
+public class AlunoService extends BaseService<Student, AlunoDTO, Long> {
 
-    public AlunoService(JpaRepository<Aluno, Long> repository) {
+    public AlunoService(JpaRepository<Student, Long> repository) {
         super(repository);
     }
 
     @Override
-    AlunoDTO returnDTO(Aluno aluno) {
+    AlunoDTO returnDTO(Student aluno) {
         if (aluno == null)
             return null;
 
         return new AlunoDTO(
                 aluno.getId(),
-                aluno.getNome(),
-                aluno.getDataNascimento(),
-                aluno.getDataMatricula(),
+                aluno.getName(),
+                aluno.getBirthDate(),
+                aluno.getRegistrationDate(),
                 aluno.getEmail(),
-                aluno.getTelefone(),
-                aluno.getEndereco(),
+                aluno.getTelephone(),
+                aluno.getAddress(),
                 aluno.getNomeResponsavel(),
                 aluno.getTelefoneResponsavel()
         );
@@ -55,13 +55,13 @@ public class AlunoService extends BaseService<Aluno, AlunoDTO, Long> {
         if (Utils.isNullOrEmpty(alunoDTO.endereco()))
             throw new DtoException("O endereço do aluno não pode ser nulo");
 
-        Aluno novoAluno = new Aluno();
-        novoAluno.setNome(alunoDTO.nome());
-        novoAluno.setDataNascimento(alunoDTO.dataNascimento());
-        novoAluno.setDataMatricula(alunoDTO.dataMatricula());
+        Student novoAluno = new Student();
+        novoAluno.setName(alunoDTO.nome());
+        novoAluno.setBirthDate(alunoDTO.dataNascimento());
+        novoAluno.setRegistrationDate(alunoDTO.dataMatricula());
         novoAluno.setEmail(alunoDTO.email());
-        novoAluno.setTelefone(alunoDTO.telefone());
-        novoAluno.setEndereco(alunoDTO.endereco());
+        novoAluno.setTelephone(alunoDTO.telefone());
+        novoAluno.setAddress(alunoDTO.endereco());
         novoAluno.setNomeResponsavel(alunoDTO.nomeResponsavel());
         novoAluno.setTelefoneResponsavel(alunoDTO.telefoneResponsavel());
 
@@ -74,35 +74,35 @@ public class AlunoService extends BaseService<Aluno, AlunoDTO, Long> {
         if (alunoDTO == null)
             return null;
 
-        Aluno aluno = getEntityById(id);
+        Student aluno = getEntityById(id);
         if (aluno == null)
             return null;
 
         if (!Utils.isNullOrEmpty(alunoDTO.nome()))
-            aluno.setNome(aluno.getNome());
+            aluno.setName(aluno.getName());
 
         if (alunoDTO.dataNascimento() != null)
-            aluno.setDataNascimento(alunoDTO.dataNascimento());
+            aluno.setBirthDate(alunoDTO.dataNascimento());
 
         if (alunoDTO.dataMatricula() != null)
-            aluno.setDataMatricula(alunoDTO.dataMatricula());
+            aluno.setRegistrationDate(alunoDTO.dataMatricula());
 
         if (!Utils.isNullOrEmpty(alunoDTO.email()))
             aluno.setEmail(aluno.getEmail());
 
         if (!Utils.isNullOrEmpty(alunoDTO.telefone()))
-            aluno.setTelefone(aluno.getTelefone());
+            aluno.setTelephone(aluno.getTelephone());
 
         if (!Utils.isNullOrEmpty(alunoDTO.endereco()))
-            aluno.setEndereco(aluno.getEndereco());
+            aluno.setAddress(aluno.getAddress());
 
-        Aluno novoAluno = new Aluno();
-        novoAluno.setNome(alunoDTO.nome());
-        novoAluno.setDataNascimento(alunoDTO.dataNascimento());
-        novoAluno.setDataMatricula(alunoDTO.dataMatricula());
+        Student novoAluno = new Student();
+        novoAluno.setName(alunoDTO.nome());
+        novoAluno.setBirthDate(alunoDTO.dataNascimento());
+        novoAluno.setRegistrationDate(alunoDTO.dataMatricula());
         novoAluno.setEmail(alunoDTO.email());
-        novoAluno.setTelefone(alunoDTO.telefone());
-        novoAluno.setEndereco(alunoDTO.endereco());
+        novoAluno.setTelephone(alunoDTO.telefone());
+        novoAluno.setAddress(alunoDTO.endereco());
 
         repository.save(novoAluno);
         return returnDTO(novoAluno);

@@ -1,114 +1,125 @@
-CREATE TABLE IF NOT EXISTS ALUNO (
-	id_aluno BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	nome VARCHAR(255) NOT NULL,
-	data_nascimento DATE NOT NULL,
-	data_matricula DATE NOT NULL,
-	email VARCHAR(255) NOT NULL,
-	telefone CHAR(11) NOT NULL,
-	endereco VARCHAR(255) NOT NULL,
-	nome_responsavel VARCHAR(255),
-	telefone_responsavel VARCHAR(11),
-	registrado_por BIGINT UNSIGNED NOT NULL,
-	data_registro DATETIME NOT NULL,
-	modificado_por BIGINT UNSIGNED,
-	data_modificacao DATETIME,
-
-	CONSTRAINT aluno_id_pk PRIMARY KEY (id_aluno),
-	CONSTRAINT aluno_email_uk UNIQUE (email)
-);
-
-CREATE TABlE IF NOT EXISTS CARGO (
-    id_cargo TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    descricao VARCHAR(255) NOT NULL,
-
-    CONSTRAINT cargo_id_pk PRIMARY KEY (id_cargo),
-    CONSTRAINT cargo_descricao_uk UNIQUE (descricao)
-);
-
-CREATE TABLE IF NOT EXISTS FUNCIONARIO (
-	id_funcionario BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	nome VARCHAR(255) NOT NULL,
-	cpf CHAR(11) NOT NULL,
-	data_nascimento DATE NOT NULL,
-	email VARCHAR(255) NOT NULL,
-	telefone CHAR(11) NOT NULL,
-    endereco VARCHAR(255) NOT NULL,
-	id_cargo TINYINT UNSIGNED NOT NULL,
-	registrado_por BIGINT UNSIGNED NOT NULL,
-    data_registro DATETIME NOT NULL,
-    modificado_por BIGINT UNSIGNED,
-    data_modificacao DATETIME,
-
-	CONSTRAINT funcionario_id_pk PRIMARY KEY (id_funcionario),
-	CONSTRAINT funcionario_cpf_uk UNIQUE (cpf),
-	CONSTRAINT funcionario_email_uk UNIQUE (email),
-	CONSTRAINT funcionario_cargo_fk FOREIGN KEY (id_cargo) REFERENCES CARGO(id_cargo)
-);
-
-CREATE TABLE IF NOT EXISTS DISCIPLINA (
-	id_disciplina TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	descricao VARCHAR(255) NOT NULL,
-	registrado_por BIGINT UNSIGNED NOT NULL,
-    data_registro DATETIME NOT NULL,
-    modificado_por BIGINT UNSIGNED,
-    data_modificacao DATETIME,
-
-	CONSTRAINT disciplina_id_pk PRIMARY KEY (id_disciplina),
-	CONSTRAINT disciplina_descricao_uk UNIQUE (descricao)
-);
-
-CREATE TABLE IF NOT EXISTS PROFESSOR_DISCIPLINA (
+CREATE TABLE IF NOT EXISTS STUDENT (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	id_funcionario BIGINT UNSIGNED NOT NULL,
-	id_disciplina TINYINT UNSIGNED NOT NULL,
-	registrado_por BIGINT UNSIGNED NOT NULL,
-    data_registro DATETIME NOT NULL,
-    modificado_por BIGINT UNSIGNED,
-    data_modificacao DATETIME,
+	uuid BINARY(16) NOT NULL,
+	name VARCHAR(255) NOT NULL,
+	birth_date DATE NOT NULL,
+	registration_date DATE NOT NULL,
+	email VARCHAR(320) NOT NULL,
+	telephone CHAR(11) NOT NULL,
+	address VARCHAR(200) NOT NULL,
 
-	CONSTRAINT professordisciplina_id_pk PRIMARY KEY (id),
-	CONSTRAINT professordisciplina_idFunc_fk FOREIGN KEY (id_funcionario) REFERENCES FUNCIONARIO(id_funcionario),
-	CONSTRAINT professordisciplina_idDisc_fk FOREIGN KEY (id_disciplina) REFERENCES DISCIPLINA(id_disciplina),
-	CONSTRAINT professordisciplina_idFunc_idDisc_uk UNIQUE (id_funcionario, id_disciplina)
+	CONSTRAINT student_id_pk PRIMARY KEY (id),
+	CONSTRAINT student_uuid_uk UNIQUE (uuid),
+	CONSTRAINT student_email_uk UNIQUE (email)
 );
 
-CREATE TABLE IF NOT EXISTS SALA (
-	id_sala TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	nome VARCHAR(255) NOT NULL,
-	vagas TINYINT UNSIGNED NOT NULL,
-	capacidade TINYINT UNSIGNED NOT NULL,
-	esta_desativada BOOLEAN NOT NULL DEFAULT 0,
-	registrado_por BIGINT UNSIGNED NOT NULL,
-    data_registro DATETIME NOT NULL,
-    modificado_por BIGINT UNSIGNED,
-    data_modificacao DATETIME,
+CREATE TABLE IF NOT EXISTS GUARDIAN (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    telephone CHAR(11) NOT NULL,
 
-	CONSTRAINT sala_id_pk PRIMARY KEY (id_sala),
-	CONSTRAINT sala_vagas_ck CHECK (vagas > 0)
+    CONSTRAINT guardian_id_pk PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS AULA (
-	id_aula BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	if_professor_disciplina BIGINT UNSIGNED NOT NULL,
-	id_sala TINYINT UNSIGNED NOT NULL,
-	horario_inicio DATETIME NOT NULL,
-	horario_fim DATETIME NOT NULL,
-	registrado_por BIGINT UNSIGNED NOT NULL,
-    data_registro DATETIME NOT NULL,
-    modificado_por BIGINT UNSIGNED,
-    data_modificacao DATETIME,
+CREATE TABLE IF NOT EXISTS STUDENT_GUARDIAN (
+    student_id BIGINT UNSIGNED NOT NULL,
+    guardian_id BIGINT UNSIGNED NOT NULL,
 
-	CONSTRAINT aula_id_pk PRIMARY KEY (id_aula),
-	CONSTRAINT aula_idProfDisc_fk FOREIGN KEY (if_professor_disciplina) REFERENCES PROFESSOR_DISCIPLINA(id),
-	CONSTRAINT aula_idSala_fk FOREIGN KEY (id_sala) REFERENCES SALA(id_sala),
-	CONSTRAINT aula_horarioInicioFim_ck CHECK (horario_inicio > horario_fim)
+    CONSTRAINT studentGuardian_id_pk PRIMARY KEY (student_id, guardian_id),
+    CONSTRAINT studentGuardian_idStud_fk FOREIGN KEY (student_id) REFERENCES STUDENT(id),
+    CONSTRAINT studentGuardian_idGuar_fk FOREIGN KEY (guardian_id) REFERENCES GUARDIAN(id)
 );
 
-CREATE TABLE IF NOT EXISTS ALUNO_AULA (
-	id_aluno BIGINT UNSIGNED,
-	id_aula BIGINT UNSIGNED,
+CREATE TABlE IF NOT EXISTS ROLE (
+    id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    description VARCHAR(40) NOT NULL,
 
-	CONSTRAINT alunoaula_idAluno_idAula_pk PRIMARY KEY (id_aluno, id_aula),
-	CONSTRAINT alunoaula_idAluno_fk FOREIGN KEY (id_aluno) REFERENCES ALUNO(id_aluno),
-	CONSTRAINT alunoaula_idAula_fk FOREIGN KEY (id_aula) REFERENCES AULA(id_aula)
+    CONSTRAINT role_id_pk PRIMARY KEY (id),
+    CONSTRAINT role_description_uk UNIQUE (description)
+);
+
+CREATE TABLE IF NOT EXISTS EMPLOYEE (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
+	name VARCHAR(255) NOT NULL,
+	cpf CHAR(11) NOT NULL,
+	birth_date DATE NOT NULL,
+	email VARCHAR(320) NOT NULL,
+	telephone CHAR(11) NOT NULL,
+    address VARCHAR(200) NOT NULL,
+	role_id TINYINT UNSIGNED NOT NULL,
+
+	CONSTRAINT employee_id_pk PRIMARY KEY (id),
+	CONSTRAINT employee_uuid_uk UNIQUE (uuid),
+	CONSTRAINT employee_cpf_uk UNIQUE (cpf),
+	CONSTRAINT employee_email_uk UNIQUE (email),
+	CONSTRAINT employee_roleId_fk FOREIGN KEY (role_id) REFERENCES ROLE(id)
+);
+
+CREATE TABLE IF NOT EXISTS SUBJECT (
+	id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	description VARCHAR(40) NOT NULL,
+
+	CONSTRAINT subject_id_pk PRIMARY KEY (id),
+	CONSTRAINT subject_description_uk UNIQUE (description)
+);
+
+CREATE TABLE IF NOT EXISTS SUBJECT_TEACHER (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	employee_id BIGINT UNSIGNED NOT NULL,
+	subject_id TINYINT UNSIGNED NOT NULL,
+
+	CONSTRAINT subjectTeacher_id_pk PRIMARY KEY (id),
+	CONSTRAINT subjectTeacher_idEmp_fk FOREIGN KEY (employee_id) REFERENCES EMPLOYEE(id),
+	CONSTRAINT subjectTeacher_idSubj_fk FOREIGN KEY (subject_id) REFERENCES SUBJECT(id),
+	CONSTRAINT subjectTeacher_idEmp_idSubj_uk UNIQUE (employee_id, subject_id)
+);
+
+CREATE TABLE IF NOT EXISTS CLASSROOM (
+	id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	name VARCHAR(255) NOT NULL,
+	capacity TINYINT UNSIGNED NOT NULL,
+	is_disabled BOOLEAN NOT NULL DEFAULT 0,
+
+	CONSTRAINT classRoom_id_pk PRIMARY KEY (id),
+	CONSTRAINT classRoom_capacity_ck CHECK (capacity > 0)
+);
+
+CREATE TABLE IF NOT EXISTS CLASS_SESSION (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	teacher_subject_id BIGINT UNSIGNED NOT NULL,
+	classroom_id TINYINT UNSIGNED NOT NULL,
+	start_time DATETIME NOT NULL,
+	end_time DATETIME NOT NULL,
+
+	CONSTRAINT classSession_id_pk PRIMARY KEY (id),
+	CONSTRAINT classSession_idTeacherSubj_fk FOREIGN KEY (teacher_subject_id) REFERENCES TEACHER_SUBJECT(id),
+	CONSTRAINT classSession_idClassroom_fk FOREIGN KEY (classroom_id) REFERENCES CLASSROOM(id),
+	CONSTRAINT classSession_startEndTime_ck CHECK (start_time < end_time)
+);
+
+CREATE TABLE IF NOT EXISTS STUDENT_CLASS_SESSION (
+	student_id BIGINT UNSIGNED,
+	class_session_id BIGINT UNSIGNED,
+
+	CONSTRAINT studentClass_idStud_idClass_pk PRIMARY KEY (student_id, class_session_id),
+	CONSTRAINT studentClass_idStud_fk FOREIGN KEY (student_id) REFERENCES STUDENT(id),
+	CONSTRAINT studentClass_idClass_fk FOREIGN KEY (class_session_id) REFERENCES CLASS_SESSION(id)
+);
+
+CREATE TABLE IF NOT EXISTS AUDIT (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    table_name VARCHAR(21) NOT NULL,
+    register_id BIGINT UNSIGNED NOT NULL,
+    operation CHAR(6) NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    date DATETIME NOT NULL,
+    old_data JSON,
+    new_data JSON,
+
+    CONSTRAINT audit_id_pk PRIMARY KEY (id),
+    CONSTRAINT audit_tableName_ck CHECK (table_name IN ('STUDENT', 'GUARDIAN', 'ROLE', 'EMPLOYEE', 'SUBJECT', 'TEACHER_SUBJECT', 'CLASSROOM',  'CLASS_SESSION', 'STUDENT_CLASS_SESSION')),
+    CONSTRAINT audit_operation_ck CHECK (operation IN ('INSERT', 'DELETE', 'UPDATE')),
+    CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES EMPLOYEE(id),
+    CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
 );

@@ -1,19 +1,19 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.FuncionarioDTO;
-import br.com.ifsp.classify.models.Funcionario;
+import br.com.ifsp.classify.models.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class FuncionarioService extends BaseService<Funcionario, FuncionarioDTO, Long> {
+public class FuncionarioService extends BaseService<Employee, FuncionarioDTO, Long> {
 
-    public FuncionarioService(JpaRepository<Funcionario, Long> repository) {
+    public FuncionarioService(JpaRepository<Employee, Long> repository) {
         super(repository);
     }
 
     @Override
-    FuncionarioDTO returnDTO(Funcionario entity) {
+    FuncionarioDTO returnDTO(Employee entity) {
         return null;
     }
 

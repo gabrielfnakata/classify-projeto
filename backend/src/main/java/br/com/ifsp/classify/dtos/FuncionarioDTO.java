@@ -10,6 +10,5 @@ public record FuncionarioDTO(
         String email,
         String telefone,
         String endereco,
-        CargoDTO cargoDTO,
-        Boolean isAdministrador
+        CargoDTO cargoDTO
 ) {}

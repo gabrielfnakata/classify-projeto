@@ -1,19 +1,19 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.AulaDTO;
-import br.com.ifsp.classify.models.Aula;
+import br.com.ifsp.classify.models.ClassSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AulaService extends BaseService<Aula, AulaDTO, Long> {
+public class AulaService extends BaseService<ClassSession, AulaDTO, Long> {
 
-    public AulaService(JpaRepository<Aula, Long> repository) {
+    public AulaService(JpaRepository<ClassSession, Long> repository) {
         super(repository);
     }
 
     @Override
-    AulaDTO returnDTO(Aula entity) {
+    AulaDTO returnDTO(ClassSession entity) {
         return null;
     }
 

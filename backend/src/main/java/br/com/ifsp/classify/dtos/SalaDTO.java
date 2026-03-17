@@ -5,5 +5,5 @@ public record SalaDTO(
         String nome,
         Integer vagas,
         Integer capacidade,
-        Boolean estaDisponivel
+        Boolean estaDesativada
 ) {}

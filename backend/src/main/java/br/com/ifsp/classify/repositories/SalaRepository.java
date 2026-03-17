@@ -1,8 +1,8 @@
 package br.com.ifsp.classify.repositories;
 
-import br.com.ifsp.classify.models.Sala;
+import br.com.ifsp.classify.models.Classroom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SalaRepository extends JpaRepository<Sala, Integer> {}
+public interface SalaRepository extends JpaRepository<Classroom, Integer> {}

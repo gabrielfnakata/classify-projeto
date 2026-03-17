@@ -1,19 +1,19 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.CargoDTO;
-import br.com.ifsp.classify.models.Cargo;
+import br.com.ifsp.classify.models.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CargoService extends BaseService<Cargo, CargoDTO, Integer> {
+public class CargoService extends BaseService<Role, CargoDTO, Integer> {
 
-    public CargoService(JpaRepository<Cargo, Integer> repository) {
+    public CargoService(JpaRepository<Role, Integer> repository) {
         super(repository);
     }
 
     @Override
-    CargoDTO returnDTO(Cargo entity) {
+    CargoDTO returnDTO(Role entity) {
         return null;
     }
 

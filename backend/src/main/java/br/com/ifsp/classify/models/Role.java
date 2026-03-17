@@ -5,14 +5,14 @@ import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Entity
-public class Cargo implements Serializable {
+public class Role implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true)
-    private String descricao;
+    @Column(nullable = false, unique = true, length = 40)
+    private String description;
 
     public Integer getId() {
         return id;
@@ -22,11 +22,11 @@ public class Cargo implements Serializable {
         this.id = id;
     }
 
-    public String getDescricao() {
-        return descricao;
+    public String getDescription() {
+        return description;
     }
 
-    public void setDescricao(String descricao) {
-        this.descricao = descricao;
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

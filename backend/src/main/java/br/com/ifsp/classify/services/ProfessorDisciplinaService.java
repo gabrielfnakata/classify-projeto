@@ -1,19 +1,19 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.ProfessorDisciplinaDTO;
-import br.com.ifsp.classify.models.ProfessorDisciplina;
+import br.com.ifsp.classify.models.SubjectTeacher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ProfessorDisciplinaService extends BaseService<ProfessorDisciplina, ProfessorDisciplinaDTO, Long> {
+public class ProfessorDisciplinaService extends BaseService<SubjectTeacher, ProfessorDisciplinaDTO, Long> {
 
-    public ProfessorDisciplinaService(JpaRepository<ProfessorDisciplina, Long> repository) {
+    public ProfessorDisciplinaService(JpaRepository<SubjectTeacher, Long> repository) {
         super(repository);
     }
 
     @Override
-    ProfessorDisciplinaDTO returnDTO(ProfessorDisciplina entity) {
+    ProfessorDisciplinaDTO returnDTO(SubjectTeacher entity) {
         return null;
     }
 

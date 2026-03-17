@@ -1,19 +1,19 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.SalaDTO;
-import br.com.ifsp.classify.models.Sala;
+import br.com.ifsp.classify.models.Classroom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SalaService extends BaseService<Sala, SalaDTO, Integer> {
+public class SalaService extends BaseService<Classroom, SalaDTO, Integer> {
 
-    public SalaService(JpaRepository<Sala, Integer> repository) {
+    public SalaService(JpaRepository<Classroom, Integer> repository) {
         super(repository);
     }
 
     @Override
-    SalaDTO returnDTO(Sala entity) {
+    SalaDTO returnDTO(Classroom entity) {
         return null;
     }
 
