@@ -15,6 +15,9 @@ public class ClassSession implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
+    private Byte[] uuid;
+
     @ManyToOne
     @JoinColumn(name = "id", nullable = false)
     private SubjectTeacher subjectTeacher;
@@ -29,7 +32,12 @@ public class ClassSession implements Serializable {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
-    @ManyToMany(mappedBy = "classSessions")
+    @ManyToMany
+    @JoinTable(
+            name = "STUDENT",
+            joinColumns = @JoinColumn(name = "class_session_id"),
+            inverseJoinColumns = @JoinColumn(name = "student_id")
+    )
     private List<Student> students = new ArrayList<>();
 
     public Long getId() {
@@ -38,6 +46,14 @@ public class ClassSession implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Byte[] getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(Byte[] uuid) {
+        this.uuid = uuid;
     }
 
     public SubjectTeacher getSubjectTeacher() {

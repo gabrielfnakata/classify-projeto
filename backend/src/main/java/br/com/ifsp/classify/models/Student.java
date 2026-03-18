@@ -14,20 +14,11 @@ public class Student extends Person implements Serializable {
     @Column(nullable = false)
     private LocalDate registrationDate;
 
-    @ManyToMany
-    @JoinTable(
-            name = "STUDENT_CLASS_SESSION",
-            joinColumns = @JoinColumn(name = "student_id"),
-            inverseJoinColumns = @JoinColumn(name = "class_session_id")
-    )
+    @ManyToMany(mappedBy = "students")
     private List<ClassSession> classSessions = new ArrayList<>();
 
-    @ManyToMany
-    @JoinTable(
-            name = "STUDENT_GUARDIAN",
-            joinColumns = @JoinColumn(name = "student_id"),
-            inverseJoinColumns = @JoinColumn(name = "guardian_id")
-    )
+    @OneToMany
+    @JoinColumn(name = "student_id")
     private List<Guardian> guardians = new ArrayList<>();
 
     public LocalDate getRegistrationDate() {

@@ -12,6 +12,9 @@ public class Classroom implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false, unique = true)
+    private Byte[] uuid;
+
     @Column(nullable = false, length = 255)
     private String name;
 
@@ -27,6 +30,14 @@ public class Classroom implements Serializable {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Byte[] getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(Byte[] uuid) {
+        this.uuid = uuid;
     }
 
     public String getName() {
@@ -45,11 +56,11 @@ public class Classroom implements Serializable {
         this.capacity = capacity;
     }
 
-    public Boolean getIsDisabled() {
+    public Boolean getDisabled() {
         return isDisabled;
     }
 
-    public void setIsDisabled(Boolean isDisabled) {
-        this.isDisabled = isDisabled;
+    public void setDisabled(Boolean disabled) {
+        isDisabled = disabled;
     }
 }

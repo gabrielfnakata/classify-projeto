@@ -17,17 +17,10 @@ CREATE TABLE IF NOT EXISTS GUARDIAN (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     telephone CHAR(11) NOT NULL,
-
-    CONSTRAINT guardian_id_pk PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS STUDENT_GUARDIAN (
     student_id BIGINT UNSIGNED NOT NULL,
-    guardian_id BIGINT UNSIGNED NOT NULL,
 
-    CONSTRAINT studentGuardian_id_pk PRIMARY KEY (student_id, guardian_id),
-    CONSTRAINT studentGuardian_idStud_fk FOREIGN KEY (student_id) REFERENCES STUDENT(id),
-    CONSTRAINT studentGuardian_idGuar_fk FOREIGN KEY (guardian_id) REFERENCES GUARDIAN(id)
+    CONSTRAINT guardian_id_pk PRIMARY KEY (id),
+    CONSTRAINT guardian_idStudent_fk FOREIGN KEY (student_id) REFERENCES STUDENT(id)
 );
 
 CREATE TABlE IF NOT EXISTS ROLE (
@@ -59,18 +52,22 @@ CREATE TABLE IF NOT EXISTS EMPLOYEE (
 
 CREATE TABLE IF NOT EXISTS SUBJECT (
 	id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
 	description VARCHAR(40) NOT NULL,
 
 	CONSTRAINT subject_id_pk PRIMARY KEY (id),
+	CONSTRAINT subject_uuid_uk UNIQUE(uuid),
 	CONSTRAINT subject_description_uk UNIQUE (description)
 );
 
 CREATE TABLE IF NOT EXISTS SUBJECT_TEACHER (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
 	employee_id BIGINT UNSIGNED NOT NULL,
 	subject_id TINYINT UNSIGNED NOT NULL,
 
 	CONSTRAINT subjectTeacher_id_pk PRIMARY KEY (id),
+	CONSTRAINT subjectTeacher_uuid_uk UNIQUE (uuid),
 	CONSTRAINT subjectTeacher_idEmp_fk FOREIGN KEY (employee_id) REFERENCES EMPLOYEE(id),
 	CONSTRAINT subjectTeacher_idSubj_fk FOREIGN KEY (subject_id) REFERENCES SUBJECT(id),
 	CONSTRAINT subjectTeacher_idEmp_idSubj_uk UNIQUE (employee_id, subject_id)
@@ -78,22 +75,26 @@ CREATE TABLE IF NOT EXISTS SUBJECT_TEACHER (
 
 CREATE TABLE IF NOT EXISTS CLASSROOM (
 	id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
 	name VARCHAR(255) NOT NULL,
 	capacity TINYINT UNSIGNED NOT NULL,
 	is_disabled BOOLEAN NOT NULL DEFAULT 0,
 
 	CONSTRAINT classRoom_id_pk PRIMARY KEY (id),
+	CONSTRAINT classRoom_uuid_uk UNIQUE (uuid),
 	CONSTRAINT classRoom_capacity_ck CHECK (capacity > 0)
 );
 
 CREATE TABLE IF NOT EXISTS CLASS_SESSION (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
 	teacher_subject_id BIGINT UNSIGNED NOT NULL,
 	classroom_id TINYINT UNSIGNED NOT NULL,
 	start_time DATETIME NOT NULL,
 	end_time DATETIME NOT NULL,
 
 	CONSTRAINT classSession_id_pk PRIMARY KEY (id),
+	CONSTRAINT classSession_uuid_uk UNIQUE (uuid),
 	CONSTRAINT classSession_idTeacherSubj_fk FOREIGN KEY (teacher_subject_id) REFERENCES TEACHER_SUBJECT(id),
 	CONSTRAINT classSession_idClassroom_fk FOREIGN KEY (classroom_id) REFERENCES CLASSROOM(id),
 	CONSTRAINT classSession_startEndTime_ck CHECK (start_time < end_time)

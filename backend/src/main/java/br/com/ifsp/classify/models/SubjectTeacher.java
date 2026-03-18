@@ -12,6 +12,9 @@ public class SubjectTeacher implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
+    private Byte[] uuid;
+
     @ManyToOne
     @JoinColumn(name = "id")
     private Employee employee;
@@ -26,6 +29,14 @@ public class SubjectTeacher implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Byte[] getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(Byte[] uuid) {
+        this.uuid = uuid;
     }
 
     public Employee getEmployee() {

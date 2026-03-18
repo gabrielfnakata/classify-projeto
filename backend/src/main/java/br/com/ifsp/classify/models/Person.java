@@ -29,12 +29,20 @@ public abstract class Person {
     @Column(nullable = false, length = 200)
     private String address;
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
+    }
+
+    public Byte[] getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(Byte[] uuid) {
+        this.uuid = uuid;
     }
 
     public String getName() {

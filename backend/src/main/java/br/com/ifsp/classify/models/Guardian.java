@@ -12,14 +12,18 @@ public class Guardian {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
+    private Byte[] uuid;
+
     @Column(nullable = false, length = 255)
     private String name;
 
     @Column(nullable = false, length = 11)
     private String telephone;
 
-    @ManyToMany(mappedBy = "guardians")
-    private List<Student> students;
+    @ManyToOne
+    @JoinColumn(name = "student_id")
+    private Student student;
 
     public Long getId() {
         return id;
@@ -27,6 +31,14 @@ public class Guardian {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Byte[] getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(Byte[] uuid) {
+        this.uuid = uuid;
     }
 
     public String getName() {
@@ -45,11 +57,11 @@ public class Guardian {
         this.telephone = telephone;
     }
 
-    public List<Student> getStudents() {
-        return students;
+    public Student getStudent() {
+        return student;
     }
 
-    public void setStudents(List<Student> students) {
-        this.students = students;
+    public void setStudent(Student student) {
+        this.student = student;
     }
 }
