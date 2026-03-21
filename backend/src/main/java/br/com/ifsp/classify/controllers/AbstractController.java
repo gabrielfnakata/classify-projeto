@@ -7,26 +7,26 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-public abstract class AbstractController<T, ID> {
+public abstract class AbstractController<CreateDTO, GetDTO, UpdateDTO> {
 
-    protected final InterfaceService<T, ID> service;
+    protected final InterfaceService<CreateDTO, GetDTO, UpdateDTO> service;
 
-    protected AbstractController(InterfaceService<T, ID> service) {
+    protected AbstractController(InterfaceService<CreateDTO, GetDTO, UpdateDTO> service) {
         this.service = service;
     }
 
     @GetMapping
-    public ResponseEntity<List<T>> findAll() {
-        List<T> allEntities = service.findAll();
+    public ResponseEntity<List<GetDTO>> findAll() {
+        List<GetDTO> allEntities = service.findAll();
 
         return (allEntities.isEmpty())
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.ok(allEntities);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<T> findById( @PathVariable ID id ) {
-        T entity = service.findById(id);
+    @GetMapping("/{uuid}")
+    public ResponseEntity<GetDTO> findById( @PathVariable String uuid ) {
+        GetDTO entity = service.findById(uuid);
 
         return (entity != null)
                 ? ResponseEntity.ok(entity)
@@ -34,18 +34,18 @@ public abstract class AbstractController<T, ID> {
     }
 
     @PostMapping(consumes = "application/json")
-    public ResponseEntity<T> create( @RequestBody T entity ) {
-        T newEntity = service.create(entity);
+    public ResponseEntity<GetDTO> create( @RequestBody CreateDTO entity ) {
+        GetDTO newEntity = service.create(entity);
 
         return (newEntity == null)
                 ? ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
                 : ResponseEntity.status(HttpStatus.CREATED).body(newEntity);
     }
 
-    @PutMapping(value = "/{id}", consumes = "application/json")
-    public ResponseEntity<T> update( @PathVariable ID id,
-                                     @RequestBody T entity) {
-        T updatedEntity = service.update(id, entity);
+    @PutMapping(value = "/{uuid}", consumes = "application/json")
+    public ResponseEntity<GetDTO> update( @PathVariable String uuid,
+                                     @RequestBody UpdateDTO entity) {
+        GetDTO updatedEntity = service.update(uuid, entity);
 
         return (updatedEntity != null)
                 ? ResponseEntity.ok(updatedEntity)
@@ -53,7 +53,7 @@ public abstract class AbstractController<T, ID> {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete( @PathVariable ID id ) {
+    public ResponseEntity<Void> delete( @PathVariable String id ) {
         return service.delete(id);
     }
 }
