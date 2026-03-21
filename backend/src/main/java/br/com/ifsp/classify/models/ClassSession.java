@@ -1,6 +1,8 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -11,30 +13,34 @@ import java.util.List;
 @Table(name = "CLASS_SESSION")
 public class ClassSession implements Serializable {
 
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JdbcTypeCode(SqlTypes.BINARY)
     @Column(nullable = false, unique = true)
-    private Byte[] uuid;
+    private byte[] uuid;
 
     @ManyToOne
-    @JoinColumn(name = "id", nullable = false)
+    @JoinColumn(name = "subject_teacher_id", nullable = false)
     private SubjectTeacher subjectTeacher;
 
     @ManyToOne
-    @JoinColumn(name = "id", nullable = false)
+    @JoinColumn(name = "classroom_id", nullable = false, insertable = false, updatable = false)
     private Classroom classroom;
 
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE_TIME)
     @Column(nullable = false)
     private LocalDateTime startTime;
 
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE_TIME)
     @Column(nullable = false)
     private LocalDateTime endTime;
 
     @ManyToMany
     @JoinTable(
-            name = "STUDENT",
+            name = "STUDENT_CLASS_SESSION",
             joinColumns = @JoinColumn(name = "class_session_id"),
             inverseJoinColumns = @JoinColumn(name = "student_id")
     )
@@ -48,11 +54,11 @@ public class ClassSession implements Serializable {
         this.id = id;
     }
 
-    public Byte[] getUuid() {
+    public byte[] getUuid() {
         return uuid;
     }
 
-    public void setUuid(Byte[] uuid) {
+    public void setUuid(byte[] uuid) {
         this.uuid = uuid;
     }
 

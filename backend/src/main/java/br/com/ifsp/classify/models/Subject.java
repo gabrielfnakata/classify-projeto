@@ -1,19 +1,25 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
 
 @Entity
+@Table(name = "SUBJECT")
 public class Subject implements Serializable {
 
+    @JdbcTypeCode(SqlTypes.TINYINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @JdbcTypeCode(SqlTypes.BINARY)
     @Column(nullable = false, unique = true)
-    private Byte[] uuid;
+    private byte[] uuid;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, unique = true, length = 40)
     private String description;
 
@@ -25,11 +31,11 @@ public class Subject implements Serializable {
         this.id = id;
     }
 
-    public Byte[] getUuid() {
+    public byte[] getUuid() {
         return uuid;
     }
 
-    public void setUuid(Byte[] uuid) {
+    public void setUuid(byte[] uuid) {
         this.uuid = uuid;
     }
 

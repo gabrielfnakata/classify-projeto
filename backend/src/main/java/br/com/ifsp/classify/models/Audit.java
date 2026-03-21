@@ -1,34 +1,47 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "AUDIT")
-public class Audit {
+public class Audit implements Serializable {
 
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 21)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "table_name", nullable = false, length = 21)
     private String tableName;
 
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.BIGINT)
+    @Column(name = "register_id", nullable = false)
     private Long registerId;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(nullable = false, length = 6)
     private String operation;
 
-    @JoinColumn(name = "id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private Employee employee;
 
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE_TIME)
     @Column(nullable = false)
     private LocalDateTime date;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "old_data")
     private String oldData;
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "new_data", nullable = false)
     private String newData;
 
     public Long getId() {

@@ -1,6 +1,8 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.List;
 
@@ -8,21 +10,25 @@ import java.util.List;
 @Table(name = "GUARDIAN")
 public class Guardian {
 
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JdbcTypeCode(SqlTypes.BINARY)
     @Column(nullable = false, unique = true)
-    private Byte[] uuid;
+    private byte[] uuid;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 255)
     private String name;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(nullable = false, length = 11)
     private String telephone;
 
     @ManyToOne
-    @JoinColumn(name = "student_id")
+    @JoinColumn(name = "student_id", insertable = false, updatable = false)
     private Student student;
 
     public Long getId() {
@@ -33,11 +39,11 @@ public class Guardian {
         this.id = id;
     }
 
-    public Byte[] getUuid() {
+    public byte[] getUuid() {
         return uuid;
     }
 
-    public void setUuid(Byte[] uuid) {
+    public void setUuid(byte[] uuid) {
         this.uuid = uuid;
     }
 

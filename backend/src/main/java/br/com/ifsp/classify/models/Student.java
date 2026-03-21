@@ -1,6 +1,8 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -11,14 +13,11 @@ import java.util.List;
 @Table(name = "STUDENT")
 public class Student extends Person implements Serializable {
 
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     @Column(nullable = false)
     private LocalDate registrationDate;
 
-    @ManyToMany(mappedBy = "students")
-    private List<ClassSession> classSessions = new ArrayList<>();
-
-    @OneToMany
-    @JoinColumn(name = "student_id")
+    @OneToMany(mappedBy = "student")
     private List<Guardian> guardians = new ArrayList<>();
 
     public LocalDate getRegistrationDate() {
@@ -29,19 +28,16 @@ public class Student extends Person implements Serializable {
         this.registrationDate = registrationDate;
     }
 
-    public List<ClassSession> getClassSessions() {
-        return classSessions;
-    }
-
-    public void setClassSessions(List<ClassSession> classSessions) {
-        this.classSessions = classSessions;
-    }
-
     public List<Guardian> getGuardians() {
         return guardians;
     }
 
     public void setGuardians(List<Guardian> guardians) {
         this.guardians = guardians;
+    }
+
+    public void addGuardian(Guardian guardian) {
+        guardians.add(guardian);
+        guardian.setStudent(this);
     }
 }

@@ -1,6 +1,8 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
 
@@ -8,19 +10,21 @@ import java.io.Serializable;
 @Table(name = "SUBJECT_TEACHER")
 public class SubjectTeacher implements Serializable {
 
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JdbcTypeCode(SqlTypes.BINARY)
     @Column(nullable = false, unique = true)
-    private Byte[] uuid;
+    private byte[] uuid;
 
     @ManyToOne
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
     @ManyToOne
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "subject_id", nullable = false)
     private Subject subject;
 
     public Long getId() {
@@ -31,11 +35,11 @@ public class SubjectTeacher implements Serializable {
         this.id = id;
     }
 
-    public Byte[] getUuid() {
+    public byte[] getUuid() {
         return uuid;
     }
 
-    public void setUuid(Byte[] uuid) {
+    public void setUuid(byte[] uuid) {
         this.uuid = uuid;
     }
 

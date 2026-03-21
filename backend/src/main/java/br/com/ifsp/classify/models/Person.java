@@ -1,31 +1,40 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 
 @MappedSuperclass
 public abstract class Person {
 
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JdbcTypeCode(SqlTypes.BINARY)
     @Column(nullable = false, unique = true, length = 16)
-    private Byte[] uuid;
+    private byte[] uuid;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 255)
     private String name;
 
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE)
     @Column(nullable = false)
     private LocalDate birthDate;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, unique = true, length = 320)
     private String email;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(nullable = false, length = 11)
     private String telephone;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 200)
     private String address;
 
@@ -37,11 +46,11 @@ public abstract class Person {
         this.id = id;
     }
 
-    public Byte[] getUuid() {
+    public byte[] getUuid() {
         return uuid;
     }
 
-    public void setUuid(Byte[] uuid) {
+    public void setUuid(byte[] uuid) {
         this.uuid = uuid;
     }
 

@@ -1,6 +1,8 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
 
@@ -8,15 +10,17 @@ import java.io.Serializable;
 @Table(name = "EMPLOYEE")
 public class Employee extends Person implements Serializable {
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 30)
     private String password;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(nullable = false, unique = true, length = 11)
     private String cpf;
 
     @ManyToOne
-    @JoinColumn(name = "id", nullable = false)
-    private Role cargo;
+    @JoinColumn(name = "role_id", nullable = false, insertable = false, updatable = false)
+    private Role role;
 
     public String getPassword() {
         return password;
@@ -34,11 +38,11 @@ public class Employee extends Person implements Serializable {
         this.cpf = cpf;
     }
 
-    public Role getCargo() {
-        return cargo;
+    public Role getRole() {
+        return role;
     }
 
-    public void setCargo(Role cargo) {
-        this.cargo = cargo;
+    public void setRole(Role role) {
+        this.role = role;
     }
 }
