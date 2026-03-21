@@ -1,14 +1,12 @@
-package br.com.ifsp.classify.dtos.create;
+package br.com.ifsp.classify.dtos.update;
 
 import java.time.LocalDate;
-import java.util.List;
 
-public record StudentCreateDTO(
+public record StudentUpdateDTO(
         String name,
         LocalDate birthDate,
         LocalDate registrationDate,
         String email,
         String telephone,
-        String address,
-        List<GuardianCreateDTO> guardians
+        String address
 ) {}
