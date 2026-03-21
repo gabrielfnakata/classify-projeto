@@ -1,29 +1,31 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.SubjectTeacherCreateDTO;
+import br.com.ifsp.classify.dtos.get.SubjectTeacherGetDTO;
+import br.com.ifsp.classify.dtos.update.SubjectTeacherUpdateDTO;
 import br.com.ifsp.classify.models.SubjectTeacher;
-import org.springframework.data.jpa.repository.JpaRepository;
+import br.com.ifsp.classify.repositories.AbstractRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ProfessorDisciplinaService extends AbstractService<SubjectTeacher, SubjectTeacherCreateDTO, Long> {
+public class SubjectTeacherService extends AbstractService<SubjectTeacher, SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO, Long> {
 
-    public ProfessorDisciplinaService(JpaRepository<SubjectTeacher, Long> repository) {
+    public SubjectTeacherService(AbstractRepository<SubjectTeacher, Long> repository) {
         super(repository);
     }
 
     @Override
-    SubjectTeacherCreateDTO returnDTO(SubjectTeacher entity) {
+    SubjectTeacherGetDTO returnDTO(SubjectTeacher entity) {
         return null;
     }
 
     @Override
-    public SubjectTeacherCreateDTO create(SubjectTeacherCreateDTO entity) {
+    public SubjectTeacherGetDTO create(SubjectTeacherCreateDTO entity) {
         return null;
     }
 
     @Override
-    public SubjectTeacherCreateDTO update(Long aLong, SubjectTeacherCreateDTO entity) {
+    public SubjectTeacherGetDTO update(String uuid, SubjectTeacherUpdateDTO entity) {
         return null;
     }
 }

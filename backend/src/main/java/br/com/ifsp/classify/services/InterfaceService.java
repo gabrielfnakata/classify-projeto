@@ -4,10 +4,10 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
-public interface InterfaceService<DTO, ID> {
-    List<DTO> findAll();
-    DTO findById(ID id);
-    DTO create(DTO entity);
-    DTO update(ID id, DTO entity);
-    ResponseEntity<Void> delete(ID id);
+public interface InterfaceService<CreateDTO, GetDTO, UpdateDTO> {
+    List<GetDTO> findAll();
+    GetDTO findById(String uuid);
+    GetDTO create(CreateDTO entity);
+    GetDTO update(String uuid, UpdateDTO entity);
+    ResponseEntity<Void> delete(String uuid);
 }

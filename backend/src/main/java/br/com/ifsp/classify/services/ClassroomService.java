@@ -1,29 +1,31 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.ClassroomCreateDTO;
+import br.com.ifsp.classify.dtos.get.ClassroomGetDTO;
+import br.com.ifsp.classify.dtos.update.ClassroomUpdateDTO;
 import br.com.ifsp.classify.models.Classroom;
-import org.springframework.data.jpa.repository.JpaRepository;
+import br.com.ifsp.classify.repositories.ClassroomRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SalaService extends AbstractService<Classroom, ClassroomCreateDTO, Integer> {
+public class ClassroomService extends AbstractService<Classroom, ClassroomCreateDTO, ClassroomGetDTO, ClassroomUpdateDTO, Integer> {
 
-    public SalaService(JpaRepository<Classroom, Integer> repository) {
+    public ClassroomService(ClassroomRepository repository) {
         super(repository);
     }
 
     @Override
-    ClassroomCreateDTO returnDTO(Classroom entity) {
+    ClassroomGetDTO returnDTO(Classroom entity) {
         return null;
     }
 
     @Override
-    public ClassroomCreateDTO create(ClassroomCreateDTO entity) {
+    public ClassroomGetDTO create(ClassroomCreateDTO entity) {
         return null;
     }
 
     @Override
-    public ClassroomCreateDTO update(Integer integer, ClassroomCreateDTO entity) {
+    public ClassroomGetDTO update(String uuid, ClassroomUpdateDTO entity) {
         return null;
     }
 }

@@ -1,110 +1,128 @@
 package br.com.ifsp.classify.services;
 
-import br.com.ifsp.classify.dtos.AlunoDTO;
+import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
+import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
+import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
+import br.com.ifsp.classify.dtos.get.StudentGetDTO;
+import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.models.Guardian;
 import br.com.ifsp.classify.models.Student;
+import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.utils.Utils;
-import org.springframework.data.jpa.repository.JpaRepository;
+import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.stereotype.Service;
 
-@Service
-public class AlunoService extends BaseService<Student, AlunoDTO, Long> {
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
-    public AlunoService(JpaRepository<Student, Long> repository) {
+@Service
+public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, Long> {
+
+    public StudentService(StudentRepository repository) {
         super(repository);
     }
 
     @Override
-    AlunoDTO returnDTO(Student aluno) {
-        if (aluno == null)
+    StudentGetDTO returnDTO(Student student) {
+        if (student == null)
             return null;
 
-        return new AlunoDTO(
-                aluno.getId(),
-                aluno.getName(),
-                aluno.getBirthDate(),
-                aluno.getRegistrationDate(),
-                aluno.getEmail(),
-                aluno.getTelephone(),
-                aluno.getAddress(),
-                aluno.getNomeResponsavel(),
-                aluno.getTelefoneResponsavel()
+        return new StudentGetDTO(
+                UuidUtils.convertBytesToString(student.getUuid()),
+                student.getName(),
+                student.getBirthDate(),
+                student.getRegistrationDate(),
+                student.getEmail(),
+                student.getTelephone(),
+                student.getAddress(),
+                student.getGuardians()
+                        .stream()
+                        .map(guardian -> new GuardianGetDTO(guardian.getName(), guardian.getTelephone()))
+                        .collect(Collectors.toList())
         );
     }
 
     @Override
-    public AlunoDTO create(AlunoDTO alunoDTO) {
-        if (alunoDTO == null)
+    public StudentGetDTO create(StudentCreateDTO studentDTO) {
+        if (studentDTO == null)
             return null;
 
-        if (Utils.isNullOrEmpty(alunoDTO.nome()))
+        if (Utils.isNullOrEmpty(studentDTO.name()))
             throw new DtoException("O nome do aluno não pode ser nulo ou vazio");
 
-        if (alunoDTO.dataNascimento() == null)
+        if (studentDTO.birthDate() == null)
             throw new DtoException("A data de nascimento do aluno não pode ser nula");
 
-        if (alunoDTO.dataMatricula() == null)
+        if (studentDTO.registrationDate() == null)
             throw new DtoException("A data de matrícula do aluno não pode ser nula");
 
-        if (Utils.isNullOrEmpty(alunoDTO.email()))
+        if (Utils.isNullOrEmpty(studentDTO.email()))
             throw new DtoException("O email do aluno não pode ser nulo");
 
-        if (Utils.isNullOrEmpty(alunoDTO.telefone()))
+        if (Utils.isNullOrEmpty(studentDTO.telephone()))
             throw new DtoException("O telefone do aluno não pode ser nulo");
 
-        if (Utils.isNullOrEmpty(alunoDTO.endereco()))
+        if (Utils.isNullOrEmpty(studentDTO.address()))
             throw new DtoException("O endereço do aluno não pode ser nulo");
 
-        Student novoAluno = new Student();
-        novoAluno.setName(alunoDTO.nome());
-        novoAluno.setBirthDate(alunoDTO.dataNascimento());
-        novoAluno.setRegistrationDate(alunoDTO.dataMatricula());
-        novoAluno.setEmail(alunoDTO.email());
-        novoAluno.setTelephone(alunoDTO.telefone());
-        novoAluno.setAddress(alunoDTO.endereco());
-        novoAluno.setNomeResponsavel(alunoDTO.nomeResponsavel());
-        novoAluno.setTelefoneResponsavel(alunoDTO.telefoneResponsavel());
+        Student newStudent = new Student();
+        newStudent.setUuid(UuidUtils.generateUUID());
+        newStudent.setName(studentDTO.name().trim().toUpperCase());
+        newStudent.setBirthDate(studentDTO.birthDate());
+        newStudent.setRegistrationDate(studentDTO.registrationDate());
+        newStudent.setEmail(studentDTO.email().trim().toUpperCase());
+        newStudent.setTelephone(studentDTO.telephone().trim());
+        newStudent.setAddress(studentDTO.address().trim());
 
-        repository.save(novoAluno);
-        return returnDTO(novoAluno);
+        if (Utils.hasElements(studentDTO.guardians())) {
+            for (GuardianCreateDTO guardian : studentDTO.guardians()) {
+                if (Utils.isNullOrEmpty(guardian.name()))
+                    throw new DtoException("O nome do responsável não pode ser nulo ou vazio");
+
+                if (Utils.isNullOrEmpty(guardian.telephone()))
+                    throw new DtoException("O telefone do responsável não pode ser nulo");
+
+                Guardian newGuardian = new Guardian();
+                newGuardian.setName(guardian.name());
+                newGuardian.setTelephone(guardian.telephone());
+
+                newStudent.addGuardian(newGuardian);
+            }
+        }
+
+        repository.save(newStudent);
+
+        return returnDTO(newStudent);
     }
 
     @Override
-    public AlunoDTO update(Long id, AlunoDTO alunoDTO) {
-        if (alunoDTO == null)
+    public StudentGetDTO update(String uuid, StudentUpdateDTO studentDTO) {
+        Student student = getEntityById(uuid);
+        if (studentDTO == null || student == null)
             return null;
 
-        Student aluno = getEntityById(id);
-        if (aluno == null)
-            return null;
+        if (!Utils.isNullOrEmpty(studentDTO.name()))
+            student.setName(studentDTO.name().trim().toUpperCase());
 
-        if (!Utils.isNullOrEmpty(alunoDTO.nome()))
-            aluno.setName(aluno.getName());
+        if (studentDTO.birthDate() != null)
+            student.setBirthDate(studentDTO.birthDate());
 
-        if (alunoDTO.dataNascimento() != null)
-            aluno.setBirthDate(alunoDTO.dataNascimento());
+        if (studentDTO.registrationDate() != null)
+            student.setRegistrationDate(studentDTO.registrationDate());
 
-        if (alunoDTO.dataMatricula() != null)
-            aluno.setRegistrationDate(alunoDTO.dataMatricula());
+        if (!Utils.isNullOrEmpty(studentDTO.email()))
+            student.setEmail(studentDTO.email().trim().toUpperCase());
 
-        if (!Utils.isNullOrEmpty(alunoDTO.email()))
-            aluno.setEmail(aluno.getEmail());
+        if (!Utils.isNullOrEmpty(studentDTO.telephone()))
+            student.setTelephone(studentDTO.telephone().trim());
 
-        if (!Utils.isNullOrEmpty(alunoDTO.telefone()))
-            aluno.setTelephone(aluno.getTelephone());
+        if (!Utils.isNullOrEmpty(studentDTO.address()))
+            student.setAddress(studentDTO.address().trim());
 
-        if (!Utils.isNullOrEmpty(alunoDTO.endereco()))
-            aluno.setAddress(aluno.getAddress());
+        repository.save(student);
 
-        Student novoAluno = new Student();
-        novoAluno.setName(alunoDTO.nome());
-        novoAluno.setBirthDate(alunoDTO.dataNascimento());
-        novoAluno.setRegistrationDate(alunoDTO.dataMatricula());
-        novoAluno.setEmail(alunoDTO.email());
-        novoAluno.setTelephone(alunoDTO.telefone());
-        novoAluno.setAddress(alunoDTO.endereco());
-
-        repository.save(novoAluno);
-        return returnDTO(novoAluno);
+        return returnDTO(student);
     }
 }

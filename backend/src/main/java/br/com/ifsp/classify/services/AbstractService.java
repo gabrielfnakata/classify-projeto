@@ -1,25 +1,30 @@
 package br.com.ifsp.classify.services;
 
+import br.com.ifsp.classify.repositories.AbstractRepository;
+import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class BaseService<E, DTO, ID> implements InterfaceService<DTO, ID> {
+public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, ID> implements InterfaceService<CreateDTO, GetDTO, UpdateDTO> {
 
-    protected final JpaRepository<E, ID> repository;
+    protected final AbstractRepository<Model, ID> repository;
+    private final String uuid = "uuid";
 
-    public BaseService(JpaRepository<E, ID> repository) {
+    public AbstractService(AbstractRepository<Model, ID> repository) {
         this.repository = repository;
     }
 
-    abstract DTO returnDTO(E entity);
-    public abstract DTO create(DTO entity);
-    public abstract DTO update(ID id, DTO entity);
+    abstract GetDTO returnDTO(Model entity);
+    public abstract GetDTO create(CreateDTO entity);
+    public abstract GetDTO update(String uuid, UpdateDTO entity);
 
     @Override
-    public List<DTO> findAll() {
+    public List<GetDTO> findAll() {
         return repository.findAll()
                 .stream()
                 .map(this::returnDTO)
@@ -27,13 +32,13 @@ public abstract class BaseService<E, DTO, ID> implements InterfaceService<DTO, I
     }
 
     @Override
-    public DTO findById(ID id) {
-        return returnDTO(getEntityById(id));
+    public GetDTO findById(String uuid) {
+        return returnDTO(getEntityById(uuid));
     }
 
     @Override
-    public ResponseEntity<Void> delete(ID id) {
-        E entity = getEntityById(id);
+    public ResponseEntity<Void> delete(String uuid) {
+        Model entity = getEntityById(uuid);
         if (entity == null)
             return ResponseEntity.badRequest().build();
 
@@ -41,9 +46,10 @@ public abstract class BaseService<E, DTO, ID> implements InterfaceService<DTO, I
         return ResponseEntity.noContent().build();
     }
 
-    protected E getEntityById(ID id) {
-        return (id == null)
-                ? null
-                : repository.findById(id).orElse(null);
+    protected Model getEntityById(String uuid) {
+        Specification<Model> spec = (root, query, cb) ->
+                cb.equal(root.get(this.uuid), UuidUtils.convertUUIDToBytes(uuid));
+
+        return repository.findOne(spec).orElse(null);
     }
 }

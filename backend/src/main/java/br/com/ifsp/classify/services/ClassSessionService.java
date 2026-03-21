@@ -1,29 +1,31 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.ClassSessionCreateDTO;
+import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
+import br.com.ifsp.classify.dtos.update.ClassSessionUpdateDTO;
 import br.com.ifsp.classify.models.ClassSession;
-import org.springframework.data.jpa.repository.JpaRepository;
+import br.com.ifsp.classify.repositories.ClassSessionRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AulaService extends AbstractService<ClassSession, ClassSessionCreateDTO, Long> {
+public class ClassSessionService extends AbstractService<ClassSession, ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, Long> {
 
-    public AulaService(JpaRepository<ClassSession, Long> repository) {
+    public ClassSessionService(ClassSessionRepository repository) {
         super(repository);
     }
 
     @Override
-    ClassSessionCreateDTO returnDTO(ClassSession entity) {
+    ClassSessionGetDTO returnDTO(ClassSession entity) {
         return null;
     }
 
     @Override
-    public ClassSessionCreateDTO create(ClassSessionCreateDTO entity) {
+    public ClassSessionGetDTO create(ClassSessionCreateDTO entity) {
         return null;
     }
 
     @Override
-    public ClassSessionCreateDTO update(Long aLong, ClassSessionCreateDTO entity) {
+    public ClassSessionGetDTO update(String uuid, ClassSessionUpdateDTO entity) {
         return null;
     }
 }
