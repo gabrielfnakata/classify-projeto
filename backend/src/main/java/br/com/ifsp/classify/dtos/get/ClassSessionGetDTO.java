@@ -5,9 +5,9 @@ import java.util.List;
 
 public record ClassSessionGetDTO(
         String uuid,
-        SubjectTeacherGetDTO subjectTeacher,
-        ClassroomGetDTO classroom,
+        ClassSessionSubjectTeacherGetDTO subjectTeacher,
+        ClassSessionClassroomGetDTO classroom,
         LocalDateTime startTime,
         LocalDateTime endTime,
-        List<String> studentIds
+        List<ClassSessionStudentGetDTO> students
 ) {}

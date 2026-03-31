@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ClassSessionCreateDTO(
-        Long teacherSubjectId,
-        Integer classroomId,
+        String subjectTeacherId,
+        String classroomId,
         LocalDateTime startTime,
         LocalDateTime endTime,
         List<String> studentIds

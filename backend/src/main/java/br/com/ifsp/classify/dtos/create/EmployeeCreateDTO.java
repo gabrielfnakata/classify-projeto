@@ -10,5 +10,5 @@ public record EmployeeCreateDTO(
         String email,
         String telephone,
         String address,
-        Integer role
+        String roleId
 ) {}
