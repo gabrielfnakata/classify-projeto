@@ -11,7 +11,7 @@ import java.io.Serializable;
 public class Employee extends Person implements Serializable {
 
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 100)
     private String password;
 
     @JdbcTypeCode(SqlTypes.CHAR)
