@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.repositories.AbstractRepository;
+import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,7 +34,9 @@ public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, ID> i
 
     @Override
     public GetDTO findById(String uuid) {
-        return returnDTO(getEntityById(uuid));
+        return Utils.isNullOrEmpty(uuid)
+                ? null
+                : returnDTO(getEntityById(uuid));
     }
 
     @Override

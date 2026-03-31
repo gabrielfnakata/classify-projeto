@@ -48,7 +48,6 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
     @Override
     public RoleGetDTO update(String uuid, RoleUpdateDTO roleDTO) {
         Role role = getEntityById(uuid);
-
         if (roleDTO == null || role == null)
             return null;
 
