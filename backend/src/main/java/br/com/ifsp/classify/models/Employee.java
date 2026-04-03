@@ -19,7 +19,7 @@ public class Employee extends Person implements Serializable {
     private String cpf;
 
     @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
     public String getPassword() {

@@ -56,7 +56,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         if (Utils.isNullOrEmpty(employeeDTO.name()))
             throw new DtoException("O nome do funcionário não pode ser vazio ou nulo");
 
-        if (employeeDTO.password() != null && !employeeDTO.password().isEmpty())
+        if (employeeDTO.password() == null || employeeDTO.password().isEmpty())
             throw new DtoException("A senha do funcionário não pode ser nula ou vazia");
 
         if (Utils.isNullOrEmpty(employeeDTO.cpf()))
@@ -121,9 +121,8 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         if (!Utils.isNullOrEmpty(employeeDTO.cpf()))
             employee.setCpf(employeeDTO.cpf().trim());
 
-        Role role;
         if (!Utils.isNullOrEmpty(employeeDTO.roleId())) {
-            role = roleRepository
+            Role role = roleRepository
                     .findOne(RoleSpecification.getByUUID(employeeDTO.roleId()))
                     .orElse(null);
 
