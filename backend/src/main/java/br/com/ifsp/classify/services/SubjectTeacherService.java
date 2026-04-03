@@ -56,7 +56,7 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
         if (Utils.isNullOrEmpty(subjectTeacherDTO.employeeId()))
             throw new DtoException("É necessário informar um funcionário");
 
-        if (!Utils.isNullOrEmpty(subjectTeacherDTO.subjectId()))
+        if (Utils.isNullOrEmpty(subjectTeacherDTO.subjectId()))
             throw new DtoException("É necessário informar uma disciplina");
 
         Employee employee = employeeRepository
