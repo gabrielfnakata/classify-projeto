@@ -85,6 +85,37 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
 
     @Override
     public SubjectTeacherGetDTO update(String uuid, SubjectTeacherUpdateDTO subjectTeacherDTO) {
-        return null;
+        SubjectTeacher subjectTeacher = getEntityById(uuid);
+        if (subjectTeacher == null || subjectTeacherDTO == null)
+            return null;
+
+        if (Utils.isNullOrEmpty(subjectTeacherDTO.employeeId()) && Utils.isNullOrEmpty(subjectTeacherDTO.subjectId()))
+            throw new DtoException("Nenhum parâmetro foi passado");
+
+        if (!Utils.isNullOrEmpty(subjectTeacherDTO.employeeId())) {
+            Employee employee = employeeRepository
+                    .findOne(EmployeeSpecification.getByUUID(subjectTeacherDTO.employeeId()))
+                    .orElse(null);
+
+            if (employee == null)
+                throw new DtoException("O funcionário informado não existe");
+
+            subjectTeacher.setEmployee(employee);
+        }
+
+        if (!Utils.isNullOrEmpty(subjectTeacherDTO.subjectId())) {
+            Subject subject = subjectRepository
+                    .findOne(SubjectSpecification.getByUUID(subjectTeacherDTO.subjectId()))
+                    .orElse(null);
+
+            if (subject == null)
+                throw new DtoException("A matéria informada não existe");
+
+            subjectTeacher.setSubject(subject);
+        }
+
+        repository.save(subjectTeacher);
+
+        return returnDTO(subjectTeacher);
     }
 }
