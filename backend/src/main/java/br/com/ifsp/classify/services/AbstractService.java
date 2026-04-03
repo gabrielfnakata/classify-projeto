@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, ID> implements InterfaceService<CreateDTO, GetDTO, UpdateDTO> {

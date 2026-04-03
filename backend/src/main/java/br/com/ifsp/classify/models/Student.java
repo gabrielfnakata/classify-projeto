@@ -17,7 +17,7 @@ public class Student extends Person implements Serializable {
     @Column(nullable = false)
     private LocalDate registrationDate;
 
-    @OneToMany(mappedBy = "student")
+    @OneToMany(mappedBy = "student", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     private List<Guardian> guardians = new ArrayList<>();
 
     public LocalDate getRegistrationDate() {

@@ -28,7 +28,7 @@ public class Guardian {
     private String telephone;
 
     @ManyToOne
-    @JoinColumn(name = "student_id", insertable = false, updatable = false)
+    @JoinColumn(name = "student_id")
     private Student student;
 
     public Long getId() {

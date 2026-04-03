@@ -4,6 +4,7 @@ import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
+import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.models.Guardian;
@@ -13,9 +14,7 @@ import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, Long> {
@@ -39,8 +38,37 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                 student.getAddress(),
                 student.getGuardians()
                         .stream()
-                        .map(guardian -> new GuardianGetDTO(guardian.getName(), guardian.getTelephone()))
-                        .collect(Collectors.toList())
+                        .map(guardian -> new GuardianGetDTO(
+                                UuidUtils.convertBytesToString(guardian.getUuid()),
+                                guardian.getName(),
+                                guardian.getTelephone()
+                        ))
+                        .toList()
+        );
+    }
+
+    private List<GuardianGetDTO> returnDTO(List<Guardian> guardians) {
+        if (guardians == null || guardians.isEmpty())
+            return null;
+
+        return guardians
+                .stream()
+                .map(guardian -> new GuardianGetDTO(
+                        UuidUtils.convertBytesToString(guardian.getUuid()),
+                        guardian.getName(),
+                        guardian.getTelephone()
+                ))
+                .toList();
+    }
+
+    private GuardianGetDTO returnDTO(Guardian guardian) {
+        if (guardian == null)
+            return null;
+
+        return new GuardianGetDTO(
+                UuidUtils.convertBytesToString(guardian.getUuid()),
+                guardian.getName(),
+                guardian.getTelephone()
         );
     }
 
@@ -124,5 +152,65 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         repository.save(student);
 
         return returnDTO(student);
+    }
+
+    public List<GuardianGetDTO> addGuardians(String uuid, List<GuardianCreateDTO> guardiansDTO) {
+        if (guardiansDTO == null || guardiansDTO.isEmpty())
+            return null;
+
+        Student student = getEntityById(uuid);
+        if (student == null)
+            throw new DtoException("O aluno informado não existe");
+
+        for (GuardianCreateDTO guardian : guardiansDTO) {
+            if (Utils.isNullOrEmpty(guardian.name()))
+                throw new DtoException("Deve ser informado um nome ao responsável do aluno");
+
+            if (Utils.isNullOrEmpty(guardian.telephone()))
+                throw new DtoException("Deve ser informado um telefone ao responsável do aluno");
+
+            Guardian newGuardian = new Guardian();
+            newGuardian.setUuid(UuidUtils.generateUUID());
+            newGuardian.setName(guardian.name().trim().toUpperCase());
+            newGuardian.setTelephone(guardian.telephone().trim());
+
+            student.addGuardian(newGuardian);
+        }
+
+        repository.save(student);
+
+        return returnDTO(student.getGuardians());
+    }
+
+    public GuardianGetDTO updateGuardian(String uuid, String guardianUuid, GuardianUpdateDTO guardianDTO) {
+        Student student = getEntityById(uuid);
+        if (student == null || guardianDTO == null)
+            return null;
+
+        if (Utils.isNullOrEmpty(guardianDTO.name()) && Utils.isNullOrEmpty(guardianDTO.telephone()))
+            throw new DtoException("Nenhum campo foi informado para alteração");
+
+        Guardian guardianToBeReturned = new Guardian();
+        student.getGuardians()
+                .stream()
+                .filter(guardian -> UuidUtils.convertBytesToString(guardian.getUuid()).equals(guardianUuid.trim()))
+                .findFirst()
+                .ifPresentOrElse((guardian) -> {
+                    if (!Utils.isNullOrEmpty(guardianDTO.name()))
+                        guardian.setName(guardianDTO.name().trim().toUpperCase());
+
+                    if (!Utils.isNullOrEmpty(guardianDTO.telephone()))
+                        guardian.setTelephone(guardianDTO.telephone().trim());
+
+                    guardianToBeReturned.setUuid(guardian.getUuid());
+                    guardianToBeReturned.setName(guardian.getName());
+                    guardianToBeReturned.setTelephone(guardian.getTelephone());
+                }, () -> {
+                    throw new DtoException("O responsável informado não existe");
+                });
+
+        repository.save(student);
+
+        return returnDTO(guardianToBeReturned);
     }
 }

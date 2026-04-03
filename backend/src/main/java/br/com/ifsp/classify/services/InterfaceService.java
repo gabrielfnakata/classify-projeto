@@ -1,5 +1,6 @@
 package br.com.ifsp.classify.services;
 
+import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;

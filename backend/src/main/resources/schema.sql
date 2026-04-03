@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS guardian (
 
     CONSTRAINT guardian_id_pk PRIMARY KEY (id),
     CONSTRAINT guardian_uuid_uk UNIQUE (uuid),
+    CONSTRAINT guardian_name_telephone_student_uk UNIQUE (name, telephone, student_id),
     CONSTRAINT guardian_idStudent_fk FOREIGN KEY (student_id) REFERENCES student(id)
 );
 
