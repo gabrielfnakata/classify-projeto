@@ -27,7 +27,7 @@ public class ClassSession implements Serializable {
     private SubjectTeacher subjectTeacher;
 
     @ManyToOne
-    @JoinColumn(name = "classroom_id", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name = "classroom_id", nullable = false)
     private Classroom classroom;
 
     @JdbcTypeCode(SqlTypes.LOCAL_DATE_TIME)
