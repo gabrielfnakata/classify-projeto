@@ -40,3 +40,9 @@ Para conseguir acessar o banco de dados, entre na sua ferramenta de gerenciament
 4. Porta: `3306`.
 5. Insira o mesmo usuário e senha informados no `.env`.
 6. Caso necessário, instale e configure o _driver_ do MySQL.
+
+## Cliente HTTP
+Ao utilizar clientes HTTP, caso apareça o erro de status 415 - "Unsupported Media Type", defina nos headers da requisição:
+|     Name     |      Value       |
+|--------------|------------------|
+| Content-Type | application/json |
