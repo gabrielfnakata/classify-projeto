@@ -46,3 +46,7 @@ Ao utilizar clientes HTTP, caso apareça o erro de status 415 - "Unsupported Med
 |     Name     |      Value       |
 |--------------|------------------|
 | Content-Type | application/json |
+
+## Documentação da API
+Para acessar a documentação dos endpoints da API, enquanto os _containers_ estiverem rodando, acesse: 
+- `http://localhost:8080/swagger-ui/index.html` 
