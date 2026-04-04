@@ -18,6 +18,9 @@ public class UuidUtils {
     }
 
     public static byte[] convertUUIDToBytes(String uuid) {
+        if (uuid == null)
+            return null;
+
         return convertUUIDToBytes(UUID.fromString(uuid.trim()));
     }
 
