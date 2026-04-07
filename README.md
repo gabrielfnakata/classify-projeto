@@ -49,4 +49,11 @@ Ao utilizar clientes HTTP, caso apareça o erro de status 415 - "Unsupported Med
 
 ## Documentação da API
 Para acessar a documentação dos endpoints da API, enquanto os _containers_ estiverem rodando, acesse: 
-- `http://localhost:8080/swagger-ui/index.html` 
+- `http://localhost:8080/swagger-ui/index.html`
+
+### Observação
+Se ao instalar o projeto, o VSCode acusar o erro:
+
+> This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
+
+Digite o comando: `npm install --save-dev @types/react @types/react-dom`
