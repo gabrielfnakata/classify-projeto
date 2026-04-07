@@ -56,4 +56,4 @@ Se ao instalar o projeto, o VSCode acusar o erro:
 
 > This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
 
-Digite o comando: `npm install --save-dev @types/react @types/react-dom`
+Em `/frontend`, digite o comando: `npm install --save-dev @types/react @types/react-dom`
