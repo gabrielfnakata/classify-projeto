@@ -1,6 +1,6 @@
 # Passo a passo para executar o projeto
 
-**Para rodar o projeto é necessário ter o Docker e o plugin Docker Compose instalados.**
+**Para rodar o projeto é necessário ter o Docker e o _plugin_ Docker Compose instalados.**
 
 1. Na raiz do projeto, crie um arquivo `.env` e o preencha com os seguintes parâmetros:
 ```text
@@ -13,7 +13,11 @@ SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/classify
 SPRING_DATASOURCE_USERNAME=
 SPRING_DATASOURCE_PASSWORD=
 SPRING_APPLICATION_NAME=Classify
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
+JWT_SECRET=
 ```
+Obs: gere um JWT base64 de pelo menos 32 bytes aleatórios
+
 2. Ainda na raiz do projeto, abra um terminal.
 
 3. Suba os _containers_ por meio do comando:
@@ -42,6 +46,9 @@ Para conseguir acessar o banco de dados, entre na sua ferramenta de gerenciament
 6. Caso necessário, instale e configure o _driver_ do MySQL.
 
 ## Cliente HTTP
+É necessário cadastrar um usuário para poder fazer requisições, crie-o em **POST** `/employee`. Em seguida, faça outra requisição para **POST** `/auth/login`
+e utilize o `acessToken` em `Auth` > `Bearer token`.
+
 Ao utilizar clientes HTTP, caso apareça o erro de status 415 - "Unsupported Media Type", defina nos headers da requisição:
 |     Name     |      Value       |
 |--------------|------------------|
