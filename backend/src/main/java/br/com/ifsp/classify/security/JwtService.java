@@ -22,7 +22,10 @@ public class JwtService {
     private static final String ACCESS_TYPE = "access";
     private static final String REFRESH_TYPE = "refresh";
 
-    public JwtService( @Value("${security.jwt.secret}") String base64Secret, @Value("${security.jwt.expiration}") long expirationMs, @Value("${security.jwt.refresh-expiration}") long refreshExpirationMs ) {
+    public JwtService( @Value("${security.jwt.secret}") String base64Secret,
+                       @Value("${security.jwt.expiration}") long expirationMs,
+                       @Value("${security.jwt.refresh-expiration}") long refreshExpirationMs ) {
+
         byte[] keyBytes = Base64.getDecoder().decode(base64Secret);
         this.signingKey = Keys.hmacShaKeyFor(keyBytes);
         this.expirationMs = expirationMs;
@@ -48,8 +51,7 @@ public class JwtService {
     public boolean isAccessTokenValid(String token) {
         try {
             Claims claims = parseClaims(token);
-            return ACCESS_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM))
-                    && claims.getExpiration().after(new Date());
+            return ACCESS_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM)) && claims.getExpiration().after(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
@@ -58,8 +60,7 @@ public class JwtService {
     public boolean isRefreshTokenValid(String token) {
         try {
             Claims claims = parseClaims(token);
-            return REFRESH_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM))
-                    && claims.getExpiration().after(new Date());
+            return REFRESH_TYPE.equals(claims.get(TOKEN_TYPE_CLAIM)) && claims.getExpiration().after(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
