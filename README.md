@@ -2,61 +2,44 @@
 
 **Para rodar o projeto é necessário ter o Docker e o _plugin_ Docker Compose instalados.**
 
-1. Na raiz do projeto, crie um arquivo `.env` e o preencha com os seguintes parâmetros:
-```text
-MYSQL_DATABASE=
-MYSQL_USER=
-MYSQL_PASSWORD=
-MYSQL_ROOT_PASSWORD=
-
-SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/classify
-SPRING_DATASOURCE_USERNAME=
-SPRING_DATASOURCE_PASSWORD=
-SPRING_APPLICATION_NAME=Classify
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-JWT_SECRET=
-```
-Obs: gere um JWT base64 de pelo menos 32 bytes aleatórios
-
-2. Ainda na raiz do projeto, abra um terminal.
-
-3. Suba os _containers_ por meio do comando:
+1. Na raiz do projeto, abra um terminal (Linux) ou o Git Bash (Windows):
 ```bash
-docker compose up --build -d
+bash script.sh  # Linux
+
+sh script.sh    # Windows
 ```
 
-4. Para saber se todos os _containers_ estão rodando corretamente, utilize:
+2. Preencha as perguntas do _script_, e, caso tudo seja preenchido corretamente, os _containers_ subirão automaticamente.
+
+3. Para saber se todos os _containers_ estão rodando corretamente, utilize:
 ```bash
 docker ps
 ```
 
-5. Se tudo ocorreu bem até aqui, será possível acessar:
-- O frontend em `http://localhost:3000`
-- O backend, por meio de um cliente HTTP, em `http://localhost:8080`
+4. Se todos os serviços estiverem rodando, será possível acessá-los usando as portas escolhidas no _script_.
 
 ## Acessando o Banco de Dados
 
 Para conseguir acessar o banco de dados, entre na sua ferramenta de gerenciamento de banco de dados e crie uma nova conexão.
 
 1. Caso haja a opção, conecte usando Host.
-2. Insira como URL, a mesma do arquivo `.env`.
-3. Servidor: `localhost`.
-4. Porta: `3306`.
-5. Insira o mesmo usuário e senha informados no `.env`.
-6. Caso necessário, instale e configure o _driver_ do MySQL.
+2. Servidor: `localhost`.
+3. Porta: _**PORTA**_ escolhida no _script_.
+4. Insira o mesmo usuário e senha informados no _script_.
+5. Caso necessário, instale e configure o _driver_ do **MySQL**.
 
 ## Cliente HTTP
 É necessário cadastrar um usuário para poder fazer requisições, crie-o em **POST** `/employee`. Em seguida, faça outra requisição para **POST** `/auth/login`
-e utilize o `acessToken` em `Auth` > `Bearer token`.
+e utilize o recém-gerado `acessToken` em `Auth` > `Bearer token`.
 
-Ao utilizar clientes HTTP, caso apareça o erro de status 415 - "Unsupported Media Type", defina nos headers da requisição:
+Ao utilizar clientes HTTP, caso apareça o erro de _status_ 415 - "_Unsupported Media Type_", defina nos _headers_ da requisição:
 |     Name     |      Value       |
 |--------------|------------------|
 | Content-Type | application/json |
 
 ## Documentação da API
 Para acessar a documentação dos endpoints da API, enquanto os _containers_ estiverem rodando, acesse: 
-- `http://localhost:8080/swagger-ui/index.html`
+- `http://localhost:backendPort/swagger-ui/index.html`
 
 ### Observação
 Se ao instalar o projeto, o VSCode acusar o erro:
