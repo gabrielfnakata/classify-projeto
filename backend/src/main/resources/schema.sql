@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS student (
 	CONSTRAINT student_id_pk PRIMARY KEY (id),
 	CONSTRAINT student_uuid_uk UNIQUE (uuid),
 	CONSTRAINT student_email_uk UNIQUE (email)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS guardian (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS guardian (
     CONSTRAINT guardian_uuid_uk UNIQUE (uuid),
     CONSTRAINT guardian_name_telephone_student_uk UNIQUE (name, telephone, student_id),
     CONSTRAINT guardian_idStudent_fk FOREIGN KEY (student_id) REFERENCES student(id)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS role (
     id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS role (
     CONSTRAINT role_id_pk PRIMARY KEY (id),
     CONSTRAINT role_uuid_uk UNIQUE(uuid),
     CONSTRAINT role_description_uk UNIQUE (description)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS employee (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS employee (
 	CONSTRAINT employee_cpf_uk UNIQUE (cpf),
 	CONSTRAINT employee_email_uk UNIQUE (email),
 	CONSTRAINT employee_roleId_fk FOREIGN KEY (role_id) REFERENCES role(id)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS subject (
 	id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS subject (
 	CONSTRAINT subject_id_pk PRIMARY KEY (id),
 	CONSTRAINT subject_uuid_uk UNIQUE(uuid),
 	CONSTRAINT subject_description_uk UNIQUE (description)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS subject_teacher (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS subject_teacher (
 	CONSTRAINT subjectTeacher_idEmp_fk FOREIGN KEY (employee_id) REFERENCES student(id),
 	CONSTRAINT subjectTeacher_idSubj_fk FOREIGN KEY (subject_id) REFERENCES subject(id),
 	CONSTRAINT subjectTeacher_idEmp_idSubj_uk UNIQUE (employee_id, subject_id)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS classroom (
 	id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS classroom (
 	CONSTRAINT classRoom_id_pk PRIMARY KEY (id),
 	CONSTRAINT classRoom_uuid_uk UNIQUE (uuid),
 	CONSTRAINT classRoom_capacity_ck CHECK (capacity > 0)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS class_session (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS class_session (
 	CONSTRAINT classSession_idTeacherSubj_fk FOREIGN KEY (subject_teacher_id) REFERENCES subject_teacher(id),
 	CONSTRAINT classSession_idClassroom_fk FOREIGN KEY (classroom_id) REFERENCES classroom(id),
 	CONSTRAINT classSession_startEndTime_ck CHECK (start_time < end_time)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS student_class_session (
 	student_id BIGINT UNSIGNED,
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS student_class_session (
 	CONSTRAINT studentClass_idStud_idClass_pk PRIMARY KEY (student_id, class_session_id),
 	CONSTRAINT studentClass_idStud_fk FOREIGN KEY (student_id) REFERENCES student(id),
 	CONSTRAINT studentClass_idClass_fk FOREIGN KEY (class_session_id) REFERENCES class_session(id)
-);
+)$$
 
 CREATE TABLE IF NOT EXISTS audit (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -129,4 +129,30 @@ CREATE TABLE IF NOT EXISTS audit (
     CONSTRAINT audit_operation_ck CHECK (operation IN ('INSERT', 'DELETE', 'UPDATE')),
     CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES employee(id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
-);
+)$$
+
+CREATE PROCEDURE IF NOT EXISTS insert_roles_if_not_exists(IN roleDescription VARCHAR(5))
+BEGIN
+	DECLARE v_count INT;
+
+SELECT
+	COUNT(*)
+INTO
+	v_count
+FROM
+	role r
+WHERE
+	r.description = roleDescription;
+
+IF v_count <= 0 THEN
+		INSERT
+	INTO
+	role (uuid,
+	description)
+VALUES (UUID_TO_BIN(UUID()),
+roleDescription);
+END IF;
+END$$
+
+CALL insert_roles_if_not_exists('ADMIN')$$
+CALL insert_roles_if_not_exists('USER')$$
