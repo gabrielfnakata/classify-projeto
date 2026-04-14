@@ -48,9 +48,24 @@ FRONTEND_PORT=${frontPort:-3000}
 	" > .env
 }
 
+start_docker () {
+  case "$(uname -s)" in
+      Linux*)   OS="linux" ;;
+      CYGWIN*|MINGW*|MSYS*) OS="windows" ;;
+  esac
+
+  if docker compose up --build -d >/dev/null 2>&1; then
+    echo "Aplicação rodando"
+  else
+    if [ "$OS" = "linux" ] && sudo docker compose up --build -d >/dev/null 2>&1; then
+        echo "Aplicação rodando"
+    fi
+  fi
+}
+
 if [ ! -f ".env" ]; then
 	askUser
 fi
 
 echo "Iniciando containers..."
-sudo docker compose up --build -d
+start_docker
