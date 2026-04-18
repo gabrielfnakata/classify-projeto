@@ -1,0 +1,129 @@
+
+    /* TODO: Passar isso pro tailwind */
+    body {
+        margin: 0;
+        }
+
+    .background {
+        background-color: rgba(136,195,192,0.23);
+        min-width: 100vw;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-card {
+        background-color: #ffffff;
+        border-radius: 15px;
+        width: 36.5vw;
+        height: 64vh;
+        gap: 4vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo {
+        width: 11.5vw;
+        height: 16vh;
+        margin-bottom: 5vh;
+    }
+
+    .form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5vh;
+        align-items: center;
+        justify-content: space-evenly;
+    }
+
+    .form input {
+        width: 20vw;
+        border-radius: 4px;
+        background-color: #f1f1f1;
+        border: none;
+        border-top: 1px #119E96 solid;
+        border-bottom: 1px #838383 solid;
+        height: 3vh;
+        font-size: 0.7rem;
+        padding: 4px;
+        color: #000000;
+    }
+
+    .check-wrapper {
+        width: 28%;
+    }
+
+    .checkbox {
+        background-color: #D9D9D9;
+        color: #119E96;
+    }
+/* 
+    .checkbox {
+        width: auto;
+        height: auto;
+        border-radius: 0;
+        -webkit-appearance: none;
+        appearance: none;
+        margin: 0 5px 0 0;
+        color: #000000;
+        border: 0;
+        width: 1vw;
+        height: 1vw;
+    }
+
+    .checkbox::before {
+        content: "";
+        width: 1vw;
+        height: 1vw;
+        transform: scale(0);
+        transition: 120ms transform ease-in-out;
+        box-shadow: inset 0.8em 0.8em #119E96;
+        transform-origin: bottom left;
+        clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    }
+
+    .checkbox:focus {
+        outline: max(1px, 0.15em) solid #119E96;
+        outline-offset: max(1px, 0.15em); 
+        outline: 1px solid #119E96;
+    }
+
+    .checkbox:checked::before {
+        transform: scale(1);
+    } */
+
+    label {
+        color: black;
+        font-size: x-small;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;        
+    }
+
+    .check-row {
+        width: 20vw;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    a {
+        font-size: x-small;
+        color: #0AA660;
+    }
+
+    .btn {
+        background-color: #119D96;
+        border: none;
+        border-radius: 4px;
+        width: 20vw;
+        height: 4vh;
+        color: #f1f1f1;
+        padding: 4px;
+        box-shadow: 0 4px 4px -4px #707070;
+    }

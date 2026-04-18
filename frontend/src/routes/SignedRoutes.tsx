@@ -1,11 +1,13 @@
-import { BrowserRouter } from "react-router";
+import { BrowserRouter, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
 import Home from "@/pages/home/Home";
 
 export default function SignedRoutes() {
     return (
         <BrowserRouter>
-            <ProtectedRoute path='/home' children={<Home/>} />
+            <Routes>
+                <ProtectedRoute path='/home' children={<Home/>} />
+            </Routes>
         </BrowserRouter>
     )
 };
