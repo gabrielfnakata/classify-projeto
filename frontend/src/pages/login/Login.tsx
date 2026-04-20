@@ -2,7 +2,7 @@ import { FieldGroup, FieldLabel } from "@/components/ui/field";
 import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field as UIField } from "@/components/ui/field";
-import { Form, Formik } from "formik";
+import { Form, Formik, type FormikHelpers } from "formik";
 import "@/styles/login.css";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -17,19 +17,22 @@ export default function Login() {
     const { Login } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogin = (values: LoginForm) => {
-        Login(values.cpf, values.password);
+    const handleLogin = async (values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
+        await Login(values.cpf, values.password)
+        .then(() => navigate('/home'))
+        .catch(() => alert("Ocorreu um erro ao logar. Tente novamente mais tarde."))
+        .finally(() => helpers.setSubmitting(false));
     }
 
 
     return (
         <div className="background">
             <div className="login-card">
-                <img className="logo" src="./public/react.svg" />
+                <img className="logo" src="/react.svg" />
                 <Formik
                     initialValues={{cpf: "", password: ""}}
-                    onSubmit={(values: LoginForm) => {
-                        handleLogin(values)
+                    onSubmit={(values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
+                        handleLogin(values, helpers)
                     }}
                 >
                     {({isSubmitting, isValid}) => (
