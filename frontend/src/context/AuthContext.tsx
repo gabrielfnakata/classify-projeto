@@ -1,32 +1,31 @@
 import api from "@/services/api";
 import type LoginResponseDTO  from "@/shared/dtos/auth/LoginResponseDTO";
-import { createContext, useState } from "react";
+import { createContext, useState, type ReactNode } from "react";
 
 interface AuthContextData {
     signed: boolean,
-    Login(email: string, password: string): Promise<void>
+    Login(cpf: string, password: string): Promise<void>
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = (params: { children: ReactNode }) => {
 
     const [loginData, setLoginData] = useState<LoginResponseDTO | null>(null);
 
-    async function Login(email: string, password: string) {
+    async function Login(cpf: string, password: string) {
         const response = await api.post<LoginResponseDTO>('/auth/login', {
-            email: email,
+            cpf: cpf,
             password: password
         });
 
-        console.log(response);
         setLoginData(response.data);
         api.defaults.headers.Authorization = `Bearer ${response.data?.accessToken}`;
     }
 
     return (
         <AuthContext.Provider value={{ signed: Boolean(loginData), Login }}>
-            {children}
+            {params.children}
         </AuthContext.Provider>
     );
 }

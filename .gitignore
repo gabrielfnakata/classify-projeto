@@ -1,5 +1,5 @@
 # Maven / Java
-/target/
+backend/target/
 /*.log
 hs_err_pid*
 

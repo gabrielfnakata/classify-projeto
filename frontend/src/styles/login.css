@@ -112,7 +112,7 @@
         justify-content: space-between;
     }
 
-    a {
+    .forgot-password {
         font-size: x-small;
         color: #0AA660;
     }
