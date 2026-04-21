@@ -1,14 +1,14 @@
-import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
-import { Inbox } from "lucide-react";
-import { cn } from "@/lib/utils";
+import type { ReactNode } from "react"
+import type { LucideIcon } from "lucide-react"
+import { Inbox } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface EmptyStateProps {
-  title: string;
-  description?: string;
-  icon?: LucideIcon;
-  action?: ReactNode;
-  className?: string;
+  title: string
+  description?: string
+  icon?: LucideIcon
+  action?: ReactNode
+  className?: string
 }
 
 export function EmptyState({
@@ -21,12 +21,12 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center",
+        "flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card px-6 py-12 text-center text-card-foreground shadow-sm",
         className
       )}
     >
-      <div className="mb-4 rounded-full bg-muted p-3">
-        <Icon className="h-6 w-6 text-muted-foreground" />
+      <div className="mb-4 rounded-full bg-accent p-3">
+        <Icon className="h-6 w-6 text-accent-foreground" />
       </div>
 
       <h3 className="text-base font-semibold text-foreground">{title}</h3>
@@ -39,5 +39,5 @@ export function EmptyState({
 
       {action ? <div className="mt-6">{action}</div> : null}
     </div>
-  );
+  )
 }

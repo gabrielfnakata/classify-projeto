@@ -1,19 +1,19 @@
-import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import type { ReactNode } from "react"
+import { cn } from "@/lib/utils"
 
 export type DataTableColumn<T> = {
-  key: string;
-  header: ReactNode;
-  cell: (row: T, index: number) => ReactNode;
-  className?: string;
-};
+  key: string
+  header: ReactNode
+  cell: (row: T, index: number) => ReactNode
+  className?: string
+}
 
 interface DataTableProps<T> {
-  data: T[];
-  columns: DataTableColumn<T>[];
-  rowKey: (row: T, index: number) => string | number;
-  emptyMessage?: string;
-  className?: string;
+  data: T[]
+  columns: DataTableColumn<T>[]
+  rowKey: (row: T, index: number) => string | number
+  emptyMessage?: string
+  className?: string
 }
 
 export function DataTable<T>({
@@ -24,16 +24,21 @@ export function DataTable<T>({
   className,
 }: DataTableProps<T>) {
   return (
-    <div className={cn("overflow-hidden rounded-xl border bg-background", className)}>
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm",
+        className
+      )}
+    >
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
-          <thead className="bg-muted/50">
+          <thead className="bg-panel-strong/70">
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
                   className={cn(
-                    "px-4 py-3 text-left font-medium text-muted-foreground",
+                    "px-4 py-3 text-left font-semibold text-muted-foreground",
                     column.className
                   )}
                 >
@@ -48,7 +53,7 @@ export function DataTable<T>({
               data.map((row, index) => (
                 <tr
                   key={String(rowKey(row, index))}
-                  className="border-t transition-colors hover:bg-muted/30"
+                  className="border-t border-border transition-colors hover:bg-accent/50"
                 >
                   {columns.map((column) => (
                     <td
@@ -74,5 +79,5 @@ export function DataTable<T>({
         </table>
       </div>
     </div>
-  );
+  )
 }

@@ -1,15 +1,15 @@
-import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import type { ReactNode } from "react"
+import { cn } from "@/lib/utils"
 
 interface FormFieldProps {
-  label: string;
-  htmlFor?: string;
-  error?: string;
-  hint?: string;
-  required?: boolean;
-  children: ReactNode;
-  className?: string;
-  contentClassName?: string;
+  label: string
+  htmlFor?: string
+  error?: string
+  hint?: string
+  required?: boolean
+  children: ReactNode
+  className?: string
+  contentClassName?: string
 }
 
 export function FormField({
@@ -26,16 +26,16 @@ export function FormField({
     <div className={cn("space-y-2", className)}>
       <label
         htmlFor={htmlFor}
-        className="text-sm font-medium text-foreground"
+        className="text-sm font-semibold text-foreground"
       >
         {label}
-        {required && <span className="ml-1 text-destructive">*</span>}
+        {required ? <span className="ml-1 text-destructive">*</span> : null}
       </label>
 
       <div
         className={cn(
-          "rounded-md transition-colors",
-          error && "ring-2 ring-destructive/30",
+          "rounded-xl transition-colors",
+          error ? "ring-2 ring-destructive/25" : "",
           contentClassName
         )}
       >
@@ -48,5 +48,5 @@ export function FormField({
         <p className="text-sm text-muted-foreground">{hint}</p>
       ) : null}
     </div>
-  );
+  )
 }
