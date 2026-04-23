@@ -7,6 +7,7 @@ import "@/styles/login.css";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FormikInput } from "@/components/wrapper/FormikInput";
+import { LoginValidationSchema } from "@/validation/LoginSchema";
 
 interface LoginForm {
     cpf: string,
@@ -31,6 +32,7 @@ export default function Login() {
                 <img className="logo" src="/react.svg" />
                 <Formik
                     initialValues={{cpf: "", password: ""}}
+                    validationSchema={LoginValidationSchema}
                     onSubmit={(values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
                         handleLogin(values, helpers)
                     }}

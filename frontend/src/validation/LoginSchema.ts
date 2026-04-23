@@ -1,7 +1,7 @@
 import * as yup from "yup";
 
 export const LoginValidationSchema = yup.object({
-    email: yup.string().email('Invalid e-mail!').required('This field is required!'),
+    cpf: yup.string().matches(/^\d{3}\.\d{3}\.\d{3}\-\d{2}$/, 'Invalid CPF').required('This field is required!'),
     password: yup.string()
     .required('This field is required!')
     .min(8)
