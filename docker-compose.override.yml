@@ -14,6 +14,8 @@ services:
       - ./backend/src:/app/src:z
       - maven-cache:/root/.m2
     environment:
+      - CORS_ALLOWED_ORIGINS=http://localhost:5173
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/classify?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimezone=America/Sao_Paulo&useSSL=false&allowPublicKeyRetrieval=true
       - SPRING_PROFILES_ACTIVE=dev
       - SPRING_DEVTOOLS_RESTART_ENABLED=true
 
