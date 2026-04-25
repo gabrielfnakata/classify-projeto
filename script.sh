@@ -40,7 +40,7 @@ MY_SQL_PORT=${dbPort:-3036}
 #Backend
 JWT_SECRET=${backJwtSecret:-$(generate_jwt)}
 BACKEND_PORT=${backPort:-8080}
-SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/classify?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimezone=America/Sao_Paulo&useSSL=false&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/classify?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimezone=America/Sao_Paulo&useSSL=false&allowPublicKeyRetrieval=true
 CORS_ALLOWED_ORIGINS=http://localhost:${frontPort:-3000}
 
 #Frontend
@@ -49,17 +49,10 @@ FRONTEND_PORT=${frontPort:-3000}
 }
 
 start_docker () {
-  case "$(uname -s)" in
-      Linux*)   OS="linux" ;;
-      CYGWIN*|MINGW*|MSYS*) OS="windows" ;;
-  esac
-
   if docker compose up --build -d >/dev/null 2>&1; then
     echo "Aplicação rodando"
   else
-    if [ "$OS" = "linux" ] && sudo docker compose up --build -d >/dev/null 2>&1; then
-        echo "Aplicação rodando"
-    fi
+    echo "Erro ao subir aplicação!"
   fi
 }
 
