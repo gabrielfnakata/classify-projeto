@@ -1,0 +1,14 @@
+{
+  "name": "Backend Dev Container",
+  "dockerComposeFile": [
+    "../../docker-compose.yml",
+    "../../docker-compose.override.yml"
+  ],
+  "service": "backend",
+  "workspaceFolder": "/app",
+  "forwardPorts": [
+    8080,
+    5005
+  ],
+  "postStartCommand": "mvn --version"
+}
