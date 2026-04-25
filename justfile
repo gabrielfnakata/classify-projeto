@@ -6,6 +6,14 @@ default:
 up:
     docker compose up -d
 
+# Para todos os contêineres e apaga o banco
+clean:
+    docker compose down -v
+
+# Subir apenas o front
+front:
+    docker compose up -d frontend
+
 # Subir o banco e o backend
 back:
     docker compose up -d db backend
@@ -22,9 +30,9 @@ log-b:
 down:
     docker compose down
 
-# Exibe as informações dos contêineres rodando
+# Exibe as informações de todos os contêineres
 ps:
-    docker ps
+    docker ps -a
 
 # Exibe a URL da documentação Swagger da API
 doc:
