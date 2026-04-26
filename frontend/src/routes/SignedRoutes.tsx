@@ -1,13 +1,13 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
-import OnDevelopment from "@/pages/on-development/OnDevelopment";
+import Components from "@/app/pages/Components";
 
 export default function SignedRoutes() {
     return (
         <BrowserRouter>
             <Routes>
                 <Route path="/home" element={
-                    <ProtectedRoute children={<OnDevelopment/>} />
+                    <ProtectedRoute children={<Components />} />
                 }/>
             </Routes>
         </BrowserRouter>

@@ -12,9 +12,9 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider>
       <AuthProvider>
         <TooltipProvider delayDuration={0}>
-        <AppRoutes/>
+          <AppRoutes/>
+        </TooltipProvider>
       </AuthProvider>
-      </TooltipProvider>
     </ThemeProvider>
   </StrictMode>
 )
