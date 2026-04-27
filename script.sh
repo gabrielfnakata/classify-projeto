@@ -36,11 +36,13 @@ JWT_SECRET=${backJwtSecret:-$(generate_jwt)}
 }
 
 start_docker () {
-  if docker compose up --build -d >/dev/null 2>&1; then
-    echo "Aplicação rodando"
-  else
-    echo "Erro ao subir aplicação!"
-  fi
+    echo "Iniciando contêineres..."
+
+    if docker compose up --build -d >/dev/null 2>&1; then
+        echo "Aplicação rodando"
+    else
+        echo "Erro ao subir aplicação!"
+    fi
 }
 
 askUser

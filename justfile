@@ -14,6 +14,10 @@ clean:
 front:
     docker compose up -d frontend
 
+#Subir apenas o banco de dados
+db:
+    docker compose up -d db
+
 # Subir o banco e o backend
 back:
     docker compose up -d db backend
