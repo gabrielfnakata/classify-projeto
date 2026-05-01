@@ -7,7 +7,7 @@ up:
     docker compose up -d
 
 # Para todos os contêineres e apaga o banco
-clean:
+clear:
     docker compose down -v
 
 # Subir apenas o front
