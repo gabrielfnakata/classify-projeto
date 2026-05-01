@@ -1,7 +1,9 @@
 # Maven / Java
-backend/target/
+
+/backend/target/
 /*.log
 hs_err_pid*
+/backend/.m2
 
 # Node / frontend
 /frontend/node_modules/
@@ -32,3 +34,5 @@ coverage-*
 # Misc
 *.tmp
 *.swp
+
+*.devcontainer
