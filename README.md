@@ -4,19 +4,32 @@
 
 1. Na raiz do projeto, abra um terminal (Linux) ou o Git Bash (Windows):
 ```bash
-bash script.sh  # Linux
-
-sh script.sh    # Windows
+bash script.sh
 ```
 
-2. Preencha as perguntas do _script_, e, caso tudo seja preenchido corretamente, os _containers_ subirão automaticamente.
+2. Preencha as perguntas do _script_, e, caso tudo seja preenchido corretamente, os contêineres subirão automaticamente.
 
-3. Para saber se todos os _containers_ estão rodando corretamente, utilize:
+3. Para saber se todos os contêineres estão rodando corretamente, utilize:
 ```bash
 docker ps
 ```
 
 4. Se todos os serviços estiverem rodando, será possível acessá-los usando as portas escolhidas no _script_.
+
+5. Enquanto os contêineres estiverem rodando, será possível alterar o conteúdo do _frontend_ e _backend_ apenas modificando e salvando o arquivo, utilizando qualquer IDE ou editor de texto.
+
+### Observação
+- Não é necessário utilizar a extensão **Dev Containers** para utilizar a modificação em tempo real.
+- Alterações em dependências ainda necessitam de _rebuild_, por meio do comando `just build`.
+
+## Extensão Dev Containers
+
+Caso não queira baixar as ferramentas como NodeJS ou JDK (Java), é possível utilizá-las diretamente do container Docker rodando. 
+
+1. Abra o VSCode na raiz do projeto.
+2. Baixe a extensão **Dev Containers** do VSCode.
+3. Aperte `Ctrl + Shift + p`, digite e escolha a opção "**Dev Containers: Reopen in Container**". 
+4. Duas opções aparecerão, uma para o _backend_ e outra para o _frontend_, escolha a que deseja utilizar.
 
 ## Acessando o Banco de Dados
 
@@ -38,12 +51,5 @@ Ao utilizar clientes HTTP, caso apareça o erro de _status_ 415 - "_Unsupported 
 | Content-Type | application/json |
 
 ## Documentação da API
-Para acessar a documentação dos endpoints da API, enquanto os _containers_ estiverem rodando, acesse: 
+Para acessar a documentação dos endpoints da API, enquanto os contêineres estiverem rodando, acesse: 
 - `http://localhost:backendPort/swagger-ui/index.html`
-
-### Observação
-Se ao instalar o projeto, o VSCode acusar o erro:
-
-> This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
-
-Em `/frontend`, digite o comando: `npm install --save-dev @types/react @types/react-dom`
