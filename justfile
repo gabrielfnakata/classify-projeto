@@ -42,3 +42,12 @@ ps:
 doc:
     echo "http://localhost:8080/swagger-ui/index.html"
 
+# Executa o script de inicialização
+script:
+    bash script.sh
+
+# Apaga todas as imagens e volumes do Docker
+clear-all:
+    docker compose down
+    docker image prune -af
+    docker volume prune -f

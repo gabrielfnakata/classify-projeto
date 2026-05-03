@@ -19,19 +19,30 @@ askUser() {
 	echo ""
 	read -rsp "Digite sua senha de usuário root: " dbRootPassword
 	echo ""
+    read -rp "Digite a porta para rodar o banco (Em branco para rodar a padrão: 3306): " dbPort
 
 	echo ""
 	echo "- - - Backend - - -"
+    read -rp "Digite a porta para rodar o backend (Em branco para rodar a padrão: 8080): " backPort
 	read -rp "Digite um JWT (Em branco para gerar aleatóriamente): " backJwtSecret
 
+    echo ""
+    echo "- - - Frontend - - -"
+    read -rp "Digite a porta para rodar o frontend (Em branco para rodar a padrão: 5173): " frontPort
+
 	echo "
-#MySQL
+# MySQL
 MYSQL_USER=${dbUser}
 MYSQL_PASSWORD=${dbPassword}
 MYSQL_ROOT_PASSWORD=${dbRootPassword}
+MYSQL_PORT=${dbPort:-3306}
 
-#Backend
+# Backend
 JWT_SECRET=${backJwtSecret:-$(generate_jwt)}
+BACK_PORT=${backPort:-8080}
+
+# Frontend
+FRONT_PORT=${frontPort:-5173}
 	" > .env
 }
 
