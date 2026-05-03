@@ -1,8 +1,7 @@
 {
   "name": "Backend Dev Container",
   "dockerComposeFile": [
-    "../../docker-compose.yml",
-    "../../docker-compose.override.yml"
+    "../../docker-compose.yml"
   ],
   "service": "backend",
   "workspaceFolder": "/home/app",
