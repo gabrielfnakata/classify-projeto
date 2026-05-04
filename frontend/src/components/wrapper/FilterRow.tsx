@@ -21,8 +21,7 @@ interface FilterRowProps {
 
 export default function FilterRow({
     filters,
-    onSubmit,
-    onValuesChange,
+    onSubmit
 }: FilterRowProps) {
 
   const widthClasses: Record<string, string> = {
@@ -55,7 +54,7 @@ export default function FilterRow({
             validationSchema={validationSchema}
             onSubmit={onSubmit}
         >
-            {({values, handleChange}) => (
+            {({handleChange}) => (
                 <Form className="w-full flex flex-wrap gap-4 justify-center">
                     {filters.map((filter: FilterConfig) => (
                         <div className={widthClasses[filter.width]}>

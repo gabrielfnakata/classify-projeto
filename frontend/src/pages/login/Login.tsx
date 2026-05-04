@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FormikInput } from "@/components/wrapper/FormikInput";
 import { LoginValidationSchema } from "@/validation/LoginSchema";
+import { useEffect } from "react";
 
 interface LoginForm {
     cpf: string,
@@ -14,7 +15,7 @@ interface LoginForm {
 };
 
 export default function Login() {
-    const { Login } = useAuth();
+    const { Login, logout } = useAuth();
     const navigate = useNavigate();
 
     const handleLogin = async (values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
@@ -23,6 +24,10 @@ export default function Login() {
         .catch(() => alert("Ocorreu um erro ao logar. Tente novamente mais tarde."))
         .finally(() => helpers.setSubmitting(false));
     }
+
+    useEffect(() => {
+        logout();
+    }, [])
 
 
     return (

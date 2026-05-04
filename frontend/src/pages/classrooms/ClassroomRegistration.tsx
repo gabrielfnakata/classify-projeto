@@ -2,20 +2,20 @@ import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/wrapper/FilterRow";
 import RegistrationPage from "@/components/wrapper/RegistrationPage";
 import useFetch from "@/hooks/useFetch";
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
+import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
 
-export default function ClassRegistration() {
-    const columns: DataTableColumn<ClassSessionDTO>[] = [];
+export default function ClassroomRegistration() {
+    const columns: DataTableColumn<ClassroomDTO>[] = [];
     const filters: FilterConfig[] = [];
-    const {data} = useFetch<ClassSessionDTO>('/classsession');
+    const {data} = useFetch<ClassroomDTO>('/classroom');
     return (
         <>
             <RegistrationPage
                 data={data ?? []} 
                 columns={columns}
                 filters={filters}
-                title="Aulas"
-                registrationRoute="/new-class-session"
+                title="Salas de Aula"
+                registrationRoute="/new-classroom"
             >
             </RegistrationPage>  
         </>
