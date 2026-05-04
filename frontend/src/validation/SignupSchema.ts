@@ -6,7 +6,10 @@ export const SignupValidationSchema = yup.object({
         .required('Este campo é obrigatório!'),
     password: yup.string()
         .required('Este campo é obrigatório!')
-        .min(3, 'Senha precisa de pelo menos 3 dígitos'),
+        .min(8, 'Senha precisa de pelo menos 8 caracteres')
+        .matches(/[a-z]/, 'Senha precisa de uma letra minúscula')
+        .matches(/[A-Z]/, 'Senha precisa de uma letra maiúscula')
+        .matches(/[0-9]/, 'Senha precisa de um número'),
     confirmPassword: yup.string()
         .required('Este campo é obrigatório!')
         .oneOf([yup.ref('password')], 'As senhas não conferem')
