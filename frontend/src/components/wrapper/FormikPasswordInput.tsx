@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 interface FormikPasswordInputProps {
     name: string;
     placeholder?: string;
+    className?: string;
 }
-//mensagem de erro caso a senha seja menor que 3 dígitos
-export function FormikPasswordInput({ name, placeholder }: FormikPasswordInputProps) {
+//mensagem de erro caso a senha seja menor que 8 dígitos
+export function FormikPasswordInput({ name, placeholder, className }: FormikPasswordInputProps) {
     const [field, meta] = useField(name);
 
     return (
@@ -15,6 +16,7 @@ export function FormikPasswordInput({ name, placeholder }: FormikPasswordInputPr
                 type="password"
                 placeholder={placeholder}
                 {...field}
+                className={className}
             />
             {meta.touched && meta.error && (
                 <p style={{ color: "#dc2626", fontSize: "0.875rem", marginTop: "0.25rem" }}>

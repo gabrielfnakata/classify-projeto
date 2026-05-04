@@ -5,9 +5,10 @@ import { useState } from "react";
 interface FormikCPFInputProps {
     name: string;
     placeholder?: string;
+    className?: string;
 }
 
-export function FormikCPFInput({ name, placeholder }: FormikCPFInputProps) {
+export function FormikCPFInput({ name, placeholder, className }: FormikCPFInputProps) {
     const [field, meta, helpers] = useField(name);
     const [inputValue, setInputValue] = useState("");
 
@@ -50,6 +51,7 @@ export function FormikCPFInput({ name, placeholder }: FormikCPFInputProps) {
                 value={field.value || inputValue}
                 onChange={handleChange}
                 maxLength={14}
+                className={className}
             />
             {meta.touched && meta.error && (
                 <p style={{ color: "#dc2626", fontSize: "0.875rem", marginTop: "0.25rem" }}>

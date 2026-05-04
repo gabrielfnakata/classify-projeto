@@ -4,7 +4,6 @@ import { Form, Formik, type FormikHelpers } from "formik";
 import { FormikCPFInput } from "@/components/wrapper/FormikCPFInput";
 import { FormikPasswordInput } from "@/components/wrapper/FormikPasswordInput";
 import { SignupValidationSchema } from "@/validation/SignupSchema";
-import "@/styles/login.css";
 
 interface SignupForm {
     cpf: string;
@@ -29,9 +28,9 @@ export default function Signup() {
     }
 
     return (
-        <div className="background">
-            <div className="login-card">
-                <img className="logo" src="/classify-logo.svg" />
+        <div className="bg-[#88c3c03b] w-screen h-screen flex flex-col items-center justify-center">
+            <div className="bg-white rounded-2xl w-[36.5vw] h-[64vh] gap-[4vh] flex flex-col items-center justify-center">
+                <img className="w-[11.5vw] h-[16vh] mb-[5vh]" src="/classify-logo.svg" />
                 <Formik
                     initialValues={{ cpf: "", password: "", confirmPassword: "" }}
                     validationSchema={SignupValidationSchema}
@@ -40,7 +39,7 @@ export default function Signup() {
                     }}
                 >
                     {({ isSubmitting, isValid }) => (
-                        <Form className="form">
+                        <Form className="flex flex-col gap-[1.5vh] items-center justify-evenly w-[25vw]">
                             <FormikCPFInput
                                 name="cpf"
                                 placeholder="CPF"
@@ -53,15 +52,13 @@ export default function Signup() {
                                 name="confirmPassword"
                                 placeholder="Confirmar Senha"
                             />
-                            <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-                                <Button
-                                    className="btn"
-                                    type="submit"
-                                    disabled={!isValid || isSubmitting}
-                                >
-                                    Criar
-                                </Button>
-                            </div>
+                            <Button
+                                className="bg-[#119D96] disabled:border-t-green-200 text-[#f1f1f1] p-1 rounded-sm border-none w-full h-[4vh] shadow-[0_4px_4px_-4px_#707070]"
+                                type="submit"
+                                disabled={!isValid || isSubmitting}
+                            >
+                                Criar
+                            </Button>
                         </Form>
                     )}
                 </Formik>
