@@ -43,7 +43,7 @@ export function SelectField({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex h-12 w-full items-center justify-between rounded-xl border border-border bg-filter-surface px-3 text-sm text-foreground shadow-sm transition-colors",
+          "flex h-8 w-full items-center justify-between rounded-xl border border-border bg-filter-surface px-3 text-sm text-foreground shadow-sm transition-colors",
           open && "ring-2 ring-ring/20"
         )}
       >
