@@ -7,6 +7,7 @@ export default function PublicRoutes() {
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<Login/>}  />
+                <Route path="/login" element={<Login/>} />
                 <Route path="/forgot-password" element={<OnDevelopment/>} />
             </Routes>
         </BrowserRouter>
