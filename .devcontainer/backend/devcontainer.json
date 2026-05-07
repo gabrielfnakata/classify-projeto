@@ -4,11 +4,7 @@
     "../../docker-compose.yml"
   ],
   "service": "backend",
-  "workspaceFolder": "/home/app",
-  "forwardPorts": [
-    8080,
-    5005
-  ],
+  "workspaceFolder": "/home/ubuntu/app",
   "customizations": {
     "vscode": {
       "extensions": [

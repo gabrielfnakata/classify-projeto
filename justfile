@@ -1,3 +1,5 @@
+set dotenv-load
+
 # Exibe a lista de comandos
 default:
     just --list
@@ -40,7 +42,7 @@ ps:
 
 # Exibe a URL da documentação Swagger da API
 doc:
-    echo "http://localhost:8080/swagger-ui/index.html"
+    echo "http://localhost:$BACK_PORT/swagger-ui/index.html"
 
 # Executa o script de inicialização
 script:

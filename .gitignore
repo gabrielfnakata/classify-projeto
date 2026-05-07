@@ -1,5 +1,4 @@
 # Maven / Java
-
 /backend/target/
 /*.log
 hs_err_pid*
@@ -16,7 +15,8 @@ yarn-error.log*
 # IDEs
 */.idea/
 /*.iml
-*/.vscode/
+*/.vscode*/
+*/.devcontainer
 
 # Env / secrets
 .env
@@ -34,5 +34,3 @@ coverage-*
 # Misc
 *.tmp
 *.swp
-
-*.devcontainer
