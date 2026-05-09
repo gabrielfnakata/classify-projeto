@@ -4,7 +4,7 @@
     "../../docker-compose.yml"
   ],
   "service": "frontend",
-  "workspaceFolder": "/app",
+  "workspaceFolder": "/home/node/app",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -17,6 +17,5 @@
       ]
     }
   },
-  "forwardPorts": [5173],
   "postStartCommand": "npm install"
 }
