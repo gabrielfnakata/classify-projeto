@@ -43,6 +43,7 @@ BACK_PORT=${backPort:-8080}
 
 # Frontend
 FRONT_PORT=${frontPort:-5173}
+VITE_API_URL=http://localhost:${backPort:-8080}
 	" > .env
 }
 
