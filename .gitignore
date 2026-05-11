@@ -3,6 +3,7 @@
 /*.log
 hs_err_pid*
 /backend/.m2
+/backend/Dockerfile
 
 # Node / frontend
 /frontend/node_modules/
@@ -11,6 +12,7 @@ hs_err_pid*
 /npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/frontend/Dockerfile
 
 # IDEs
 */.idea/
