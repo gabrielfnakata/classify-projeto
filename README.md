@@ -2,7 +2,9 @@
 
 **Observação: para rodar o projeto é necessário ter o Docker e o _plugin_ Docker Compose instalados.**
 
-1. Na raiz do projeto, abra um terminal (Linux) ou o Git Bash (Windows) e digite:
+1. Crie dois `Dockerfile`, um em `/backend` e outro em `/frontend`, e cole em cada um o conteúdo de seu respectivo `Dockerfile.template`.
+
+2. Na raiz do projeto, abra um terminal (Linux) ou o Git Bash (Windows) e digite:
 ```bash
 bash script.sh
 ```
