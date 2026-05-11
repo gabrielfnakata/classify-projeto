@@ -52,7 +52,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* adicionei daqui pra baixo */
   --color-panel-soft: var(--panel-soft);
   --color-panel-strong: var(--panel-strong);
   --color-filter-surface: var(--filter-surface);
@@ -64,6 +63,12 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+
+  --color-event-1: var(--event-1);
+  --color-event-2: var(--event-2);
+  --color-event-3: var(--event-3);
+  --color-event-4: var(--event-4);
+  --color-event-5: var(--event-5);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -109,7 +114,7 @@
   --chart-4: oklch(0.5 0.065 255);
   --chart-5: oklch(0.44 0.06 262);
 
-  --radius: 0.95rem;
+  --radius: 0.3rem;
 
   --sidebar: oklch(0.91 0.012 232);
   --sidebar-foreground: oklch(0.31 0.035 240);
@@ -133,6 +138,7 @@
 
   --info: oklch(0.9 0.035 230);
   --info-foreground: oklch(0.36 0.065 230);
+
 }
 
 .dark {
@@ -192,8 +198,8 @@
 
   --info: oklch(0.34 0.045 230);
   --info-foreground: oklch(0.93 0.02 230);
-}
 
+}
 
 @layer base {
   * {

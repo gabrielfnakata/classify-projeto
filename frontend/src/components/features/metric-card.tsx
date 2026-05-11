@@ -20,6 +20,7 @@ type MetricCardVariant = "summary" | "detailed"
 
 interface MetricCardProps {
   variant?: MetricCardVariant
+  align?: "left" | "center" // Nova propriedade para forçar o alinhamento
 
   title?: string
   value: string
@@ -85,6 +86,7 @@ function StatusIcon({ tone }: { tone: MetricCardTone }) {
 
 export function MetricCard({
   variant = "detailed",
+  align,
   title,
   value,
   subtitle,
@@ -96,15 +98,25 @@ export function MetricCard({
   className,
   footer,
 }: MetricCardProps) {
+  
+  // Define o alinhamento padrão com base na variante para não quebrar telas antigas
+  const isCentered = align === "center" || (variant === "summary" && align !== "left");
+
   if (variant === "summary") {
     return (
       <div
         className={cn(
-          "rounded-2xl border px-6 py-5 text-center shadow-sm transition-colors",
+          "flex flex-col justify-center rounded-2xl border px-6 py-5 shadow-sm transition-colors",
+          isCentered ? "items-center text-center" : "items-start text-left",
           toneCardClasses[tone],
           className
         )}
       >
+        {/* Agora o summary também aceita título! */}
+        {title ? (
+          <p className="mb-2 text-sm font-medium text-muted-foreground">{title}</p>
+        ) : null}
+
         <div className={cn("text-2xl font-bold tracking-tight", toneValueClasses[tone])}>
           {value}
         </div>
@@ -116,17 +128,18 @@ export function MetricCard({
     )
   }
 
+  // Renderização da variante Detailed
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border shadow-sm transition-colors",
+        "overflow-hidden flex flex-col rounded-2xl border shadow-sm transition-colors",
         toneCardClasses[tone],
         className
       )}
     >
-      <div className="p-6">
+      <div className={cn("p-6 flex flex-col flex-1", isCentered && "items-center text-center")}>
         {title ? (
-          <div className="mb-5 flex items-center gap-1.5">
+          <div className={cn("mb-5 flex items-center gap-1.5", isCentered && "justify-center")}>
             <h3 className="text-base font-medium text-foreground">{title}</h3>
 
             {tooltipText ? (
@@ -148,8 +161,8 @@ export function MetricCard({
           </div>
         ) : null}
 
-        <div className="flex items-start justify-between gap-4">
-          <div>
+        <div className={cn("flex w-full gap-4", isCentered ? "flex-col items-center justify-center" : "items-start justify-between")}>
+          <div className={cn(isCentered && "flex flex-col items-center")}>
             <div className="text-[2.1rem] font-bold leading-none tracking-tight text-foreground">
               {value}
             </div>
@@ -176,11 +189,11 @@ export function MetricCard({
       </div>
 
       {(statusLabel || footer) ? (
-        <div className="border-t border-border/70 px-6 py-3.5">
+        <div className={cn("border-t border-border/70 px-6 py-3.5", isCentered && "flex justify-center text-center")}>
           {footer ? (
             footer
           ) : (
-            <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <div className={cn("inline-flex items-center gap-2 text-sm text-muted-foreground", isCentered && "justify-center")}>
               <StatusIcon tone={tone} />
               <span>{statusLabel}</span>
             </div>
