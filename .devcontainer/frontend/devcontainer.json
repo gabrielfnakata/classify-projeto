@@ -17,5 +17,5 @@
       ]
     }
   },
-  "postStartCommand": "npm install"
+  "postStartCommand": "npm --version"
 }
