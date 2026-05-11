@@ -16,6 +16,7 @@ yarn-error.log*
 */.idea/
 /*.iml
 */.vscode*/
+*/.devcontainer
 
 # Env / secrets
 .env
@@ -33,7 +34,3 @@ coverage-*
 # Misc
 *.tmp
 *.swp
-
-# Dev Environment
-.devcontainer
-*/Dockerfile.dev
