@@ -29,7 +29,7 @@ export default function Login() {
     return (
         <div className="background">
             <div className="login-card">
-                <img className="logo" src="/react.svg" />
+                <img className="logo" src="/classify-logo.svg" />
                 <Formik
                     initialValues={{cpf: "", password: ""}}
                     validationSchema={LoginValidationSchema}
@@ -60,6 +60,7 @@ export default function Login() {
                                 </p>
                             </div>
                             <Button className="btn" type="submit" disabled={!isValid || isSubmitting}>Entrar</Button>
+                            <Button className="btn" type="button" onClick={() => navigate('/signup')}>Cadastro</Button>
                         </Form>
                     )}
                 </Formik>

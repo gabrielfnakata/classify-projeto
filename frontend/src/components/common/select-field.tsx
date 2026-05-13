@@ -25,16 +25,12 @@ export function SelectField({
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (!containerRef.current) return
-
       if (!containerRef.current.contains(event.target as Node)) {
         setOpen(false)
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   return (
@@ -43,17 +39,21 @@ export function SelectField({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex h-12 w-full items-center justify-between rounded-xl border border-border bg-filter-surface px-3 text-sm text-foreground shadow-sm transition-colors",
-          open && "ring-2 ring-ring/20"
+          "flex h-8 w-full min-w-0 items-center justify-between rounded-lg border border-input px-2.5 py-1 text-base md:text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+          open && "border-ring ring-3 ring-ring/50",
+          selectedOption
+            ? "bg-muted text-foreground"
+            : "bg-background text-muted-foreground",
+          className
         )}
       >
-        <span className={cn(!selectedOption && "text-muted-foreground")}>
+        <span className="truncate">
           {selectedOption?.label ?? placeholder}
         </span>
 
         <ChevronDown
           className={cn(
-            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+            "h-4 w-4 shrink-0 opacity-50 transition-transform duration-200",
             open && "rotate-180"
           )}
         />
@@ -61,7 +61,7 @@ export function SelectField({
 
       <div
         className={cn(
-          "absolute left-0 top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-lg transition-all duration-200",
+          "absolute left-0 top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-2xl border border-input bg-background text-foreground shadow-lg transition-all duration-200",
           open
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none -translate-y-1 opacity-0"
@@ -75,8 +75,10 @@ export function SelectField({
               setOpen(false)
             }}
             className={cn(
-              "flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-              value === "" && "bg-accent text-accent-foreground font-semibold"
+              "flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors",
+              value === ""
+                ? "bg-muted text-foreground font-semibold"
+                : "hover:bg-muted hover:text-foreground"
             )}
           >
             <span>{placeholder}</span>
@@ -85,7 +87,6 @@ export function SelectField({
 
           {options.map((option) => {
             const isSelected = option.value === value
-
             return (
               <button
                 key={option.value}
@@ -95,8 +96,10 @@ export function SelectField({
                   setOpen(false)
                 }}
                 className={cn(
-                  "flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                  isSelected && "bg-accent text-accent-foreground font-semibold"
+                  "flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors",
+                  isSelected
+                    ? "bg-muted text-foreground font-semibold"
+                    : "hover:bg-muted hover:text-foreground"
                 )}
               >
                 <span>{option.label}</span>
