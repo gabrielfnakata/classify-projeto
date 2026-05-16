@@ -1,24 +1,46 @@
 # Passo a passo para executar o projeto
 
-**Para rodar o projeto é necessário ter o Docker e o _plugin_ Docker Compose instalados.**
+**Observação: para rodar o projeto é necessário ter o Docker e o _plugin_ Docker Compose instalados.**
 
-1. Na raiz do projeto, abra um terminal (Linux) ou o Git Bash (Windows):
+1. Crie dois `Dockerfile`, um em `/backend` e outro em `/frontend`, e cole em cada um o conteúdo de seu respectivo `Dockerfile.template`.
+
+2. Na raiz do projeto, abra um terminal (Linux) ou o Git Bash (Windows) e digite:
 ```bash
-bash script.sh  # Linux
-
-sh script.sh    # Windows
+bash script.sh
 ```
 
-2. Preencha as perguntas do _script_, e, caso tudo seja preenchido corretamente, os _containers_ subirão automaticamente.
+2. Preencha as perguntas do _script_, e, caso tudo seja preenchido corretamente, os contêineres subirão automaticamente.
 
-3. Para saber se todos os _containers_ estão rodando corretamente, utilize:
+3. Para saber se todos os contêineres estão rodando corretamente, utilize:
 ```bash
 docker ps
 ```
 
 4. Se todos os serviços estiverem rodando, será possível acessá-los usando as portas escolhidas no _script_.
 
-## Acessando o Banco de Dados
+5. Enquanto os contêineres estiverem rodando, será possível alterar o conteúdo do _frontend_ e _backend_ apenas modificando e salvando o arquivo, utilizando qualquer IDE ou editor de texto.
+
+## Acessando a Aplicação
+Por padrão, ao iniciar um novo projeto, um usuário de administrador é criado para que você tenha livre acesso à aplicação. Suas credenciais são:
+
+- **CPF**: 111.111.111-11
+- **Senha**: 123456aA
+
+## Observações
+- No frontend, não é necessário utilizar a extensão **Dev Containers** para utilizar a modificação em tempo real. Já para o backend, ela é necessária.
+- **Just** é apenas um executador de comandos, não é necessário tê-lo instalado para rodar o projeto. É possível ver os seus comandos no arquivo `justfile` na raiz do projeto.
+- Alterações em dependências ainda necessitam de _rebuild_. Faça-o, por meio do comando `just build`.
+
+# Extensão Dev Containers
+
+Caso não queira baixar as ferramentas como NodeJS ou JDK (Java), é possível utilizá-las diretamente do container Docker que está rodando. Para utilizá-la:
+
+1. Abra o VSCode na raiz do projeto.
+2. Baixe a extensão **Dev Containers** do VSCode.
+3. Aperte `Ctrl + Shift + p`, digite e escolha a opção "**Dev Containers: Reopen in Container**". 
+4. Duas opções aparecerão, uma para o _backend_ e outra para o _frontend_, escolha a que deseja utilizar.
+
+# Acessando o Banco de Dados
 
 Para conseguir acessar o banco de dados, entre na sua ferramenta de gerenciamento de banco de dados e crie uma nova conexão.
 
@@ -28,22 +50,19 @@ Para conseguir acessar o banco de dados, entre na sua ferramenta de gerenciament
 4. Insira o mesmo usuário e senha informados no _script_.
 5. Caso necessário, instale e configure o _driver_ do **MySQL**.
 
-## Cliente HTTP
+# Cliente HTTP
 É necessário cadastrar um usuário para poder fazer requisições, crie-o em **POST** `/employee`. Em seguida, faça outra requisição para **POST** `/auth/login`
-e utilize o recém-gerado `acessToken` em `Auth` > `Bearer token`.
+e utilize o recém-gerado `accessToken` em `Auth` > `Bearer token`.
 
 Ao utilizar clientes HTTP, caso apareça o erro de _status_ 415 - "_Unsupported Media Type_", defina nos _headers_ da requisição:
+
 |     Name     |      Value       |
 |--------------|------------------|
 | Content-Type | application/json |
 
-## Documentação da API
-Para acessar a documentação dos endpoints da API, enquanto os _containers_ estiverem rodando, acesse: 
-- `http://localhost:backendPort/swagger-ui/index.html`
+# Documentação da API
+Enquanto o container do backend estiver rodando, é possível acessar a documentação da API. Na raiz do projeto, digite o seguinte comando para descobrir sua URL:
 
-### Observação
-Se ao instalar o projeto, o VSCode acusar o erro:
-
-> This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
-
-Em `/frontend`, digite o comando: `npm install --save-dev @types/react @types/react-dom`
+```bash
+just doc
+```

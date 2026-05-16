@@ -19,53 +19,43 @@ askUser() {
 	echo ""
 	read -rsp "Digite sua senha de usuário root: " dbRootPassword
 	echo ""
-	read -rp "Em qual porta gostaria que o serviço rodasse (vazio para usar o padrão): " dbPort
+    read -rp "Digite a porta para rodar o banco (Em branco para rodar a padrão: 3306): " dbPort
 
 	echo ""
 	echo "- - - Backend - - -"
+    read -rp "Digite a porta para rodar o backend (Em branco para rodar a padrão: 8080): " backPort
 	read -rp "Digite um JWT (Em branco para gerar aleatóriamente): " backJwtSecret
-	read -rp "Em qual porta gostaria que o serviço rodasse (vazio para usar o padrão): " backPort
 
-	echo ""
-	echo "- - - Frontend - - -"
-	read -rp "Em qual porta gostaria que o serviço rodasse (vazio para usar o padrão): " frontPort
+    echo ""
+    echo "- - - Frontend - - -"
+    read -rp "Digite a porta para rodar o frontend (Em branco para rodar a padrão: 5173): " frontPort
 
 	echo "
-#MySQL
+# MySQL
 MYSQL_USER=${dbUser}
 MYSQL_PASSWORD=${dbPassword}
 MYSQL_ROOT_PASSWORD=${dbRootPassword}
-MY_SQL_PORT=${dbPort:-3036}
+MYSQL_PORT=${dbPort:-3306}
 
-#Backend
+# Backend
 JWT_SECRET=${backJwtSecret:-$(generate_jwt)}
-BACKEND_PORT=${backPort:-8080}
-SPRING_DATASOURCE_URL=jdbc:mysql://db-mysql:3306/classify?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimezone=America/Sao_Paulo&useSSL=false&allowPublicKeyRetrieval=true
-CORS_ALLOWED_ORIGINS=http://localhost:${frontPort:-3000}
+BACK_PORT=${backPort:-8080}
 
-#Frontend
-FRONTEND_PORT=${frontPort:-3000}
+# Frontend
+FRONT_PORT=${frontPort:-5173}
+VITE_API_URL=http://localhost:${backPort:-8080}
 	" > .env
 }
 
 start_docker () {
-  case "$(uname -s)" in
-      Linux*)   OS="linux" ;;
-      CYGWIN*|MINGW*|MSYS*) OS="windows" ;;
-  esac
+    echo "Iniciando contêineres..."
 
-  if docker compose up --build -d >/dev/null 2>&1; then
-    echo "Aplicação rodando"
-  else
-    if [ "$OS" = "linux" ] && sudo docker compose up --build -d >/dev/null 2>&1; then
+    if docker compose up --build -d >/dev/null 2>&1; then
         echo "Aplicação rodando"
+    else
+        echo "Erro ao subir aplicação!"
     fi
-  fi
 }
 
-if [ ! -f ".env" ]; then
-	askUser
-fi
-
-echo "Iniciando containers..."
+askUser
 start_docker

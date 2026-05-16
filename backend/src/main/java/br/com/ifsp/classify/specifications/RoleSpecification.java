@@ -7,9 +7,15 @@ import org.springframework.data.jpa.domain.Specification;
 public class RoleSpecification {
 
     private static final String UUID = "uuid";
+    private static final String DESCRIPTION = "description";
 
     public static Specification<Role> getByUUID(String uuid) {
         return (root, query, cb) ->
                 cb.equal(root.get(UUID), UuidUtils.convertUUIDToBytes(uuid));
+    }
+
+    public static Specification<Role> getByDescription(String description) {
+        return (root, query, cb) -> 
+                cb.equal(root.get(DESCRIPTION), description.trim().toUpperCase());
     }
 }
