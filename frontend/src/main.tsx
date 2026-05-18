@@ -1,60 +1,20 @@
-// import { StrictMode } from "react"
-// import { createRoot } from "react-dom/client"
-
-// import "./index.css"
-// import { ThemeProvider } from "@/components/theme-provider"
-// import { TooltipProvider } from "@/components/ui/tooltip"
-// import { AuthProvider } from "./context/AuthContext.tsx"
-// import AppRoutes from "./routes/routes.tsx"
-
-// createRoot(document.getElementById("root")!).render(
-//   <StrictMode>
-//     <ThemeProvider>
-//       <AuthProvider>
-//         <TooltipProvider delayDuration={0}>
-//           <AppRoutes/>
-//         </TooltipProvider>
-//       </AuthProvider>
-//     </ThemeProvider>
-//   </StrictMode>
-// )
-
-// import { StrictMode } from "react"
-// import { createRoot } from "react-dom/client"
-// import "./index.css"
-// import { ThemeProvider } from "@/components/theme-provider"
-// import { TooltipProvider } from "@/components/ui/tooltip"
-// import Components from "@/app/pages/Components";
-
-// createRoot(document.getElementById("root")!).render(
-//   <StrictMode>
-//     <ThemeProvider>
-//       <TooltipProvider delayDuration={0}>
-        
-//         {/* Renderize sua tela diretamente na raiz */}
-//         <Components />
-
-//       </TooltipProvider>
-//     </ThemeProvider>
-//   </StrictMode>
-// )
-
-
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
+
 import "./index.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import Dashboard from "@/app/pages/Dashboard"
+import { AuthProvider } from "./context/AuthContext.tsx"
+import AppRoutes from "./routes/routes.tsx"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
-      <TooltipProvider delayDuration={0}>
-
-        <Dashboard />
-
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider delayDuration={0}>
+          <AppRoutes/>
+        </TooltipProvider>
+      </AuthProvider>
     </ThemeProvider>
   </StrictMode>
 )

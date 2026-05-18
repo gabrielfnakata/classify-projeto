@@ -22,6 +22,7 @@ import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,9 +66,27 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                 classSession.getEndTime(),
                 classSession.getStudents()
                         .stream()
-                        .map(stud -> new ClassSessionStudentGetDTO( UuidUtils.convertBytesToString(stud.getUuid()), stud.getName() ))
+                        .map(stud -> new ClassSessionStudentGetDTO(UuidUtils.convertBytesToString(stud.getUuid()), stud.getName()))
                         .toList()
         );
+    }
+
+    public List<ClassSessionGetDTO> findSessionsByDateAndProfessorCpf(String date, String professorCpf) {
+        LocalDate selectedDate = LocalDate.parse(date);
+
+        return repository.findAll()
+                .stream()
+                .filter(classSession ->
+                        classSession.getStartTime() != null &&
+                        classSession.getStartTime().toLocalDate().isEqual(selectedDate)
+                )
+                .filter(classSession ->
+                        classSession.getSubjectTeacher() != null &&
+                        classSession.getSubjectTeacher().getEmployee() != null &&
+                        professorCpf.equals(classSession.getSubjectTeacher().getEmployee().getCpf())
+                )
+                .map(this::returnDTO)
+                .toList();
     }
 
     @Override
