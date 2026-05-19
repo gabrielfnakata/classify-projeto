@@ -1,10 +1,11 @@
 import api from "@/services/api";
 import type LoginResponseDTO  from "@/shared/dtos/auth/LoginResponseDTO";
+import type { LoginForm } from "@/shared/models/forms/loginForm";
 import { createContext, useEffect, useState, type ReactNode } from "react";
 
 interface AuthContextData {
     signed: boolean,
-    Login(cpf: string, password: string): Promise<void>,
+    login(values: LoginForm): Promise<void>,
     refresh(): Promise<void>,
     logout(): void
 };
@@ -15,15 +16,17 @@ export const AuthProvider = (params: { children: ReactNode }) => {
 
     const [loginData, setLoginData] = useState<LoginResponseDTO | null>(null);
 
-    async function Login(cpf: string, password: string) {
+    async function login(values: LoginForm) {
         const response = await api.post<LoginResponseDTO>('/auth/login', {
-            cpf: cpf.replaceAll('.', '').replace('-', ''),
-            password: password
+            cpf: values.cpf,
+            password: values.password
         });
 
         setLoginData(response.data);
-        sessionStorage.setItem('refreshToken', response.data.refreshToken);
         api.defaults.headers.Authorization = `Bearer ${response.data?.accessToken}`;
+        if (values.rememberMe) {
+            sessionStorage.setItem('refreshToken', response.data.refreshToken);
+        }
     }
 
     async function refresh() {
@@ -63,7 +66,7 @@ export const AuthProvider = (params: { children: ReactNode }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ signed: Boolean(loginData), Login, refresh, logout }}>
+        <AuthContext.Provider value={{ signed: Boolean(loginData), login, refresh, logout }}>
             {params.children}
         </AuthContext.Provider>
     );
