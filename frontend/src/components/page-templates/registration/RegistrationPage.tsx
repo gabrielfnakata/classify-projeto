@@ -32,7 +32,6 @@ export default function RegistrationPage<T extends dataType>({
 
     useEffect(() => {
         // TODO: Chamada à API com a filtragem dos dados
-        console.log(filterValues);
     }, [filterValues]);
     
     return (

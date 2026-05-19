@@ -10,7 +10,8 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { signed } = useAuth();
+  const { signed, loading } = useAuth();
+  if (loading) return null;
   if (!signed) return <Navigate to="/" />
   return (
     <AppShell>
