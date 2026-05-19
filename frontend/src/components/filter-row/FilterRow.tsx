@@ -1,13 +1,15 @@
-import { Form, Formik } from "formik";
-import { FormikInput } from "./FormikInput";
+import { Form, Formik, useFormikContext } from "formik";
+import { FormikInput } from "../formik-input/FormikInput";
 import * as Yup from "yup";
-import { SelectField } from "../common/select-field";
+import { FormikSelectField } from "../formik-input/FormikSelect";
+import { useEffect } from "react";
+import CpfInput from "../cpf-input/CpfInput";
 
 export interface FilterConfig {
     name: string;
-    label: string;
-    inputType: 'text' | 'number' | 'select';
+    inputType: 'text' | 'number' | 'select' | 'cpf';
     width: number;
+    label?: string;
     validation?: Yup.AnySchema;
     options?: {value: string; label: string}[];
     placeholder?: string;
@@ -19,9 +21,25 @@ interface FilterRowProps {
     onValuesChange?: (values: Record<string, string>) => void;
 }
 
+function AutoSubmit({ onValuesChange, debounceMs }: { onValuesChange?: (v: Record<string, string>) => void; debounceMs: number }) {
+    const { values, submitForm } = useFormikContext<Record<string, string>>();
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            submitForm();
+            onValuesChange?.(values);
+        }, debounceMs);
+
+        return () => clearTimeout(timer);
+    }, [values]);
+
+    return null;
+}
+
 export default function FilterRow({
     filters,
-    onSubmit
+    onSubmit,
+    onValuesChange
 }: FilterRowProps) {
 
   const widthClasses: Record<string, string> = {
@@ -54,22 +72,30 @@ export default function FilterRow({
             validationSchema={validationSchema}
             onSubmit={onSubmit}
         >
-            {({handleChange}) => (
-                <Form className="w-full flex flex-wrap gap-4 justify-center">
+            {({}) => (
+                <Form className="w-full flex gap-2 justify-center">
+                    <AutoSubmit debounceMs={600} onValuesChange={onValuesChange} />
                     {filters.map((filter: FilterConfig) => (
                         <div className={widthClasses[filter.width]}>
                             {filter.inputType === 'select' ? (
-                                <SelectField
+                                <FormikSelectField
+                                name={filter.name}
                                 placeholder={filter.placeholder}
                                 options={filter.options || []}
-                                onChange={(value) => handleChange(value)}
+                                />
+                            ) : filter.inputType === 'cpf' ? (
+                                <CpfInput
+                                    name={filter.name}
+                                    placeholder={filter.placeholder}
+                                    isFilter={true}
                                 />
                             ) : (
                                 <FormikInput
                                 name={filter.name}
                                 label={filter.label}
-                                placeholder={filter.label}
+                                placeholder={filter.placeholder}
                                 type={filter.inputType}
+                                isFilter={true}
                                 />
                             )}
                         </div>
