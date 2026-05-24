@@ -1,17 +1,18 @@
 import { format, isSameDay, startOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { TimelineEvent } from "@/components/features/daily-timeline";
-import { getPastelColorTheme } from "@/components/features/daily-timeline";
+import type { TimelineEvent } from "@/shared/dtos/timeline-event";
+import { getEventColorTheme } from "@/shared/utils/event-color-theme";
 
 interface ProfessorWeekProps {
   weeklyClasses: TimelineEvent[];
+  date: Date;
   onClassClick: (classSession: TimelineEvent) => void;
 }
 
-export function ProfessorWeekWidget({ weeklyClasses = [], onClassClick }: ProfessorWeekProps) {
+export function ProfessorWeekWidget({ weeklyClasses = [], date, onClassClick }: ProfessorWeekProps) {
   const todayDate = new Date();
-  const weekStart = startOfWeek(todayDate, { locale: ptBR }); 
+  const weekStart = startOfWeek(date, { locale: ptBR }); 
   const weekDays = Array.from({ length: 6 }).map((_, i) => addDays(weekStart, i + 1)); 
 
   return (
@@ -28,7 +29,7 @@ export function ProfessorWeekWidget({ weeklyClasses = [], onClassClick }: Profes
           <div 
             key={index} 
             className={cn(
-              "flex flex-col h-full min-h-[140px] p-4 rounded-2xl border transition-all w-full shadow-sm",
+              "flex flex-col h-full min-h-[140px] p-4 rounded-lg border transition-all w-full shadow-sm",
               isCurrentDay ? "border-primary bg-primary/5 ring-1 ring-primary/50" : "border-border hover:border-border/80",
               isEmpty ? "opacity-75 bg-muted/20" : "bg-card"
             )}
@@ -40,7 +41,7 @@ export function ProfessorWeekWidget({ weeklyClasses = [], onClassClick }: Profes
             {!isEmpty ? (
               <div className="space-y-2 flex-1">
                 {classesForDay.map((classSession) => {
-                  const colorClasses = getPastelColorTheme(classSession.subtitle);
+                  const colorClasses = getEventColorTheme(classSession.subtitle);
 
                   return (
                     <button 

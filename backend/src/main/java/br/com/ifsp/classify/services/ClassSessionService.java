@@ -16,14 +16,17 @@ import br.com.ifsp.classify.repositories.ClassroomRepository;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.repositories.SubjectTeacherRepository;
 import br.com.ifsp.classify.specifications.ClassroomSpecification;
+import br.com.ifsp.classify.specifications.ClassSessionSpecification;
 import br.com.ifsp.classify.specifications.StudentSpecification;
 import br.com.ifsp.classify.specifications.SubjectTeacherSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -74,17 +77,22 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
     public List<ClassSessionGetDTO> findSessionsByDateAndProfessorCpf(String date, String professorCpf) {
         LocalDate selectedDate = LocalDate.parse(date);
 
-        return repository.findAll()
+        Specification<ClassSession> specification = ClassSessionSpecification.getByDate(selectedDate)
+                .and(ClassSessionSpecification.getByProfessorCpf(professorCpf));
+
+        return findBySpecification(specification);
+    }
+
+    public List<ClassSessionGetDTO> findSessionsByDate(String date) {
+        LocalDate selectedDate = LocalDate.parse(date);
+
+        return findBySpecification(ClassSessionSpecification.getByDate(selectedDate));
+    }
+
+    private List<ClassSessionGetDTO> findBySpecification(Specification<ClassSession> specification) {
+        return repository.findAll(specification)
                 .stream()
-                .filter(classSession ->
-                        classSession.getStartTime() != null &&
-                        classSession.getStartTime().toLocalDate().isEqual(selectedDate)
-                )
-                .filter(classSession ->
-                        classSession.getSubjectTeacher() != null &&
-                        classSession.getSubjectTeacher().getEmployee() != null &&
-                        professorCpf.equals(classSession.getSubjectTeacher().getEmployee().getCpf())
-                )
+                .sorted(Comparator.comparing(ClassSession::getStartTime))
                 .map(this::returnDTO)
                 .toList();
     }

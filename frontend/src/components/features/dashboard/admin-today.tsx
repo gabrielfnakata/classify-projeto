@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import type { TimelineEvent } from "@/components/features/daily-timeline";
-import { getPastelColorTheme } from "@/components/features/daily-timeline";
+import type { TimelineEvent } from "@/shared/dtos/timeline-event";
+import { getEventColorTheme } from "@/shared/utils/event-color-theme";
 
 interface AdminTodayProps {
   dailyClasses: TimelineEvent[];
@@ -37,7 +37,7 @@ export function AdminTodayClassesWidget({ dailyClasses = [], onClassClick }: Adm
           <div 
             key={block.label} 
             className={cn(
-              "border border-border shadow-sm rounded-2xl p-4 flex flex-col h-full min-h-[140px] w-full transition-all",
+              "border border-border shadow-sm rounded-lg p-4 flex flex-col h-full min-h-[140px] w-full transition-all",
               isEmpty ? "opacity-75 bg-muted/20" : "bg-card"
             )}
           >
@@ -47,7 +47,7 @@ export function AdminTodayClassesWidget({ dailyClasses = [], onClassClick }: Adm
             
             <div className="space-y-2 flex-1 flex flex-col">
               {blockClasses.map((classSession) => {
-                const colorClasses = getPastelColorTheme(classSession.subtitle);
+                const colorClasses = getEventColorTheme(classSession.subtitle);
 
                 return (
                   <button 

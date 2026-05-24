@@ -3,15 +3,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { cn } from "@/lib/utils";
-
-export interface TimelineEvent {
-  id: string | number;
-  date?: string;
-  startTime: string;
-  endTime: string;
-  title: string;
-  subtitle: string;
-}
+import type { TimelineEvent } from "@/shared/dtos/timeline-event";
+import { getEventColorTheme } from "@/shared/utils/event-color-theme";
 
 interface DailyTimelineProps {
   date: Date;
@@ -46,27 +39,6 @@ function parseTimeToMinutes(time: string) {
 function capitalize(text: string) {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
-
-export const getPastelColorTheme = (name: string) => {
-  let hash = 0;
-
-  for (let index = 0; index < name.length; index++) {
-    hash = name.charCodeAt(index) + ((hash << 5) - hash);
-  }
-
-  const pastelThemes: [string, string, string, string, string, string] = [
-    "bg-blue-50/70 border-blue-100 border-l-blue-300 text-blue-800 dark:bg-blue-900/10 dark:border-blue-900/30 dark:border-l-blue-600 dark:text-blue-200",
-    "bg-emerald-50/70 border-emerald-100 border-l-emerald-300 text-emerald-800 dark:bg-emerald-900/10 dark:border-emerald-900/30 dark:border-l-emerald-600 dark:text-emerald-200",
-    "bg-yellow-50/80 border-yellow-200 border-l-yellow-400 text-yellow-800 dark:bg-yellow-900/10 dark:border-yellow-900/30 dark:border-l-yellow-600 dark:text-yellow-200",
-    "bg-violet-50/70 border-violet-100 border-l-violet-300 text-violet-800 dark:bg-violet-900/10 dark:border-violet-900/30 dark:border-l-violet-600 dark:text-violet-200",
-    "bg-orange-50/70 border-orange-100 border-l-orange-300 text-orange-800 dark:bg-orange-900/10 dark:border-orange-900/30 dark:border-l-orange-600 dark:text-orange-200",
-    "bg-rose-50/70 border-rose-100 border-l-rose-300 text-rose-800 dark:bg-rose-900/10 dark:border-rose-900/30 dark:border-l-rose-600 dark:text-rose-200",
-  ];
-
-  const themeIndex = Math.abs(hash) % pastelThemes.length;
-
-  return pastelThemes[themeIndex];
-};
 
 export function DailyTimeline({
   date,
@@ -127,7 +99,7 @@ export function DailyTimeline({
     return `${capitalize(weekDay)}, ${day} de ${capitalize(month)} de ${year}`;
   };
 
-  const layoutedEvents = useMemo<LayoutedTimelineEvent[]>((() => {
+  const layoutedEvents = useMemo<LayoutedTimelineEvent[]>(() => {
     const eventsWithMinutes: TimelineEventWithMinutes[] = events
       .map((event) => ({
         ...event,
@@ -199,7 +171,7 @@ export function DailyTimeline({
     }
 
     return finalLayout;
-  }) as () => LayoutedTimelineEvent[], [events]);
+  }, [events]);
 
   return (
     <div className="flex flex-col w-full bg-card rounded-2xl border p-6 shadow-sm">
@@ -256,7 +228,7 @@ export function DailyTimeline({
 
             const widthPct = 100 / event.maxCol;
             const leftPct = widthPct * event.col;
-            const colorClasses = getPastelColorTheme(event.subtitle);
+            const colorClasses = getEventColorTheme(event.subtitle);
 
             const durationMins = event.endM - event.startM;
             const baseZIndex = 2000 - durationMins;

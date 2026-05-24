@@ -2,7 +2,6 @@ import { useMemo, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 
-import { AppShell } from "@/components/layout/app-shell"
 import { ContentCard } from "@/components/layout/content-card"
 import { PageHeader } from "@/components/layout/page-header"
 
@@ -157,8 +156,7 @@ export default function Components() {
   ]
 
   return (
-    <AppShell>
-      <div className="space-y-8">
+    <div className="space-y-8">
         <PageHeader
           title="Demonstração de componentes"
           description="Página de exemplo usando os componentes das pastas common, layout e features."
@@ -454,7 +452,6 @@ export default function Components() {
             }
           />
         </ContentCard>
-      </div>
-    </AppShell>
+    </div>
   )
 }

@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
 import Components from "@/app/pages/Components";
-import Dashboard from "@/pages/Dashboard";
+import Dashboard from "@/pages/dashboard/Dashboard";
 
 export default function SignedRoutes() {
   return (
@@ -14,7 +14,12 @@ export default function SignedRoutes() {
 
         <Route
           path="/dashboard"
-          element={<ProtectedRoute children={<Dashboard />} />}
+          element={<ProtectedRoute children={<Dashboard userRole="PROFESSOR" />} />}
+        />
+
+        <Route
+          path="/admin/dashboard"
+          element={<ProtectedRoute children={<Dashboard userRole="ADMIN" />} />}
         />
       </Routes>
     </BrowserRouter>
