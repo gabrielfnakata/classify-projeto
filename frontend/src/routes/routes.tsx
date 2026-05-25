@@ -1,4 +1,5 @@
 import Login from "@/pages/login/Login";
+import Signup from "@/pages/signup/Signup";
 import OnDevelopment from "@/pages/on-development/OnDevelopment";
 import { Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -16,6 +17,7 @@ export default function AppRoutes() {
             {/* Rotas públicas */}
             <Route path="/" element={<Login/>}  />
             <Route path="/login" element={<Login/>} />
+            <Route path="/signup" element={<Signup/>} />
             <Route path="/forgot-password" element={
                 <PublicShell>
                     <OnDevelopment/>
