@@ -1,3 +1,4 @@
+import { AppShell } from "@/components/layout/app-shell";
 import { useAuth } from "@/hooks/useAuth";
 import type { ReactNode } from "react";
 import { Navigate } from "react-router";
@@ -9,7 +10,12 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { signed } = useAuth();
+  const { signed, loading } = useAuth();
+  if (loading) return null;
   if (!signed) return <Navigate to="/" />
-  return (children);
+  return (
+    <AppShell>
+      {children}
+    </AppShell>
+  );
 } 

@@ -39,12 +39,17 @@ export function SelectField({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
+<<<<<<< HEAD
           "flex h-8 w-full min-w-0 items-center justify-between rounded-lg border border-input px-2.5 py-1 text-base md:text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
           open && "border-ring ring-3 ring-ring/50",
           selectedOption
             ? "bg-muted text-foreground"
             : "bg-background text-muted-foreground",
           className
+=======
+          "flex h-8 w-full items-center justify-between rounded-xl border border-border bg-filter-surface px-3 text-sm text-foreground shadow-sm transition-colors",
+          open && "ring-2 ring-ring/20"
+>>>>>>> 0b3587f0d98d50209c10e67c1d41075646608a45
         )}
       >
         <span className="truncate">
