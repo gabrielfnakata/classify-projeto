@@ -228,6 +228,6 @@ CREATE TABLE IF NOT EXISTS audit (
 		'TELEPHONE'
 	)),
     CONSTRAINT audit_operation_ck CHECK (operation IN ('INSERT', 'DELETE', 'UPDATE')),
-    CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES employee(id),
+    CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES user (id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
 );
