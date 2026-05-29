@@ -30,7 +30,7 @@ public class Audit implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private Employee employee;
+    private User user;
 
     @JdbcTypeCode(SqlTypes.LOCAL_DATE_TIME)
     @Column(nullable = false)
@@ -76,12 +76,12 @@ public class Audit implements Serializable {
         this.operation = operation;
     }
 
-    public Employee getEmployee() {
-        return employee;
+    public User getUser() {
+        return user;
     }
 
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public LocalDateTime getDate() {

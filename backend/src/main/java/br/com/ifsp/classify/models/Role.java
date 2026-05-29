@@ -25,8 +25,8 @@ public class Role implements Serializable {
     @Column(nullable = false, unique = true, length = 40)
     private String description;
 
-    @OneToMany(mappedBy = "role")
-    private List<Employee> employees = new ArrayList<>();
+    @OneToMany(mappedBy = "user")
+    private List<User> users = new ArrayList<>();
 
     public Integer getId() {
         return id;
@@ -52,11 +52,11 @@ public class Role implements Serializable {
         this.description = description;
     }
 
-    public List<Employee> getEmployees() {
-        return employees;
+    public List<User> getUsers() {
+        return users;
     }
 
-    public void setEmployees(List<Employee> employees) {
-        this.employees = employees;
+    public void setUsers(List<User> users) {
+        this.users = users;
     }
 }

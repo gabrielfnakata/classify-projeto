@@ -5,29 +5,75 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "EMPLOYEE")
-public class Employee extends Person implements Serializable {
+public class Employee implements Serializable {
+
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(nullable = false, unique = true)
+    private byte[] uuid;
 
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(nullable = false, length = 100)
-    private String password;
+    @Column(nullable = false, length = 255)
+    private String name;
+
+    @JdbcTypeCode(SqlTypes.DATE)
+    @Column(nullable = true)
+    private LocalDate birthDate;
 
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(nullable = false, unique = true, length = 11)
     private String cpf;
 
-    @ManyToOne
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+    @JdbcTypeCode(SqlTypes.DATE)
+    @Column(nullable = false)
+    private LocalDate hireDate;
 
-    public String getPassword() {
-        return password;
+    @OneToOne
+    @Column(nullable = false)
+    private User user;
+
+    @JdbcTypeCode(SqlTypes.BOOLEAN)
+    @Column(nullable = false)
+    private Boolean isDeleted;
+
+    public Long getId() {
+        return id;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public byte[] getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(byte[] uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
     }
 
     public String getCpf() {
@@ -38,11 +84,27 @@ public class Employee extends Person implements Serializable {
         this.cpf = cpf;
     }
 
-    public Role getRole() {
-        return role;
+    public LocalDate getHireDate() {
+        return hireDate;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
+    public void setHireDate(LocalDate hireDate) {
+        this.hireDate = hireDate;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 }

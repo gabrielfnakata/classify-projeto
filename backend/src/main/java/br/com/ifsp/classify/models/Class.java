@@ -1,18 +1,27 @@
 package br.com.ifsp.classify.models;
 
-import jakarta.persistence.*;
-
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-@Entity
-@Table(name = "GUARDIAN")
-public class Guardian {
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 
-    @JdbcTypeCode(SqlTypes.BIGINT)
+@Entity
+@Table(name = "CLASS")
+public class Class implements Serializable {
+
+    @JdbcTypeCode(SqlTypes.TINYINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,20 +31,12 @@ public class Guardian {
     private byte[] uuid;
 
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, unique = true, length = 25)
     private String name;
 
-    @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(nullable = true, length = 11)
-    private String cpf;
-
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(nullable = false, unique = true, length = 320)
-    private String email;
-
-    @ManyToOne
-    @JoinColumn(name = "address_id", nullable = true)
-    private Address address;
+    @Column(nullable = true, length = 50)
+    private String description;
 
     @JdbcTypeCode(SqlTypes.BOOLEAN)
     @Column(nullable = false)
@@ -43,7 +44,7 @@ public class Guardian {
 
     @ManyToMany
     @JoinTable(
-        name = "STUDENT_GUARDIAN",
+        name = "STUDENT_CLASS",
         joinColumns = @JoinColumn(name = "guardian_id"),
         inverseJoinColumns = @JoinColumn(name = "student_id")
     )
@@ -73,28 +74,12 @@ public class Guardian {
         this.name = name;
     }
 
-    public String getCpf() {
-        return cpf;
+    public String getDescription() {
+        return description;
     }
 
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Address getAddress() {
-        return address;
-    }
-
-    public void setAddress(Address address) {
-        this.address = address;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Boolean getIsDeleted() {
@@ -103,5 +88,13 @@ public class Guardian {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public List<Student> getStudents() {
+        return students;
+    }
+
+    public void setStudents(List<Student> students) {
+        this.students = students;
     }
 }
