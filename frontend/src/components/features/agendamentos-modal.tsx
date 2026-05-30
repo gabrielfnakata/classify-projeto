@@ -118,12 +118,6 @@ export function AgendamentosModal({ session, onClose, onEdit }: AgendamentosModa
               </div>
             </div>
 
-            {session.description && (
-              <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm italic text-muted-foreground">
-                "{session.description}"
-              </p>
-            )}
-
             <div className="space-y-1">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Alunos
