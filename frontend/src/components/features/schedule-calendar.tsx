@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils"
 import { formatYMD, formatMonthYearLabel } from "@/shared/utils/date-formatter"
 import type { ClassSession } from "@/shared/models/class-session"
 
-export type { ClassSession }
 
 interface ScheduleCalendarProps {
   sessions: ClassSession[]
