@@ -45,7 +45,7 @@ public class Class implements Serializable {
     @ManyToMany
     @JoinTable(
         name = "STUDENT_CLASS",
-        joinColumns = @JoinColumn(name = "guardian_id"),
+        joinColumns = @JoinColumn(name = "class_id"),
         inverseJoinColumns = @JoinColumn(name = "student_id")
     )
     private List<Student> students = new ArrayList<>();

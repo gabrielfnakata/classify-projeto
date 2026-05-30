@@ -50,7 +50,7 @@ public class ClassSession implements Serializable {
     @JoinColumn(name = "student_id", nullable = true)
     private Student student;
 
-    @OneToMany(mappedBy = "assessment")
+    @OneToMany(mappedBy = "classSession")
     private List<Assessment> assessments = new ArrayList<>();
 
     public Long getId() {

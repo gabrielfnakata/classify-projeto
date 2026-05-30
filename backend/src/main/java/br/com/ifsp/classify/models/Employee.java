@@ -37,7 +37,6 @@ public class Employee implements Serializable {
     private LocalDate hireDate;
 
     @OneToOne
-    @Column(nullable = false)
     private User user;
 
     @JdbcTypeCode(SqlTypes.BOOLEAN)
