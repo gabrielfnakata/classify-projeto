@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Loader2, Search, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -106,20 +106,36 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
     }
   }
 
-  const availableTeachers = subjectTeachers
-    .filter((st) => !form.subjectId || st.subject.uuid === form.subjectId)
-    .reduce<{ uuid: string; name: string }[]>((acc, st) => {
-      if (!acc.find((t) => t.uuid === st.employee.uuid)) acc.push(st.employee)
-      return acc
-    }, [])
+  const availableTeachers = useMemo(
+    () => [
+      ...new Map(
+        subjectTeachers
+          .filter((st) => !form.subjectId || st.subject.uuid === form.subjectId)
+          .map((st) => [st.employee.uuid, st.employee])
+      ).values(),
+    ],
+    [subjectTeachers, form.subjectId]
+  )
 
-  const availableSubjects = subjectTeachers
-    .filter((st) => !form.teacherId || st.employee.uuid === form.teacherId)
-    .map((st) => st.subject)
-    .filter((s, i, arr) => arr.findIndex((x) => x.uuid === s.uuid) === i)
+  const availableSubjects = useMemo(
+    () => [
+      ...new Map(
+        subjectTeachers
+          .filter((st) => !form.teacherId || st.employee.uuid === form.teacherId)
+          .map((st) => [st.subject.uuid, st.subject])
+      ).values(),
+    ],
+    [subjectTeachers, form.teacherId]
+  )
 
-  const filteredStudents = students.filter((st) =>
-    st.name.toLowerCase().includes(studentSearch.toLowerCase())
+  const filteredStudents = useMemo(
+    () => students.filter((st) => st.name.toLowerCase().includes(studentSearch.toLowerCase())),
+    [students, studentSearch]
+  )
+
+  const selectableStudents = useMemo(
+    () => filteredStudents.filter((s) => !form.studentIds.includes(s.uuid)),
+    [filteredStudents, form.studentIds]
   )
 
   const isValid = isEditing
@@ -251,24 +267,22 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
                   />
                   {studentSearch && (
                     <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-md">
-                      {filteredStudents.filter((s) => !form.studentIds.includes(s.uuid)).length === 0 ? (
+                      {selectableStudents.length === 0 ? (
                         <p className="px-3 py-3 text-center text-sm text-muted-foreground">Nenhum aluno encontrado</p>
                       ) : (
-                        filteredStudents
-                          .filter((s) => !form.studentIds.includes(s.uuid))
-                          .map((st) => (
-                            <button
-                              key={st.uuid}
-                              type="button"
-                              onClick={() => {
-                                setForm((p) => ({ ...p, studentIds: [...p.studentIds, st.uuid] }))
-                                setStudentSearch("")
-                              }}
-                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50"
-                            >
-                              {st.name}
-                            </button>
-                          ))
+                        selectableStudents.map((st) => (
+                          <button
+                            key={st.uuid}
+                            type="button"
+                            onClick={() => {
+                              setForm((p) => ({ ...p, studentIds: [...p.studentIds, st.uuid] }))
+                              setStudentSearch("")
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50"
+                          >
+                            {st.name}
+                          </button>
+                        ))
                       )}
                     </div>
                   )}
