@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from "react"
-import { Loader2, Search, X } from "lucide-react"
+import { CalendarPlus, Loader2, Pencil, Search, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import api from "@/services/api"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
@@ -138,120 +145,163 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
     [filteredStudents, form.studentIds]
   )
 
+
   const isValid = isEditing
     ? Boolean(form.date && form.startTime && form.endTime)
     : Boolean(form.date && form.startTime && form.endTime && form.teacherId && form.subjectId && form.classroomId && form.studentIds.length > 0)
 
   return (
-    <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="right" className="flex flex-col gap-0 p-0 sm:max-w-md">
-        <SheetHeader className="border-b border-border p-4">
-          <SheetTitle>{isEditing ? "Editar Agendamento" : "Novo Agendamento"}</SheetTitle>
-          <SheetDescription>
-            {isEditing ? "Atualize os dados do agendamento." : "Preencha os dados para criar um novo agendamento."}
-          </SheetDescription>
-        </SheetHeader>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="flex max-h-[85vh] max-w-xl flex-col p-0">
+        <DialogHeader className="border-b border-border p-5 pr-12">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              {isEditing
+                ? <Pencil className="h-4 w-4 text-primary" />
+                : <CalendarPlus className="h-4 w-4 text-primary" />
+              }
+            </div>
+            <DialogTitle>{isEditing ? "Editar Agendamento" : "Novo Agendamento"}</DialogTitle>
+          </div>
+        </DialogHeader>
 
         {loading ? (
-          <div className="flex flex-1 items-center justify-center">
+          <div className="flex h-48 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">
-            <fieldset className="space-y-3">
-              <legend className="text-sm font-semibold text-foreground">Data e Horário</legend>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Data</Label>
-                <Input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5">
+            <div>
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Data e Horário
+              </p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Data</Label>
+                  <Input
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+                  />
+                </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Início</Label>
-                  <Input type="time" value={form.startTime} onChange={(e) => setForm((p) => ({ ...p, startTime: e.target.value }))} />
+                  <Input
+                    type="time"
+                    value={form.startTime}
+                    onChange={(e) => setForm((p) => ({ ...p, startTime: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Fim</Label>
-                  <Input type="time" value={form.endTime} onChange={(e) => setForm((p) => ({ ...p, endTime: e.target.value }))} />
+                  <Input
+                    type="time"
+                    value={form.endTime}
+                    onChange={(e) => setForm((p) => ({ ...p, endTime: e.target.value }))}
+                  />
                 </div>
               </div>
-            </fieldset>
-
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-foreground">Professor</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={form.teacherId}
-                  onValueChange={(v) => {
-                    const subjectStillValid = subjectTeachers.some(
-                      (st) => st.employee.uuid === v && st.subject.uuid === form.subjectId
-                    )
-                    setForm((p) => ({ ...p, teacherId: v, subjectId: subjectStillValid ? p.subjectId : "" }))
-                  }}
-                >
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="Selecionar professor..." /></SelectTrigger>
-                  <SelectContent>
-                    {availableTeachers.map((t) => <SelectItem key={t.uuid} value={t.uuid}>{t.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {form.teacherId && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    type="button"
-                    onClick={() => setForm((p) => ({ ...p, teacherId: "" }))}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-foreground">Disciplina</Label>
-              <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Professor
+                </Label>
+                <div className="flex gap-1.5">
+                  <Select
+                    value={form.teacherId}
+                    onValueChange={(v) => {
+                      const subjectStillValid = subjectTeachers.some(
+                        (st) => st.employee.uuid === v && st.subject.uuid === form.subjectId
+                      )
+                      setForm((p) => ({ ...p, teacherId: v, subjectId: subjectStillValid ? p.subjectId : "" }))
+                    }}
+                  >
+                    <SelectTrigger className="flex-1 min-w-0">
+                      <SelectValue placeholder="Selecionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableTeachers.map((t) => (
+                        <SelectItem key={t.uuid} value={t.uuid}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.teacherId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      className="shrink-0"
+                      onClick={() => setForm((p) => ({ ...p, teacherId: "" }))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Disciplina
+                </Label>
+                <div className="flex gap-1.5">
+                  <Select
+                    value={form.subjectId}
+                    onValueChange={(v) => {
+                      const teacherStillValid = subjectTeachers.some(
+                        (st) => st.subject.uuid === v && st.employee.uuid === form.teacherId
+                      )
+                      setForm((p) => ({ ...p, subjectId: v, teacherId: teacherStillValid ? p.teacherId : "" }))
+                    }}
+                  >
+                    <SelectTrigger className="flex-1 min-w-0">
+                      <SelectValue placeholder="Selecionar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableSubjects.map((s) => (
+                        <SelectItem key={s.uuid} value={s.uuid}>{s.description}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.subjectId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      className="shrink-0"
+                      onClick={() => setForm((p) => ({ ...p, subjectId: "" }))}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Sala
+                </Label>
                 <Select
-                  value={form.subjectId}
-                  onValueChange={(v) => {
-                    const teacherStillValid = subjectTeachers.some(
-                      (st) => st.subject.uuid === v && st.employee.uuid === form.teacherId
-                    )
-                    setForm((p) => ({ ...p, subjectId: v, teacherId: teacherStillValid ? p.teacherId : "" }))
-                  }}
+                  value={form.classroomId}
+                  onValueChange={(v) => setForm((p) => ({ ...p, classroomId: v }))}
                 >
-                  <SelectTrigger className="flex-1"><SelectValue placeholder="Selecionar disciplina..." /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                   <SelectContent>
-                    {availableSubjects.map((s) => <SelectItem key={s.uuid} value={s.uuid}>{s.description}</SelectItem>)}
+                    {classrooms.map((cr) => (
+                      <SelectItem key={cr.uuid} value={cr.uuid}>{cr.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                {form.subjectId && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    type="button"
-                    onClick={() => setForm((p) => ({ ...p, subjectId: "" }))}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-foreground">Sala</Label>
-              <Select value={form.classroomId} onValueChange={(v) => setForm((p) => ({ ...p, classroomId: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecionar sala..." /></SelectTrigger>
-                <SelectContent>
-                  {classrooms.map((cr) => <SelectItem key={cr.uuid} value={cr.uuid}>{cr.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
             </div>
 
             {!isEditing && (
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-foreground">
+                <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Alunos
                   {form.studentIds.length > 0 && (
-                    <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                    <span className="ml-1.5 normal-case font-normal text-muted-foreground">
                       ({form.studentIds.length} selecionado{form.studentIds.length > 1 ? "s" : ""})
                     </span>
                   )}
@@ -268,7 +318,9 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
                   {studentSearch && (
                     <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-md">
                       {selectableStudents.length === 0 ? (
-                        <p className="px-3 py-3 text-center text-sm text-muted-foreground">Nenhum aluno encontrado</p>
+                        <p className="px-3 py-3 text-center text-sm text-muted-foreground">
+                          Nenhum aluno encontrado
+                        </p>
                       ) : (
                         selectableStudents.map((st) => (
                           <button
@@ -300,7 +352,9 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
                           {student.name}
                           <button
                             type="button"
-                            onClick={() => setForm((p) => ({ ...p, studentIds: p.studentIds.filter((i) => i !== id) }))}
+                            onClick={() =>
+                              setForm((p) => ({ ...p, studentIds: p.studentIds.filter((i) => i !== id) }))
+                            }
                             className="ml-0.5 rounded-full hover:text-primary/70"
                           >
                             <X className="h-3 w-3" />
@@ -315,7 +369,8 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
 
             {isEditing && (
               <p className="text-xs text-muted-foreground">
-                {form.studentIds.length} aluno{form.studentIds.length !== 1 ? "s" : ""} vinculado{form.studentIds.length !== 1 ? "s" : ""} a este agendamento.
+                {form.studentIds.length} aluno{form.studentIds.length !== 1 ? "s" : ""} vinculado
+                {form.studentIds.length !== 1 ? "s" : ""} a este agendamento.
               </p>
             )}
 
@@ -327,16 +382,20 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-border p-4">
+        <DialogFooter>
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={submitting}>
             Cancelar
           </Button>
-          <Button className="flex-1" onClick={handleSubmit} disabled={submitting || loading || !isValid}>
+          <Button
+            className="flex-1"
+            onClick={handleSubmit}
+            disabled={submitting || loading || !isValid}
+          >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             {isEditing ? "Salvar Alterações" : "Criar Agendamento"}
           </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
