@@ -62,6 +62,9 @@ public class Student implements Serializable {
     )
     private List<Class> classes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "student")
+    private List<Telephone> telephones = new ArrayList<>();
+
     public Long getId() {
         return id;
     }
@@ -140,5 +143,13 @@ public class Student implements Serializable {
 
     public void setClasses(List<Class> classes) {
         this.classes = classes;
+    }
+
+    public List<Telephone> getTelephones() {
+        return telephones;
+    }
+
+    public void setTelephones(List<Telephone> telephones) {
+        this.telephones = telephones;
     }
 }
