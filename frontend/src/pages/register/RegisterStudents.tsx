@@ -9,6 +9,7 @@ import PhoneInput from "@/components/phone-input/PhoneInput";
 import { RegisterStudentsValidationSchema } from "@/validation/RegisterStudentsSchema";
 import type { FormikHelpers } from "formik";
 
+// TODO: passar isso pro backend
 const serieOptions = [
   { label: "1º Ano", value: "1" },
   { label: "2º Ano", value: "2" },
@@ -21,11 +22,13 @@ const serieOptions = [
   { label: "9º Ano", value: "9" },
 ];
 
+// TODO: trocar por true e false
 const referralOptions = [
   { label: "Sim", value: "sim" },
   { label: "Não", value: "nao" },
 ];
 
+// TODO: isso vai na pasta shared/models/forms
 interface RegisterStudentsForm {
   fullName: string;
   guardian1Name: string;
@@ -68,6 +71,7 @@ export default function RegisterStudents() {
     helpers: FormikHelpers<RegisterStudentsForm>
   ) => {
     try {
+      // TODO: integrar com api
       await new Promise((resolve) => setTimeout(resolve, 500));
       navigate("/students");
     } catch (error) {
@@ -77,8 +81,11 @@ export default function RegisterStudents() {
     }
   };
 
+  // TODO: não precisa do formfield!
+  // usar o formikselect
+  // o overflow acontece pelo select do 'quem indicou'
   return (
-    <div className="background w-full min-h-screen flex flex-col items-center justify-center py-8 px-2">
+    <div className="background w-full h-full flex flex-col items-center justify-center">
       <ContentCard className="card rounded-2xl w-full max-w-5xl flex flex-col items-center justify-center p-8">
         <h1 className="text-2xl font-bold mb-6">Registrar Aluno</h1>
 
