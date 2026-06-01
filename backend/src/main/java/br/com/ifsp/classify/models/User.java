@@ -24,6 +24,10 @@ public class User implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(nullable = false, unique = true)
+    private byte[] uuid;
+
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, unique = true, length = 320)
     private String email;
@@ -50,6 +54,14 @@ public class User implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public byte[] getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(byte[] uuid) {
+        this.uuid = uuid;
     }
 
     public String getEmail() {

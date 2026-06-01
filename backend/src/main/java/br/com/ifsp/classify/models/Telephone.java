@@ -47,10 +47,6 @@ public class Telephone implements Serializable {
     @JoinColumn(name = "employee_id", nullable = true)
     private Employee employee;
 
-    @JdbcTypeCode(SqlTypes.BOOLEAN)
-    @Column(nullable = false)
-    private Boolean isDeleted;
-
     public Long getId() {
         return id;
     }
@@ -105,13 +101,5 @@ public class Telephone implements Serializable {
 
     public void setEmployee(Employee employee) {
         this.employee = employee;
-    }
-
-    public Boolean getIsDeleted() {
-        return isDeleted;
-    }
-
-    public void setIsDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
     }
 }

@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS role (
 
 CREATE TABLE IF NOT EXISTS user (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
 	email VARCHAR(320) NOT NULL,
 	password VARCHAR(100) NOT NULL,
 	refresh_token VARCHAR(255),
@@ -92,6 +93,7 @@ CREATE TABLE IF NOT EXISTS user (
 	role_id TINYINT UNSIGNED NOT NULL,
 
 	CONSTRAINT user_id_pk PRIMARY KEY (id),
+	CONSTRAINT user_uuid_uk UNIQUE (uuid),
 	CONSTRAINT user_email_uk UNIQUE (email),
 	CONSTRAINT user_refreshToken_uk UNIQUE (refresh_token),
 	CONSTRAINT user_roleId_fk FOREIGN KEY (role_id) REFERENCES role (id)
