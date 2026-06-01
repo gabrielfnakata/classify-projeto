@@ -152,4 +152,15 @@ public class Student implements Serializable {
     public void setTelephones(List<Telephone> telephones) {
         this.telephones = telephones;
     }
+
+    public void addGuardian(Guardian guardian) {
+        if (guardians.add(guardian)) {
+            guardian.addStudent(this);
+        }
+    }
+
+    public void addTelephone(Telephone telephone) {
+        telephones.add(telephone);
+        telephone.setStudent(this);
+    }
 }

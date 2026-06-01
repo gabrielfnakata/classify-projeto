@@ -49,6 +49,9 @@ public class Guardian {
     )
     private List<Student> students = new ArrayList<>();
 
+    @OneToMany(mappedBy = "guardian")
+    private List<Telephone> telephones = new ArrayList<>();
+
     public Long getId() {
         return id;
     }
@@ -103,5 +106,32 @@ public class Guardian {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public List<Student> getStudents() {
+        return students;
+    }
+
+    public void setStudents(List<Student> students) {
+        this.students = students;
+    }
+
+    public List<Telephone> getTelephones() {
+        return telephones;
+    }
+
+    public void setTelephones(List<Telephone> telephones) {
+        this.telephones = telephones;
+    }
+
+    public void addStudent(Student student) {
+        if (students.add(student)) {
+            student.addGuardian(this);
+        }
+    }
+
+    public void addTelephone(Telephone telephone) {
+        telephones.add(telephone);
+        telephone.setGuardian(this);
     }
 }
