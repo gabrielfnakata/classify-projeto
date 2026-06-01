@@ -173,6 +173,7 @@ function SessionBlock({
   )
 }
 
+// TODO: Atenção com o DTO!
 function DayView({
   sessions,
   currentDate,

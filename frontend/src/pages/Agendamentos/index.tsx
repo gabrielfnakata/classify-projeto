@@ -55,7 +55,7 @@ export default function AgendamentosPage() {
 
   const fetchSessions = () => setRefreshKey((k) => k + 1)
 
-  const sessions = useMemo(() => (rawSessions ?? []).map(mapToSession), [rawSessions])
+  const sessions = useMemo(() => (rawSessions ? rawSessions : []).map(mapToSession), [rawSessions])
 
   const metrics = useMemo(() => {
     const todayStr = formatYMD(new Date())

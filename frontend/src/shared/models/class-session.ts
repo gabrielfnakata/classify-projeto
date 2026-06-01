@@ -1,3 +1,4 @@
+// TODO: utilizar ClassSessionDTO no lugar dessa interface.
 export interface ClassSession {
   id: string
   subject: string

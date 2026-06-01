@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -20,6 +19,7 @@ import type { ClassSession } from "@/shared/models/class-session"
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import useFetch from "@/hooks/useFetch"
 
+// TODO: levar essa interface para shared/models/forms
 interface FormState {
   date: string
   startTime: string
@@ -42,6 +42,7 @@ interface AgendamentosFormProps {
   editingSession?: ClassSession | null
 }
 
+// TODO: implementar o Formik
 export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: AgendamentosFormProps) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
@@ -52,9 +53,9 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
   const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO>("/classroom")
   const { data: studentsData, loading: loadingStu } = useFetch<StudentDTO>("/student")
 
-  const subjectTeachers = subjectTeachersData ?? []
-  const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled)
-  const students = studentsData ?? []
+  const subjectTeachers = subjectTeachersData ? subjectTeachersData : [];
+  const classrooms = (classroomsData ? classroomsData : []).filter((c) => !c.isDisabled)
+  const students = studentsData ? studentsData : [];
   const loading = loadingST !== false || loadingCR !== false || loadingStu !== false
   const isEditing = Boolean(editingSession)
 
