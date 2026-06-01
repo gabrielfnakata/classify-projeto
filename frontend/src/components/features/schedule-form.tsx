@@ -18,24 +18,9 @@ import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
 import type { ClassSession } from "@/shared/models/class-session"
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import useFetch from "@/hooks/useFetch"
+import { type ScheduleFormState, EMPTY_SCHEDULE_FORM } from "@/shared/models/forms/ScheduleFormState"
 
-// TODO: levar essa interface para shared/models/forms
-interface FormState {
-  date: string
-  startTime: string
-  endTime: string
-  teacherId: string
-  subjectId: string
-  classroomId: string
-  studentIds: string[]
-}
-
-const EMPTY_FORM: FormState = {
-  date: "", startTime: "", endTime: "",
-  teacherId: "", subjectId: "", classroomId: "", studentIds: [],
-}
-
-interface AgendamentosFormProps {
+interface ScheduleFormProps {
   open: boolean
   onClose: () => void
   onSuccess: (date: string) => void
@@ -43,8 +28,8 @@ interface AgendamentosFormProps {
 }
 
 // TODO: implementar o Formik
-export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: AgendamentosFormProps) {
-  const [form, setForm] = useState<FormState>(EMPTY_FORM)
+export function ScheduleForm({ open, onClose, onSuccess, editingSession }: ScheduleFormProps) {
+  const [form, setForm] = useState<ScheduleFormState>(EMPTY_SCHEDULE_FORM)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [studentSearch, setStudentSearch] = useState("")
@@ -74,7 +59,7 @@ export function AgendamentosForm({ open, onClose, onSuccess, editingSession }: A
             classroomId: editingSession._classroomId ?? "",
             studentIds: editingSession._studentIds ?? [],
           }
-        : EMPTY_FORM
+        : EMPTY_SCHEDULE_FORM
     )
   }, [open, editingSession])
 

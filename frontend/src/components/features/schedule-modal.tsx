@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils"
 import type { ClassSession } from "@/shared/models/class-session"
 
-interface AgendamentosModalProps {
+interface ScheduleModalProps {
   session: ClassSession | null
   onClose: () => void
   onEdit: () => void
@@ -48,7 +48,7 @@ function Initials({ name }: { name: string }) {
   )
 }
 
-export function AgendamentosModal({ session, onClose, onEdit }: AgendamentosModalProps) {
+export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) {
   const [studentsOpen, setStudentsOpen] = useState(false)
   const students = session?._students ?? []
   const hasMultiple = students.length > 1

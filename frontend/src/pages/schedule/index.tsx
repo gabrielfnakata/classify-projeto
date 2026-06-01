@@ -2,8 +2,8 @@ import { useMemo, useState } from "react"
 import { ChevronLeft, ChevronRight, Loader2, Plus, Search } from "lucide-react"
 import useFetch from "@/hooks/useFetch"
 
-import { AgendamentosForm } from "@/components/features/agendamentos-form"
-import { AgendamentosModal } from "@/components/features/agendamentos-modal"
+import { ScheduleForm } from "@/components/features/schedule-form"
+import { ScheduleModal } from "@/components/features/schedule-modal"
 import { MetricCard } from "@/components/features/metric-card"
 import { SectionTitle } from "@/components/features/section-title"
 import { ScheduleCalendar } from "@/components/features/schedule-calendar"
@@ -42,7 +42,7 @@ function mapToSession(dto: ClassSessionDTO): ClassSession {
   }
 }
 
-export default function AgendamentosPage() {
+export default function SchedulePage() {
   const [refreshKey, setRefreshKey] = useState(0)
   const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO>(`/classsession?r=${refreshKey}`)
 
@@ -212,12 +212,12 @@ export default function AgendamentosPage() {
         )}
       </ContentCard>
 
-      <AgendamentosModal
+      <ScheduleModal
         session={selectedSession}
         onClose={() => setSelectedSession(null)}
         onEdit={openEditForm}
       />
-      <AgendamentosForm
+      <ScheduleForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSuccess={(date) => {
