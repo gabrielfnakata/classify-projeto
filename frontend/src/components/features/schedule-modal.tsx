@@ -12,25 +12,44 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import type { ClassSession } from "@/shared/models/class-session"
+import { formatYMD } from "@/shared/utils/date-formatter"
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 
 interface ScheduleModalProps {
-  session: ClassSession | null
+  session: ClassSessionDTO | null
   onClose: () => void
   onEdit: () => void
 }
 
-const statusLabels: Record<ClassSession["status"], string> = {
+type SessionStatus = "info" | "success"
+
+const statusLabels: Record<SessionStatus, string> = {
   info: "Agendado",
   success: "Concluído",
-  warning: "Pendente",
-  danger: "Cancelado",
 }
 
-function formatDisplayDate(dateStr: string): string {
+const pad = (n: number) => String(n).padStart(2, "0")
+
+function toHHMM(raw: unknown): string {
+  const d = new Date(raw as string)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function sessionStatus(dto: ClassSessionDTO): SessionStatus {
+  return new Date(dto.endTime as unknown as string) < new Date() ? "success" : "info"
+}
+
+function studentOrClass(dto: ClassSessionDTO): string {
+  return dto.students.length === 1
+    ? dto.students[0].name
+    : `${dto.students.length} aluno${dto.students.length !== 1 ? "s" : ""}`
+}
+
+function formatDisplayDate(raw: unknown): string {
+  const date = new Date(raw as string)
   return new Intl.DateTimeFormat("pt-BR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
-  }).format(new Date(dateStr + "T00:00:00"))
+  }).format(new Date(formatYMD(date) + "T00:00:00"))
 }
 
 function Initials({ name }: { name: string }) {
@@ -50,7 +69,7 @@ function Initials({ name }: { name: string }) {
 
 export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) {
   const [studentsOpen, setStudentsOpen] = useState(false)
-  const students = session?._students ?? []
+  const students = session?.students ?? []
   const hasMultiple = students.length > 1
 
   const handleOpenChange = (open: boolean) => {
@@ -59,6 +78,8 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
       setStudentsOpen(false)
     }
   }
+
+  const status = session ? sessionStatus(session) : "info"
 
   return (
     <Dialog open={!!session} onOpenChange={handleOpenChange}>
@@ -69,16 +90,16 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
               <BookOpen className="h-4 w-4 text-primary" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="truncate">{session?.subject ?? ""}</DialogTitle>
+              <DialogTitle className="truncate">{session?.subjectTeacher.subject ?? ""}</DialogTitle>
               {session && (
                 <div className="mt-0.5">
-                  <StatusBadge variant={session.status}>{statusLabels[session.status]}</StatusBadge>
+                  <StatusBadge variant={status}>{statusLabels[status]}</StatusBadge>
                 </div>
               )}
             </div>
           </div>
           <DialogDescription className="mt-1">
-            {session ? formatDisplayDate(session.date) : ""}
+            {session ? formatDisplayDate(session.startTime) : ""}
           </DialogDescription>
         </DialogHeader>
 
@@ -89,8 +110,8 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                 Professor
               </div>
               <div className="flex items-center gap-2">
-                <Initials name={session.teacher} />
-                <span className="text-sm text-foreground">{session.teacher}</span>
+                <Initials name={session.subjectTeacher.employee} />
+                <span className="text-sm text-foreground">{session.subjectTeacher.employee}</span>
               </div>
             </div>
 
@@ -102,7 +123,7 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="text-sm text-foreground">
-                    {session.startTime} – {session.endTime}
+                    {toHHMM(session.startTime)} – {toHHMM(session.endTime)}
                   </span>
                 </div>
               </div>
@@ -113,7 +134,7 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                 </div>
                 <div className="flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="text-sm text-foreground">{session.room}</span>
+                  <span className="text-sm text-foreground">{session.classroom.name}</span>
                 </div>
               </div>
             </div>
@@ -131,7 +152,7 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                       onClick={() => setStudentsOpen((o) => !o)}
                       className="flex items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-primary"
                     >
-                      {session.studentOrClass}
+                      {studentOrClass(session)}
                       <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", studentsOpen && "rotate-180")} />
                     </button>
                     {studentsOpen && (
@@ -143,7 +164,7 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                     )}
                   </div>
                 ) : (
-                  <span className="text-sm text-foreground">{session.studentOrClass}</span>
+                  <span className="text-sm text-foreground">{studentOrClass(session)}</span>
                 )}
               </div>
             </div>

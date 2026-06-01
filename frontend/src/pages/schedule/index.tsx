@@ -7,7 +7,6 @@ import { ScheduleModal } from "@/components/features/schedule-modal"
 import { MetricCard } from "@/components/features/metric-card"
 import { SectionTitle } from "@/components/features/section-title"
 import { ScheduleCalendar } from "@/components/features/schedule-calendar"
-import type { ClassSession } from "@/shared/models/class-session"
 import { ContentCard } from "@/components/layout/content-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,29 +16,8 @@ import { formatDateLabel, formatMonthYearLabel, formatYMD } from "@/shared/utils
 
 type ViewMode = "day" | "week" | "month"
 
-function mapToSession(dto: ClassSessionDTO): ClassSession {
-  const start = new Date(dto.startTime as unknown as string)
-  const end = new Date(dto.endTime as unknown as string)
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return {
-    id: dto.uuid,
-    subject: dto.subjectTeacher.subject,
-    teacher: dto.subjectTeacher.employee,
-    studentOrClass:
-      dto.students.length === 1
-        ? dto.students[0].name
-        : `${dto.students.length} aluno${dto.students.length !== 1 ? "s" : ""}`,
-    startTime: `${pad(start.getHours())}:${pad(start.getMinutes())}`,
-    endTime: `${pad(end.getHours())}:${pad(end.getMinutes())}`,
-    room: dto.classroom.name,
-    status: end < new Date() ? "success" : "info",
-    date: formatYMD(start),
-    _classroomId: dto.classroom.uuid,
-    _employeeUuid: dto.subjectTeacher.uuidEmployee,
-    _subjectUuid: dto.subjectTeacher.uuidSubject,
-    _studentIds: dto.students.map((s) => s.uuid),
-    _students: dto.students.map((s) => ({ uuid: s.uuid, name: s.name })),
-  }
+function sessionDate(dto: ClassSessionDTO): string {
+  return formatYMD(new Date(dto.startTime as unknown as string))
 }
 
 export default function SchedulePage() {
@@ -47,15 +25,15 @@ export default function SchedulePage() {
   const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO>(`/classsession?r=${refreshKey}`)
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedSession, setSelectedSession] = useState<ClassSession | null>(null)
+  const [selectedSession, setSelectedSession] = useState<ClassSessionDTO | null>(null)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>("day")
   const [formOpen, setFormOpen] = useState(false)
-  const [editingSession, setEditingSession] = useState<ClassSession | null>(null)
+  const [editingSession, setEditingSession] = useState<ClassSessionDTO | null>(null)
 
   const fetchSessions = () => setRefreshKey((k) => k + 1)
 
-  const sessions = useMemo(() => (rawSessions ? rawSessions : []).map(mapToSession), [rawSessions])
+  const sessions = useMemo(() => rawSessions ?? [], [rawSessions])
 
   const metrics = useMemo(() => {
     const todayStr = formatYMD(new Date())
@@ -67,19 +45,16 @@ export default function SchedulePage() {
     weekEnd.setHours(23, 59, 59, 999)
 
     const selectedStr = formatYMD(currentDate)
-    const selectedDay = sessions.filter((s) => s.date === selectedStr)
+    const selectedDay = sessions.filter((s) => sessionDate(s) === selectedStr)
 
     return {
-      classesToday: sessions.filter((s) => s.date === todayStr).length,
+      classesToday: sessions.filter((s) => sessionDate(s) === todayStr).length,
       classesThisWeek: sessions.filter((s) => {
-        const d = new Date(s.date + "T00:00:00")
+        const d = new Date(sessionDate(s) + "T00:00:00")
         return d >= weekStart && d <= weekEnd
       }).length,
-      totalStudents: selectedDay.reduce((acc, s) => {
-        const n = s.studentOrClass.match(/\d+/)
-        return acc + (n ? parseInt(n[0]) : 1)
-      }, 0),
-      occupiedRooms: new Set(selectedDay.map((s) => s.room)).size,
+      totalStudents: selectedDay.reduce((acc, s) => acc + s.students.length, 0),
+      occupiedRooms: new Set(selectedDay.map((s) => s.classroom.name)).size,
     }
   }, [sessions, currentDate])
 
@@ -88,10 +63,10 @@ export default function SchedulePage() {
     const q = searchQuery.toLowerCase()
     return sessions.filter(
       (s) =>
-        s.subject.toLowerCase().includes(q) ||
-        s.teacher.toLowerCase().includes(q) ||
-        s.room.toLowerCase().includes(q) ||
-        s._students?.some((st) => st.name.toLowerCase().includes(q))
+        s.subjectTeacher.subject.toLowerCase().includes(q) ||
+        s.subjectTeacher.employee.toLowerCase().includes(q) ||
+        s.classroom.name.toLowerCase().includes(q) ||
+        s.students.some((st) => st.name.toLowerCase().includes(q))
     )
   }, [sessions, searchQuery])
 

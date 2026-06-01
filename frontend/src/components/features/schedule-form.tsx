@@ -15,16 +15,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import api from "@/services/api"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
-import type { ClassSession } from "@/shared/models/class-session"
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import useFetch from "@/hooks/useFetch"
 import { type ScheduleFormState, EMPTY_SCHEDULE_FORM } from "@/shared/models/forms/ScheduleFormState"
+import { formatYMD } from "@/shared/utils/date-formatter"
+
+const pad = (n: number) => String(n).padStart(2, "0")
+function toHHMM(raw: unknown): string {
+  const d = new Date(raw as string)
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 interface ScheduleFormProps {
   open: boolean
   onClose: () => void
   onSuccess: (date: string) => void
-  editingSession?: ClassSession | null
+  editingSession?: ClassSessionDTO | null
 }
 
 // TODO: implementar o Formik
@@ -51,13 +58,13 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSession }: Sched
     setForm(
       editingSession
         ? {
-            date: editingSession.date,
-            startTime: editingSession.startTime,
-            endTime: editingSession.endTime,
-            teacherId: editingSession._employeeUuid ?? "",
-            subjectId: editingSession._subjectUuid ?? "",
-            classroomId: editingSession._classroomId ?? "",
-            studentIds: editingSession._studentIds ?? [],
+            date: formatYMD(new Date(editingSession.startTime as unknown as string)),
+            startTime: toHHMM(editingSession.startTime),
+            endTime: toHHMM(editingSession.endTime),
+            teacherId: editingSession.subjectTeacher.uuidEmployee,
+            subjectId: editingSession.subjectTeacher.uuidSubject,
+            classroomId: editingSession.classroom.uuid,
+            studentIds: editingSession.students.map((s) => s.uuid),
           }
         : EMPTY_SCHEDULE_FORM
     )
@@ -79,7 +86,7 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSession }: Sched
         }
         if (subjectTeacherId) payload.subjectTeacherId = subjectTeacherId
         if (form.classroomId) payload.classRoomId = form.classroomId
-        await api.put(`/classsession/${editingSession.id}`, payload)
+        await api.put(`/classsession/${editingSession.uuid}`, payload)
       } else {
         await api.post("/classsession", {
           subjectTeacherId,
@@ -353,10 +360,10 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSession }: Sched
               </div>
             )}
 
-            {isEditing && (
+            {isEditing && editingSession && (
               <p className="text-xs text-muted-foreground">
-                {form.studentIds.length} aluno{form.studentIds.length !== 1 ? "s" : ""} vinculado
-                {form.studentIds.length !== 1 ? "s" : ""} a este agendamento.
+                {editingSession.students.length} aluno{editingSession.students.length !== 1 ? "s" : ""} vinculado
+                {editingSession.students.length !== 1 ? "s" : ""} a este agendamento.
               </p>
             )}
 
