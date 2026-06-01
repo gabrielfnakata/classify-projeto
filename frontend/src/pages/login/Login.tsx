@@ -68,8 +68,8 @@ export default function Login() {
                                     Esqueci minha senha
                                 </p>
                             </div>
-                            <Button className="btn" type="submit" disabled={!isValid || isSubmitting}>Entrar</Button>
-                            <Button className="btn" type="button" onClick={() => navigate('/signup')}>Cadastro</Button>
+                            <Button className="bg-[#119D96] disabled:border-t-green-200 text-[#f1f1f1] p-1 rounded-sm border-none w-[20vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]" type="submit" disabled={!isValid || isSubmitting}>Entrar</Button>
+                            <Button className="bg-[#119D96] disabled:border-t-green-200 text-[#f1f1f1] p-1 rounded-sm border-none w-[20vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]" type="button" onClick={() => navigate('/signup')}>Cadastro</Button>
                         </Form>
                     )}
                 </Formik>
