@@ -10,6 +10,7 @@ import EmployeeRegistration from "@/pages/employees/EmployeeRegistration";
 import SubjectRegistration from "@/pages/subjects/SubjectRegistration";
 import ClassroomRegistration from "@/pages/classrooms/ClassroomRegistration";
 import { PublicShell } from "@/components/layout/public-shell";
+import RegisterStudents from "@/pages/register/RegisterStudents";
 
 export default function AppRoutes() {
     return (
@@ -38,7 +39,7 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<StudentRegistration />} />
             }/>
             <Route path="/new-student" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute children={<RegisterStudents/>} />
             }/>
             <Route path="/employees" element={
                 <ProtectedRoute children={<EmployeeRegistration />} />
