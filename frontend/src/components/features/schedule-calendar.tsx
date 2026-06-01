@@ -418,9 +418,20 @@ export function ScheduleCalendar({
     if (!scrollRef.current || viewMode === "month") return
     const now = new Date()
     const isToday = formatYMD(currentDate) === formatYMD(now)
-    const targetHour = isToday ? Math.max(0, now.getHours() - 1) : 8
-    scrollRef.current.scrollTop = targetHour * HOUR_HEIGHT
-  }, [viewMode, currentDate])
+
+    const currentDateSessions = sessions.filter(
+      (s) => sessionDate(s) === formatYMD(currentDate)
+    )
+    const earliest = currentDateSessions.sort(
+      (a, b) => timeToMinutes(toHHMM(a.startTime)) - timeToMinutes(toHHMM(b.startTime))
+    )[0]
+
+    const targetMinutes = earliest
+      ? Math.max(0, timeToMinutes(toHHMM(earliest.startTime)) - 30)
+      : (isToday ? Math.max(0, now.getHours() - 1) : 8) * 60
+
+    scrollRef.current.scrollTo({ top: (targetMinutes / 60) * HOUR_HEIGHT, behavior: "smooth" })
+  }, [sessions, viewMode, currentDate])
 
   return (
     <div className="flex h-[600px] flex-col overflow-hidden">
