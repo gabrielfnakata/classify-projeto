@@ -1,0 +1,17 @@
+{
+  "name": "Backend Dev Container",
+  "dockerComposeFile": [
+    "../../docker-compose.yml"
+  ],
+  "service": "backend",
+  "workspaceFolder": "/home/ubuntu/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-spring-boot"
+      ]
+    }
+  },
+  "postStartCommand": "mvn --version"
+}

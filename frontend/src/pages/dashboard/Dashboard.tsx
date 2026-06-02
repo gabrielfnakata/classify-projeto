@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { format, isBefore, isToday, parseISO, startOfDay } from "date-fns"
+import { format, isToday, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 import { EmptyState } from "@/components/common/empty-state"
@@ -11,13 +11,12 @@ import {
   type DashboardMetricsData,
 } from "@/components/features/dashboard/dashboard-metrics"
 import { ProfessorWeekWidget } from "@/components/features/dashboard/professor-week"
-import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import useFetch from "@/hooks/useFetch"
 import { cn } from "@/lib/utils"
-import type { ClassSessionGetDTO } from "@/shared/dtos/class-session-get-dto"
-import type { TimelineEvent } from "@/shared/dtos/timeline-event"
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import type { TimelineEvent } from "@/shared/types/timeline-event"
 import { getEventColorTheme } from "@/shared/utils/event-color-theme"
 
 type UserRole = "ADMIN" | "PROFESSOR"
@@ -54,10 +53,10 @@ function formatHeaderDate(baseDate: Date) {
   return `${capitalize(weekDay)}, ${day} de ${capitalize(month)} de ${year}`
 }
 
-function mapClassSessionToTimelineEvent(dto: ClassSessionGetDTO): TimelineEvent {
+function mapClassSessionToTimelineEvent(dto: ClassSessionDTO): TimelineEvent {
   return {
     id: dto.uuid,
-    date: dto.startTime.split("T")[0],
+    date: new Date(dto.startTime).toISOString().split("T")[0],
     startTime: format(new Date(dto.startTime), "HH:mm"),
     endTime: format(new Date(dto.endTime), "HH:mm"),
     title: dto.subjectTeacher?.subject || "Aula",
@@ -73,7 +72,7 @@ export default function Dashboard({ userRole = "PROFESSOR" }: DashboardProps) {
   const selectedDate = date ?? new Date()
   const formattedApiDate = format(selectedDate, "yyyy-MM-dd")
 
-  const { data: dailySessionsRaw, loading: loadingDaily } = useFetch<ClassSessionGetDTO[]>(
+  const { data: dailySessionsRaw, loading: loadingDaily } = useFetch<ClassSessionDTO>(
     `/classsession/date/${formattedApiDate}`
   )
   const dailySessions = Array.isArray(dailySessionsRaw) ? dailySessionsRaw : []
@@ -92,8 +91,6 @@ export default function Dashboard({ userRole = "PROFESSOR" }: DashboardProps) {
   const daysWithClasses = dailyClasses.map((classSession) => parseISO(classSession.date ?? formattedApiDate))
 
   const isTodaySelected = isToday(selectedDate)
-  const isPastDate = isBefore(startOfDay(selectedDate), startOfDay(new Date()))
-
   const currentMonth = format(selectedDate, "MMMM yyyy", { locale: ptBR })
   const formattedCurrentMonth = capitalize(currentMonth)
 
@@ -103,14 +100,6 @@ export default function Dashboard({ userRole = "PROFESSOR" }: DashboardProps) {
         ? "Aulas de hoje"
         : `Aulas do dia ${format(selectedDate, "dd/MM")}`
       : viewConfig.topSectionTitle
-
-  const handleOpenClassModal = (classSession: TimelineEvent) => {
-    console.log("Abrir modal:", classSession)
-  }
-
-  const handleOpenMetricModal = (type: string) => {
-    console.log("Métrica clicada:", type)
-  }
 
   return (
     <div className="w-full animate-in fade-in-50 space-y-8">
@@ -122,12 +111,11 @@ export default function Dashboard({ userRole = "PROFESSOR" }: DashboardProps) {
         <h2 className="text-xl font-semibold text-foreground">{dynamicTopTitle}</h2>
 
         {userRole === "ADMIN" ? (
-          <AdminTodayClassesWidget dailyClasses={dailyClasses} onClassClick={handleOpenClassModal} />
+          <AdminTodayClassesWidget dailyClasses={dailyClasses} />
         ) : (
           <ProfessorWeekWidget
             date={selectedDate}
             weeklyClasses={dailyClasses}
-            onClassClick={handleOpenClassModal}
           />
         )}
       </section>
@@ -139,7 +127,6 @@ export default function Dashboard({ userRole = "PROFESSOR" }: DashboardProps) {
           date={selectedDate}
           formattedCurrentMonth={formattedCurrentMonth}
           metrics={metrics}
-          onMetricClick={handleOpenMetricModal}
         />
       </section>
 
@@ -183,16 +170,11 @@ export default function Dashboard({ userRole = "PROFESSOR" }: DashboardProps) {
                   <EmptyState
                     title="Nenhuma aula agendada"
                     description="Não há compromissos marcados para esta data."
-                    action={
-                      !isPastDate ? (
-                        <Button className="mt-4 h-11 px-5 text-sm font-semibold">Agendar nova aula</Button>
-                      ) : undefined
-                    }
                   />
                 </CardContent>
               </Card>
             ) : viewConfig.calendarType === "TIMELINE" ? (
-              <DailyTimeline date={selectedDate} events={dailyClasses} onEventClick={handleOpenClassModal} />
+              <DailyTimeline date={selectedDate} events={dailyClasses} />
             ) : (
               <Card className="min-h-[400px]">
                 <CardHeader>
@@ -209,17 +191,15 @@ export default function Dashboard({ userRole = "PROFESSOR" }: DashboardProps) {
                         <span className="text-[10px] font-medium text-muted-foreground">{classSession.endTime}</span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleOpenClassModal(classSession)}
+                      <div
                         className={cn(
-                          "flex flex-1 cursor-pointer flex-col justify-center overflow-hidden rounded-lg border border-l-4 border-border/20 p-3 text-left shadow-sm transition-all hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          "flex flex-1 flex-col justify-center overflow-hidden rounded-lg border border-l-4 border-border/20 p-3 text-left shadow-sm",
                           getEventColorTheme(classSession.subtitle)
                         )}
                       >
                         <p className="w-full truncate text-sm font-bold">{classSession.title}</p>
                         <p className="mt-0.5 w-full truncate text-xs opacity-80">{classSession.subtitle}</p>
-                      </button>
+                      </div>
                     </div>
                   ))}
                 </CardContent>

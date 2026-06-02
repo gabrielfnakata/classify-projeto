@@ -6,6 +6,7 @@ import br.com.ifsp.classify.dtos.update.RoleUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.models.Role;
 import br.com.ifsp.classify.repositories.RoleRepository;
+import br.com.ifsp.classify.specifications.RoleSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,12 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
                 UuidUtils.convertBytesToString(role.getUuid()),
                 role.getDescription()
         );
+    }
+
+    public Role getByDescription(String description) {
+        return repository
+            .findOne(RoleSpecification.getByDescription(description))
+            .orElse(null);
     }
 
     @Override

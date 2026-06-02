@@ -130,29 +130,3 @@ CREATE TABLE IF NOT EXISTS audit (
     CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES employee(id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
 )$$
-
-CREATE PROCEDURE IF NOT EXISTS insert_roles_if_not_exists(IN roleDescription VARCHAR(5))
-BEGIN
-	DECLARE v_count INT;
-
-SELECT
-	COUNT(*)
-INTO
-	v_count
-FROM
-	role r
-WHERE
-	r.description = roleDescription;
-
-IF v_count <= 0 THEN
-		INSERT
-	INTO
-	role (uuid,
-	description)
-VALUES (UUID_TO_BIN(UUID()),
-roleDescription);
-END IF;
-END$$
-
-CALL insert_roles_if_not_exists('ADMIN')$$
-CALL insert_roles_if_not_exists('USER')$$

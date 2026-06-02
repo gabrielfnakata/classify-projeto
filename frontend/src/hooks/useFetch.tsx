@@ -1,33 +1,23 @@
 import { useEffect, useState } from "react";
 import api from "@/services/api";
 
-export default function useFetch<T = unknown>(url: string) {
-    const [data, setData] = useState<T | null>(null);
+export default function useFetch<T>(url: string) {
+    const [data, setData] = useState<T[] | null>(null);
     const [loading, setLoading] = useState<boolean | null>(null);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        let ignore = false;
-
-        Promise.resolve()
-        .then(() => {
-            if (!ignore) setLoading(true);
-
-            return api.get(url);
-        })
+        setLoading(true);
+        api.get(url, {data: {}})
         .then((response) => {
-            if (!ignore) setData(response.data);
+            setData(response.data);
         })
         .catch((error) => {
-            if (!ignore) setError(error);
+            setError(error);
         })
         .finally(() => {
-            if (!ignore) setLoading(false);
+            setLoading(false);
         })
-
-        return () => {
-            ignore = true;
-        }
     }, [url]);
 
     return {data, loading, error};

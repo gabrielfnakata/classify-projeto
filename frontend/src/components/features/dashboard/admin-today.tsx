@@ -1,13 +1,12 @@
 import { cn } from "@/lib/utils";
-import type { TimelineEvent } from "@/shared/dtos/timeline-event";
+import type { TimelineEvent } from "@/shared/types/timeline-event";
 import { getEventColorTheme } from "@/shared/utils/event-color-theme";
 
 interface AdminTodayProps {
   dailyClasses: TimelineEvent[];
-  onClassClick: (classSession: TimelineEvent) => void;
 }
 
-export function AdminTodayClassesWidget({ dailyClasses = [], onClassClick }: AdminTodayProps) {
+export function AdminTodayClassesWidget({ dailyClasses = [] }: AdminTodayProps) {
   const minHour = dailyClasses.length > 0 ? Math.min(...dailyClasses.map(a => parseInt(a.startTime.split(":")[0]))) : 8;
   const maxHour = dailyClasses.length > 0 ? Math.max(...dailyClasses.map(a => parseInt(a.endTime.split(":")[0]) + 1)) : 20;
   
@@ -50,17 +49,15 @@ export function AdminTodayClassesWidget({ dailyClasses = [], onClassClick }: Adm
                 const colorClasses = getEventColorTheme(classSession.subtitle);
 
                 return (
-                  <button 
+                  <div 
                     key={classSession.id}
-                    type="button"
-                    onClick={() => onClassClick(classSession)}
                     className={cn(
-                      "w-full text-left text-xs p-2 rounded-lg border border-l-4 hover:brightness-95 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring truncate",
+                      "w-full text-left text-xs p-2 rounded-lg border border-l-4 truncate",
                       colorClasses
                     )}
                   >
                     <span className="font-bold">{classSession.startTime}</span> - {classSession.subtitle}, {classSession.title}
-                  </button>
+                  </div>
                 );
               })}
               

@@ -1,0 +1,21 @@
+{
+  "name": "Frontend Dev Container",
+  "dockerComposeFile": [
+    "../../docker-compose.yml"
+  ],
+  "service": "frontend",
+  "workspaceFolder": "/home/node/app",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense"
+      ]
+    }
+  },
+  "postStartCommand": "npm --version"
+}

@@ -1,16 +1,15 @@
 import { format, isSameDay, startOfWeek, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { TimelineEvent } from "@/shared/dtos/timeline-event";
+import type { TimelineEvent } from "@/shared/types/timeline-event";
 import { getEventColorTheme } from "@/shared/utils/event-color-theme";
 
 interface ProfessorWeekProps {
   weeklyClasses: TimelineEvent[];
   date: Date;
-  onClassClick: (classSession: TimelineEvent) => void;
 }
 
-export function ProfessorWeekWidget({ weeklyClasses = [], date, onClassClick }: ProfessorWeekProps) {
+export function ProfessorWeekWidget({ weeklyClasses = [], date }: ProfessorWeekProps) {
   const todayDate = new Date();
   const weekStart = startOfWeek(date, { locale: ptBR }); 
   const weekDays = Array.from({ length: 6 }).map((_, i) => addDays(weekStart, i + 1)); 
@@ -44,17 +43,15 @@ export function ProfessorWeekWidget({ weeklyClasses = [], date, onClassClick }: 
                   const colorClasses = getEventColorTheme(classSession.subtitle);
 
                   return (
-                    <button 
+                    <div 
                       key={classSession.id}
-                      type="button"
-                      onClick={() => onClassClick(classSession)}
                       className={cn(
-                        "w-full text-left text-xs p-2.5 rounded-lg border border-l-4 hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors truncate shadow-sm",
+                        "w-full text-left text-xs p-2.5 rounded-lg border border-l-4 truncate shadow-sm",
                         colorClasses
                       )}
                     >
                       <span className="font-bold">{classSession.startTime}</span> - {classSession.title}, {classSession.subtitle}
-                    </button>
+                    </div>
                   );
                 })}
               </div>

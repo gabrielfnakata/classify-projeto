@@ -83,12 +83,6 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         return findBySpecification(specification);
     }
 
-    public List<ClassSessionGetDTO> findSessionsByDate(String date) {
-        LocalDate selectedDate = LocalDate.parse(date);
-
-        return findBySpecification(ClassSessionSpecification.getByDate(selectedDate));
-    }
-
     private List<ClassSessionGetDTO> findBySpecification(Specification<ClassSession> specification) {
         return repository.findAll(specification)
                 .stream()

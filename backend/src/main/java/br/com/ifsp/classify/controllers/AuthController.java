@@ -3,10 +3,14 @@ package br.com.ifsp.classify.controllers;
 import br.com.ifsp.classify.dtos.auth.LoginRequestDTO;
 import br.com.ifsp.classify.dtos.auth.LoginResponseDTO;
 import br.com.ifsp.classify.dtos.auth.RefreshRequestDTO;
+import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.models.Employee;
 import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.security.JwtService;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
+
+import java.util.regex.Pattern;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +34,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO body ) {
-        Employee employee = employeeRepository.findOne(EmployeeSpecification.getByCpf(body.cpf())).orElse(null);
+        if (!Pattern.matches("^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$", body.cpf().trim()))
+            throw new DtoException("Formatação de CPF inválida.");
+
+        String formattedCpf = body.cpf().trim().replaceAll("[\\.|-]", "");
+        Employee employee = employeeRepository.findOne(EmployeeSpecification.getByCpf(formattedCpf)).orElse(null);
         if (employee == null || !passwordEncoder.matches(body.password(), employee.getPassword()))
             return ResponseEntity.status(401).build();
 
