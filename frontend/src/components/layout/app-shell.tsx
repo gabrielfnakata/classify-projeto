@@ -12,7 +12,7 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <TooltipProvider delayDuration={0}>
         <AppSidebar />
         <SidebarInset>
