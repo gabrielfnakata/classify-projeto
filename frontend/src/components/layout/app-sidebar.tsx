@@ -7,22 +7,32 @@ import { NavSearch } from "./nav-search"
 import { mainNavigation } from "./sidebar-items"
 
 export function AppSidebar() {
-  const { state } = useSidebar()
+  const { state, setOpen } = useSidebar()
   const [searchQuery, setSearchQuery] = useState("")
   const isCollapsed = state === "collapsed"
 
   const filteredNavigation = useMemo(() => {
     if (!searchQuery) return mainNavigation
 
-    const query = searchQuery.toLowerCase()
+    const normalize = (text: string) =>
+      text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+
+    const query = normalize(searchQuery)
 
     return mainNavigation
       .map((group) => {
-        const filteredSubItems = group.items?.filter((sub) =>
-          sub.title.toLowerCase().includes(query)
-        )
-        if (!filteredSubItems?.length) return null
-        return { ...group, items: filteredSubItems }
+        const groupTitle = normalize(group.title)
+        const matchesGroup = groupTitle.includes(query)
+
+        const filteredSubItems = group.items?.filter((sub) => {
+          const subTitle = normalize(sub.title)
+          return subTitle.includes(query)
+        })
+
+        if (matchesGroup || (filteredSubItems && filteredSubItems.length > 0)) {
+          return { ...group, items: filteredSubItems }
+        }
+        return null
       })
       .filter(Boolean) as typeof mainNavigation
   }, [searchQuery])
@@ -30,8 +40,11 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="relative sticky top-0 h-svh border-r border-sidebar-border"
+      className="relative sticky top-0 h-svh border-r border-sidebar-border cursor-pointer group-data-[state=expanded]:cursor-default"
       style={{ "--sidebar-width-icon": "55px" } as React.CSSProperties}
+      onClick={() => {
+        if (isCollapsed) setOpen(true)
+      }}
     >
       <NavHeader />
 
