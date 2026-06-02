@@ -23,10 +23,19 @@ export default function AppRoutes() {
             } />
 
             {/* Rotas protegidas */}
+            <Route path="/classes" element={
+                <ProtectedRoute children={<OnDevelopment />} />
+            }/>
+            <Route path="/account" element={
+                <ProtectedRoute children={<OnDevelopment />} />
+            }/>
+            <Route path="/settings" element={
+                <ProtectedRoute children={<OnDevelopment />} />
+            }/>
             <Route path="/components-demo" element={
                 <ProtectedRoute children={<Components />} />
             }/>
-            <Route path="/classes" element={
+            <Route path="/schedule" element={
                 <ProtectedRoute children={<ClassRegistration />} />
             }/>
             <Route path="/new-class-session" element={
