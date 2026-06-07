@@ -1,6 +1,7 @@
 package br.com.ifsp.classify;
 
 import java.time.LocalDate;
+import java.time.Month;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -8,42 +9,44 @@ import org.springframework.context.annotation.Configuration;
 
 import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
 import br.com.ifsp.classify.dtos.create.RoleCreateDTO;
-import br.com.ifsp.classify.models.Role;
-import br.com.ifsp.classify.repositories.EmployeeRepository;
+import br.com.ifsp.classify.dtos.create.UserCreateDTO;
+import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.repositories.RoleRepository;
+import br.com.ifsp.classify.repositories.UserRepository;
 import br.com.ifsp.classify.services.EmployeeService;
 import br.com.ifsp.classify.services.RoleService;
-import br.com.ifsp.classify.utils.UuidUtils;
+import br.com.ifsp.classify.services.UserService;
 
 @Configuration
 public class DataInitializer {
     
     @Bean
-    CommandLineRunner initDatabase(RoleRepository roleRepository, RoleService roleService, EmployeeRepository empRepository, EmployeeService empService) {
+    CommandLineRunner initDatabase(RoleRepository roleRepository, RoleService roleService, EmployeeService employeeService, UserRepository userRepository, UserService userService) {
         return (args) -> {
             if (roleRepository.count() == 0) {
-                roleService.create(new RoleCreateDTO("ADMIN"));
-                roleService.create(new RoleCreateDTO("SECRETARY"));
-                roleService.create(new RoleCreateDTO("TEACHER"));
+                roleService.create(new RoleCreateDTO("ADMIN", "Cargo máximo, possui todas as permissões"));
+                roleService.create(new RoleCreateDTO("SECRE", "Pode visualizar e cadastrar alunos e professores"));
+                roleService.create(new RoleCreateDTO("PROFE", "Pode marcar aulas e criar turmas"));
             }
 
-            if (empRepository.count() == 0) {
-                Role adminRole = roleService.getByDescription("ADMIN");
+            if (userRepository.count() == 0) {
+                RoleGetDTO adminRole = roleService.getById("ADMIN");
                 if (adminRole == null)
                     return;
-                
-                EmployeeCreateDTO newEmp = new EmployeeCreateDTO(
-                    "ADMIN",
-                    "123456aA",
-                    "11111111111",
-                    LocalDate.now(),
-                    "admin@gmail.com",
-                    "11912345678",
-                    "Rua das Flores, 199 - São Paulo",
-                    UuidUtils.convertBytesToString(adminRole.getUuid())
-                );
 
-                empService.create(newEmp);
+                employeeService.create(new EmployeeCreateDTO(
+                    "ADMINISTRADOR",
+                    LocalDate.of(2000, Month.JANUARY, 01),
+                    "467.330.035-11",
+                    LocalDate.now(),
+                    new UserCreateDTO(
+                        "admin@gmail.com",
+                        "123456aA",
+                        adminRole.id(),
+                        null
+                    ),
+                    null
+                ));
             }
         };
     }
