@@ -31,7 +31,7 @@ public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, ID> i
     }
 
     @Override
-    public GetDTO findById(String uuid) {
+    public GetDTO getById(String uuid) {
         return Utils.isNullOrEmpty(uuid)
                 ? null
                 : returnDTO(getEntityById(uuid));

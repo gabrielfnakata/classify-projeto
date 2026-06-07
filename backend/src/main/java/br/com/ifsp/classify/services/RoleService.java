@@ -6,13 +6,11 @@ import br.com.ifsp.classify.dtos.update.RoleUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.models.Role;
 import br.com.ifsp.classify.repositories.RoleRepository;
-import br.com.ifsp.classify.specifications.RoleSpecification;
 import br.com.ifsp.classify.utils.Utils;
-import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.stereotype.Service;
 
 @Service
-public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO, RoleUpdateDTO, Integer> {
+public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO, RoleUpdateDTO, String> {
 
     public RoleService(RoleRepository repository) {
         super(repository);
@@ -24,15 +22,17 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
             return null;
 
         return new RoleGetDTO(
-                UuidUtils.convertBytesToString(role.getUuid()),
+                role.getId(),
                 role.getDescription()
         );
     }
 
-    public Role getByDescription(String description) {
-        return repository
-            .findOne(RoleSpecification.getByDescription(description))
+    public RoleGetDTO getById(String id) {
+        Role role = repository
+            .findById(id)
             .orElse(null);
+
+        return returnDTO(role);
     }
 
     @Override
@@ -40,12 +40,17 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
         if (roleDTO == null)
             return null;
 
+        if (Utils.isNullOrEmpty(roleDTO.id()))
+            throw new DtoException("É necessário informar um id");
+        else if (roleDTO.id().trim().length() != 5)
+            throw new DtoException("O id deve possuir 5 caracteres");
+
         if (Utils.isNullOrEmpty(roleDTO.description()))
             throw new DtoException("A descrição do cargo não pode ser vazia");
 
         Role newRole = new Role();
-        newRole.setUuid(UuidUtils.generateUUID());
-        newRole.setDescription(roleDTO.description().trim().toUpperCase());
+        newRole.setId(Utils.trimAndUpper(roleDTO.id()));
+        newRole.setDescription(Utils.trimAndUpper(roleDTO.description()));
 
         repository.save(newRole);
 
@@ -53,13 +58,16 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
     }
 
     @Override
-    public RoleGetDTO update(String uuid, RoleUpdateDTO roleDTO) {
-        Role role = getEntityById(uuid);
+    public RoleGetDTO update(String id, RoleUpdateDTO roleDTO) {
+        Role role = repository
+            .findById(id)
+            .orElse(null);
+
         if (roleDTO == null || role == null)
             return null;
 
         if (!Utils.isNullOrEmpty(roleDTO.description()))
-            role.setDescription(roleDTO.description().trim().toUpperCase());
+            role.setDescription(Utils.trimAndUpper(roleDTO.description()));
 
         repository.save(role);
 
