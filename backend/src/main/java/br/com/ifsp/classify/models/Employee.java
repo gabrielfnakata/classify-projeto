@@ -6,6 +6,8 @@ import org.hibernate.type.SqlTypes;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "EMPLOYEE")
@@ -36,12 +38,15 @@ public class Employee implements Serializable {
     @Column(nullable = false)
     private LocalDate hireDate;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     private User user;
 
     @JdbcTypeCode(SqlTypes.BOOLEAN)
     @Column(nullable = false)
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
+
+    @OneToMany(mappedBy = "employee")
+    private List<Telephone> telephones = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -105,5 +110,18 @@ public class Employee implements Serializable {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public List<Telephone> getTelephones() {
+        return telephones;
+    }
+
+    public void setTelephones(List<Telephone> telephones) {
+        this.telephones = telephones;
+    }
+
+    public void addTelephone(Telephone telephone) {
+        telephones.add(telephone);
+        telephone.setEmployee(this);
     }
 }

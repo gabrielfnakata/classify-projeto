@@ -44,7 +44,7 @@ public class Student implements Serializable {
 
     @JdbcTypeCode(SqlTypes.BOOLEAN)
     @Column(nullable = false)
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
 
     @ManyToMany
     @JoinTable(

@@ -74,13 +74,10 @@ CREATE TABLE IF NOT EXISTS student_class (
 )$$
 
 CREATE TABLE IF NOT EXISTS role (
-    id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    uuid BINARY(16) NOT NULL,
-    description VARCHAR(40) NOT NULL,
+    id CHAR(5) NOT NULL,
+    description VARCHAR(80) NOT NULL,
 
-    CONSTRAINT role_id_pk PRIMARY KEY (id),
-    CONSTRAINT role_uuid_uk UNIQUE(uuid),
-    CONSTRAINT role_description_uk UNIQUE (description)
+    CONSTRAINT role_id_pk PRIMARY KEY (id)
 )$$
 
 CREATE TABLE IF NOT EXISTS user (
@@ -90,7 +87,7 @@ CREATE TABLE IF NOT EXISTS user (
 	password VARCHAR(100) NOT NULL,
 	refresh_token VARCHAR(255),
 	created_at DATETIME DEFAULT NOW(),
-	role_id TINYINT UNSIGNED NOT NULL,
+	role_id CHAR(5) NOT NULL,
 
 	CONSTRAINT user_id_pk PRIMARY KEY (id),
 	CONSTRAINT user_uuid_uk UNIQUE (uuid),
@@ -106,7 +103,7 @@ CREATE TABLE IF NOT EXISTS employee (
 	birth_date DATE,
 	cpf CHAR(11) NOT NULL,
 	hire_date DATE,
-	user_id BIGINT UNSIGNED NOT NULL,
+	user_id BIGINT UNSIGNED,
 	is_deleted BOOLEAN NOT NULL DEFAULT 0,
 
 	CONSTRAINT employee_id_pk PRIMARY KEY (id),
