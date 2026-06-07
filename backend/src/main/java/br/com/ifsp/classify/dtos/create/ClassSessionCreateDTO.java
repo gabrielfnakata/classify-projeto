@@ -1,12 +1,13 @@
 package br.com.ifsp.classify.dtos.create;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record ClassSessionCreateDTO(
-        String subjectTeacherId,
-        String classroomId,
+        String subjectTeacherUuid,
+        String classroomUuid,
         LocalDateTime startTime,
         LocalDateTime endTime,
-        List<String> studentIds
+        ReportCreateDTO report,
+        String classUuid,
+        String studentUuid
 ) {}

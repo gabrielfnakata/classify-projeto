@@ -6,9 +6,9 @@ import java.util.List;
 public record StudentCreateDTO(
         String name,
         LocalDate birthDate,
-        LocalDate registrationDate,
         String email,
-        String telephone,
-        String address,
+        String cpf,
+        LocalDate registrationDate,
+        List<TelephoneCreateDTO> telephones,
         List<GuardianCreateDTO> guardians
 ) {}

@@ -1,6 +1,10 @@
 package br.com.ifsp.classify.dtos.update;
 
+import java.util.List;
+
 public record GuardianUpdateDTO(
         String name,
-        String telephone
+        String cpf,
+        String email,
+        List<TelephoneUpdateDTO> telephone
 ) {}

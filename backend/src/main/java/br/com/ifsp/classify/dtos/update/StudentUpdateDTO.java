@@ -1,12 +1,13 @@
 package br.com.ifsp.classify.dtos.update;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record StudentUpdateDTO(
         String name,
         LocalDate birthDate,
-        LocalDate registrationDate,
         String email,
-        String telephone,
-        String address
+        String cpf,
+        LocalDate registrationDate,
+        List<TelephoneUpdateDTO> telephones
 ) {}
