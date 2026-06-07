@@ -1,5 +1,5 @@
 export interface LoginForm {
-    cpf: string,
+    email: string,
     password: string,
     rememberMe: boolean
 };
