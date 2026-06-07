@@ -8,6 +8,7 @@ import { FormikInput } from "@/components/formik-input/FormikInput";
 import PhoneInput from "@/components/phone-input/PhoneInput";
 import { RegisterStudentsValidationSchema } from "@/validation/RegisterStudentsSchema";
 import type { FormikHelpers } from "formik";
+import { type RegisterStudentsForm } from "@/shared/models/forms/registerStudentsForm";
 
 // TODO: passar isso pro backend
 const serieOptions = [
@@ -27,24 +28,6 @@ const referralOptions = [
   { label: "Sim", value: "sim" },
   { label: "Não", value: "nao" },
 ];
-
-// TODO: isso vai na pasta shared/models/forms
-interface RegisterStudentsForm {
-  fullName: string;
-  guardian1Name: string;
-  parentage1: string;
-  guardian2Name: string;
-  parentage2: string;
-  guardian1Phone: string;
-  guardian2Phone: string;
-  email: string;
-  address: string;
-  neighborhood: string;
-  school: string;
-  grade: string;
-  referral: string;
-  referrerName: string;
-}
 
 const initialValues: RegisterStudentsForm = {
   fullName: "",
