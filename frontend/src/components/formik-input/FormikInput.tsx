@@ -14,6 +14,7 @@ interface FormikInputProps {
     required?: boolean;
     isFilter?: boolean;
     mask?: string;
+    disabled?: boolean;
 }
 
 export function FormikInput({ name, ...props }: FormikInputProps) {
@@ -36,9 +37,8 @@ export function FormikInput({ name, ...props }: FormikInputProps) {
     ) :
     (
         <FieldGroup>
-            <Field
-                className={`${props.className}`}                
-            >
+            <Field 
+            className={`${props.className}`}>
                 {props.label ? <FieldLabel>{props.label}</FieldLabel> : null}
                 <Input
                     name={field.name}
@@ -47,7 +47,8 @@ export function FormikInput({ name, ...props }: FormikInputProps) {
                     type={props.type}
                     placeholder={props.placeholder}
                     required={props.required}
-                    className= "w-full rounded-xl border border-border bg-filter-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
+                    disabled={props.disabled}
+                    className="w-full rounded-xl border border-border bg-filter-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
                 />
             </Field>
         </FieldGroup>

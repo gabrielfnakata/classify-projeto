@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router";
 import { Formik, Form } from "formik";
-import { FormField } from "@/components/common/form-field";
-import { SelectField } from "@/components/common/select-field";
+import { FormikInput } from "@/components/formik-input/FormikInput";
+import { FormikSelectField } from "@/components/formik-input/FormikSelect";
 import { ContentCard } from "@/components/layout/content-card";
 import { Button } from "@/components/ui/button";
-import { FormikInput } from "@/components/formik-input/FormikInput";
 import PhoneInput from "@/components/phone-input/PhoneInput";
 import { RegisterStudentsValidationSchema } from "@/validation/RegisterStudentsSchema";
 import type { FormikHelpers } from "formik";
 import { type RegisterStudentsForm } from "@/shared/models/forms/registerStudentsForm";
+import { FieldLabel } from "@/components/ui/field";
 
 // TODO: passar isso pro backend
 const serieOptions = [
@@ -46,6 +46,18 @@ const initialValues: RegisterStudentsForm = {
   referrerName: "",
 };
 
+function SelectWrapper({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <FieldLabel>
+        {label}
+        {required}
+      </FieldLabel>
+      {children}
+    </div>
+  );
+}
+
 export default function RegisterStudents() {
   const navigate = useNavigate();
 
@@ -64,9 +76,6 @@ export default function RegisterStudents() {
     }
   };
 
-  // TODO: não precisa do formfield!
-  // usar o formikselect
-  // o overflow acontece pelo select do 'quem indicou'
   return (
     <div className="background w-full h-full flex flex-col items-center justify-center">
       <ContentCard className="card rounded-2xl w-full max-w-5xl flex flex-col items-center justify-center p-8">
@@ -78,160 +87,80 @@ export default function RegisterStudents() {
           onSubmit={handleSubmit}
           validateOnMount={true}
         >
-          {({ isSubmitting, setFieldValue, values, errors, touched, setTouched }) => (
+          {({ isSubmitting, values, errors, touched, setFieldValue, setTouched }) => (
             <Form className="flex flex-col gap-5 w-full">
 
-              <FormField
-                label="Nome Completo"
-                htmlFor="fullName"
-                required
-                error={touched.fullName ? errors.fullName : undefined}
-              >
-                <FormikInput name="fullName" placeholder="Ex: Maria da Silva" />
-              </FormField>
+              <FormikInput name="fullName" label="Nome Completo" required placeholder="Ex: Maria da Silva" />
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Nome do Responsável 1"
-                  htmlFor="guardian1Name"
-                  required
-                  error={touched.guardian1Name ? errors.guardian1Name : undefined}
-                >
-                  <FormikInput name="guardian1Name" placeholder="Ex: Ana da Silva" />
-                </FormField>
-                <FormField
-                  label="Parentesco"
-                  htmlFor="parentage1"
-                  required
-                  error={touched.parentage1 ? errors.parentage1 : undefined}
-                >
-                  <FormikInput name="parentage1" placeholder="Ex: Mãe" />
-                </FormField>
+                <FormikInput name="guardian1Name" label="Nome do Responsável 1" required placeholder="Ex: Ana da Silva" />
+                <FormikInput name="parentage1" label="Parentesco" required placeholder="Ex: Mãe" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Nome do Responsável 2"
-                  htmlFor="guardian2Name"
-                  error={touched.guardian2Name ? errors.guardian2Name : undefined}
-                >
-                  <FormikInput name="guardian2Name" placeholder="Ex: João da Silva" />
-                </FormField>
-                <FormField
-                  label="Parentesco"
-                  htmlFor="parentage2"
-                  error={touched.parentage2 ? errors.parentage2 : undefined}
-                >
-                  <FormikInput name="parentage2" placeholder="Ex: Pai" />
-                </FormField>
+                <FormikInput name="guardian2Name" label="Nome do Responsável 2" placeholder="Ex: João da Silva" />
+                <FormikInput name="parentage2" label="Parentesco" placeholder="Ex: Pai" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Telefone do Responsável 1"
-                  htmlFor="guardian1Phone"
-                  required
-                  error={touched.guardian1Phone ? errors.guardian1Phone : undefined}
-                >
-                  <PhoneInput name="guardian1Phone" placeholder="Ex: (11) 99234-1234" />
-                </FormField>
-                <FormField
-                  label="Telefone do Responsável 2"
-                  htmlFor="guardian2Phone"
-                  error={touched.guardian2Phone ? errors.guardian2Phone : undefined}
-                >
-                  <PhoneInput name="guardian2Phone" placeholder="Ex: (11) 99234-1234" />
-                </FormField>
+                <PhoneInput name="guardian1Phone" label="Telefone do Responsável 1" required placeholder="Ex: (11) 99234-1234" />
+                <PhoneInput name="guardian2Phone" label="Telefone do Responsável 2" placeholder="Ex: (11) 99234-1234" />
               </div>
 
-              <FormField
-                label="E-mail"
-                htmlFor="email"
-                required
-                error={touched.email ? errors.email : undefined}
-              >
-                <FormikInput name="email" type="text" placeholder="Ex: ana@email.com" />
-              </FormField>
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Endereço"
-                  htmlFor="address"
-                  required
-                  error={touched.address ? errors.address : undefined}
-                >
-                  <FormikInput name="address" placeholder="Ex: Rua Pedro Vicente, 123 - Ap 101" />
-                </FormField>
-                <FormField
-                  label="Bairro"
-                  htmlFor="neighborhood"
-                  required
-                  error={touched.neighborhood ? errors.neighborhood : undefined}
-                >
-                  <FormikInput name="neighborhood" placeholder="Ex: Canindé" />
-                </FormField>
+              <div className="flex flex-col gap-1">
+                <FormikInput name="email" label="E-mail" required type="text" placeholder="Ex: ana@email.com" />
+                {touched.email && errors.email && errors.email !== "E-mail é obrigatório" && (
+                  <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Escola"
-                  htmlFor="school"
-                  required
-                  error={touched.school ? errors.school : undefined}
-                >
-                  <FormikInput name="school" placeholder="Ex: Colégio Aprender Mais" />
-                </FormField>
-                <FormField
-                  label="Série"
-                  htmlFor="grade"
-                  required
-                  error={touched.grade ? errors.grade : undefined}
-                >
-                  <SelectField
-                    value={values.grade}
-                    onChange={(value) => setFieldValue("grade", value)}
+                <FormikInput name="address" label="Endereço" required placeholder="Ex: Rua Pedro Vicente, 123 - Ap 101" />
+                <FormikInput name="neighborhood" label="Bairro" required placeholder="Ex: Canindé" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormikInput name="school" label="Escola" required placeholder="Ex: Colégio Aprender Mais" />
+                <SelectWrapper label="Série" required>
+                  <FormikSelectField
+                    name="grade"
                     options={serieOptions}
                     placeholder="Escolha uma série"
+                    required
                   />
-                </FormField>
+                </SelectWrapper>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  label="Indicação"
-                  htmlFor="referral"
-                  error={touched.referral ? errors.referral : undefined}
-                >
-                  <SelectField
-                    value={values.referral}
-                    onChange={(value) => {
-                      setFieldValue("referral", value);
-                      if (value === "nao") setFieldValue("referrerName", "");
-                    }}
+                <SelectWrapper label="Indicação">
+                  <FormikSelectField
+                    name="referral"
                     options={referralOptions}
                     placeholder="Escolha uma opção"
+                    onValueChange={(value) => {
+                      if (value !== "sim") setFieldValue("referrerName", "");
+                    }}
                   />
-                </FormField>
-                <FormField
+                </SelectWrapper>
+                <FormikInput
+                  name="referrerName"
                   label="Se sim, quem indicou"
-                  htmlFor="referrerName"
-                  error={touched.referrerName ? errors.referrerName : undefined}
-                >
-                  <FormikInput name="referrerName" placeholder="Ex: Carolina Santos (Amiga)" />
-                </FormField>
+                  placeholder="Ex: Carolina Santos (Amiga)"
+                  disabled={values.referral !== "sim"}
+                />
               </div>
 
               <div className="flex justify-end pt-6 gap-4">
                 <Button
                   type="button"
                   onClick={() => navigate("/students")}
-                  className="bg-[#c0392b] disabled:border-t-green-200 text-[#f1f1f1] p-1 rounded-sm border-none w-[5vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]"
+                  className="bg-[#c0392b] text-[#f1f1f1] p-1 rounded-sm border-none w-[5vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-[#119D96] disabled:border-t-green-200 text-[#f1f1f1] p-1 rounded-sm border-none w-[5vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]"
+                  className="bg-[#119D96] text-[#f1f1f1] p-1 rounded-sm border-none w-[5vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]"
                   disabled={isSubmitting}
                   onClick={async () => {
                     const allTouched = Object.keys(initialValues).reduce(
