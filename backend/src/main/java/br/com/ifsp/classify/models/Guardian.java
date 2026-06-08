@@ -1,8 +1,16 @@
 package br.com.ifsp.classify.models;
 
-import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "GUARDIAN")
@@ -24,6 +32,10 @@ public class Guardian {
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(nullable = false, length = 11)
     private String telephone;
+
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 50)
+    private String parentage;
 
     @ManyToOne
     @JoinColumn(name = "student_id")
@@ -59,6 +71,14 @@ public class Guardian {
 
     public void setTelephone(String telephone) {
         this.telephone = telephone;
+    }
+
+    public String getParentage() {
+        return parentage;
+    }
+
+    public void setParentage(String parentage) {
+        this.parentage = parentage;
     }
 
     public Student getStudent() {

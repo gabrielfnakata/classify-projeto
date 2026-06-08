@@ -1,5 +1,9 @@
 package br.com.ifsp.classify.services;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
@@ -12,9 +16,6 @@ import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, Long> {
@@ -36,12 +37,18 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                 student.getEmail(),
                 student.getTelephone(),
                 student.getAddress(),
+                student.getNeighborhood(),
+                student.getSchool(),
+                student.getGrade(),
+                student.getReferral(),
+                student.getReferrerName(),
                 student.getGuardians()
                         .stream()
                         .map(guardian -> new GuardianGetDTO(
                                 UuidUtils.convertBytesToString(guardian.getUuid()),
                                 guardian.getName(),
-                                guardian.getTelephone()
+                                guardian.getTelephone(),
+                                guardian.getParentage()
                         ))
                         .toList()
         );
@@ -56,7 +63,8 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                 .map(guardian -> new GuardianGetDTO(
                         UuidUtils.convertBytesToString(guardian.getUuid()),
                         guardian.getName(),
-                        guardian.getTelephone()
+                        guardian.getTelephone(),
+                        guardian.getParentage()
                 ))
                 .toList();
     }
@@ -68,7 +76,8 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         return new GuardianGetDTO(
                 UuidUtils.convertBytesToString(guardian.getUuid()),
                 guardian.getName(),
-                guardian.getTelephone()
+                guardian.getTelephone(),
+                guardian.getParentage()
         );
     }
 
@@ -95,6 +104,15 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         if (Utils.isNullOrEmpty(studentDTO.address()))
             throw new DtoException("O endereço do aluno não pode ser nulo");
 
+        if (Utils.isNullOrEmpty(studentDTO.neighborhood()))
+            throw new DtoException("O bairro do aluno não pode ser nulo");
+
+        if (Utils.isNullOrEmpty(studentDTO.school()))
+            throw new DtoException("A escola do aluno não pode ser nula");
+
+        if (studentDTO.grade() == null)
+            throw new DtoException("A série do aluno não pode ser nula");
+
         Student newStudent = new Student();
         newStudent.setUuid(UuidUtils.generateUUID());
         newStudent.setName(studentDTO.name().trim().toUpperCase());
@@ -103,6 +121,15 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         newStudent.setEmail(studentDTO.email().trim().toUpperCase());
         newStudent.setTelephone(studentDTO.telephone().trim());
         newStudent.setAddress(studentDTO.address().trim());
+        newStudent.setNeighborhood(studentDTO.neighborhood().trim());
+        newStudent.setSchool(studentDTO.school().trim());
+        newStudent.setGrade(studentDTO.grade());
+        newStudent.setReferral(studentDTO.referral());
+        newStudent.setReferrerName(
+                studentDTO.referral() && studentDTO.referrerName() != null
+                        ? studentDTO.referrerName().trim()
+                        : null
+        );
 
         if (Utils.hasElements(studentDTO.guardians())) {
             for (GuardianCreateDTO guardian : studentDTO.guardians()) {
@@ -112,9 +139,14 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                 if (Utils.isNullOrEmpty(guardian.telephone()))
                     throw new DtoException("O telefone do responsável não pode ser nulo");
 
+                if (Utils.isNullOrEmpty(guardian.parentage()))
+                    throw new DtoException("O parentesco do responsável não pode ser nulo");
+
                 Guardian newGuardian = new Guardian();
-                newGuardian.setName(guardian.name());
-                newGuardian.setTelephone(guardian.telephone());
+                newGuardian.setUuid(UuidUtils.generateUUID());
+                newGuardian.setName(guardian.name().trim().toUpperCase());
+                newGuardian.setTelephone(guardian.telephone().trim());
+                newGuardian.setParentage(guardian.parentage().trim());
 
                 newStudent.addGuardian(newGuardian);
             }
@@ -149,6 +181,24 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         if (!Utils.isNullOrEmpty(studentDTO.address()))
             student.setAddress(studentDTO.address().trim());
 
+        if (!Utils.isNullOrEmpty(studentDTO.neighborhood()))
+            student.setNeighborhood(studentDTO.neighborhood().trim());
+
+        if (!Utils.isNullOrEmpty(studentDTO.school()))
+            student.setSchool(studentDTO.school().trim());
+
+        if (studentDTO.grade() != null)
+            student.setGrade(studentDTO.grade());
+
+        if (studentDTO.referral() != null) {
+            student.setReferral(studentDTO.referral());
+            student.setReferrerName(
+                    studentDTO.referral() && studentDTO.referrerName() != null
+                            ? studentDTO.referrerName().trim()
+                            : null
+            );
+        }
+
         repository.save(student);
 
         return returnDTO(student);
@@ -169,10 +219,14 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             if (Utils.isNullOrEmpty(guardian.telephone()))
                 throw new DtoException("Deve ser informado um telefone ao responsável do aluno");
 
+            if (Utils.isNullOrEmpty(guardian.parentage()))
+                throw new DtoException("Deve ser informado o parentesco ao responsável do aluno");
+
             Guardian newGuardian = new Guardian();
             newGuardian.setUuid(UuidUtils.generateUUID());
             newGuardian.setName(guardian.name().trim().toUpperCase());
             newGuardian.setTelephone(guardian.telephone().trim());
+            newGuardian.setParentage(guardian.parentage().trim());
 
             student.addGuardian(newGuardian);
         }
@@ -187,7 +241,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         if (student == null || guardianDTO == null)
             return null;
 
-        if (Utils.isNullOrEmpty(guardianDTO.name()) && Utils.isNullOrEmpty(guardianDTO.telephone()))
+        if (Utils.isNullOrEmpty(guardianDTO.name()) && Utils.isNullOrEmpty(guardianDTO.telephone()) && Utils.isNullOrEmpty(guardianDTO.parentage()))
             throw new DtoException("Nenhum campo foi informado para alteração");
 
         Guardian guardianToBeReturned = new Guardian();
@@ -202,9 +256,13 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                     if (!Utils.isNullOrEmpty(guardianDTO.telephone()))
                         guardian.setTelephone(guardianDTO.telephone().trim());
 
+                    if (!Utils.isNullOrEmpty(guardianDTO.parentage()))
+                        guardian.setParentage(guardianDTO.parentage().trim());
+
                     guardianToBeReturned.setUuid(guardian.getUuid());
                     guardianToBeReturned.setName(guardian.getName());
                     guardianToBeReturned.setTelephone(guardian.getTelephone());
+                    guardianToBeReturned.setParentage(guardian.getParentage());
                 }, () -> {
                     throw new DtoException("O responsável informado não existe");
                 });

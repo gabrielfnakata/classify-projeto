@@ -7,6 +7,11 @@ CREATE TABLE IF NOT EXISTS student (
 	email VARCHAR(320) NOT NULL,
 	telephone CHAR(11) NOT NULL,
 	address VARCHAR(200) NOT NULL,
+	neighborhood VARCHAR(100) NOT NULL,
+    school VARCHAR(255) NOT NULL,
+    grade TINYINT UNSIGNED NOT NULL,
+    referral BOOLEAN NOT NULL DEFAULT 0,
+    referrer_name VARCHAR(255) NULL,
 
 	CONSTRAINT student_id_pk PRIMARY KEY (id),
 	CONSTRAINT student_uuid_uk UNIQUE (uuid),
@@ -18,6 +23,7 @@ CREATE TABLE IF NOT EXISTS guardian (
     uuid BINARY(16) NOT NULL,
     name VARCHAR(255) NOT NULL,
     telephone CHAR(11) NOT NULL,
+	parentage VARCHAR(50) NOT NULL,
     student_id BIGINT UNSIGNED NOT NULL,
 
     CONSTRAINT guardian_id_pk PRIMARY KEY (id),

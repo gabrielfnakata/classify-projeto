@@ -6,7 +6,11 @@ export interface StudentDTO {
     birthDate: Date;
     registrationDate: Date;
     email: string;
-    telephone: string;
     address: string;
+    neighborhood: string;
+    school: string;     
+    grade: string;
+    referral: boolean;
+    referrerName?: string;
     guardians: GuardianDTO[];
 }

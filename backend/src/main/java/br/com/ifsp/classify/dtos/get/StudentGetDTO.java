@@ -11,5 +11,10 @@ public record StudentGetDTO(
         String email,
         String telephone,
         String address,
+        String neighborhood,
+        String school,
+        Integer grade,
+        Boolean referral,
+        String referrerName,
         List<GuardianGetDTO> guardians
 ) {}
