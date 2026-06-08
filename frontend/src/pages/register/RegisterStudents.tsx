@@ -95,13 +95,33 @@ export default function RegisterStudents() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <FormikInput name="guardian2Name" label="Nome do Responsável 2" placeholder="Ex: João da Silva" />
-                <FormikInput name="parentage2" label="Parentesco" placeholder="Ex: Pai" />
+                <FormikInput
+                  name="guardian2Name"
+                  label="Nome do Responsável 2"
+                  placeholder="Ex: João da Silva"
+                  onChange={(e) => {
+                    if (!e.target.value.trim()) {
+                      setFieldValue("parentage2", "");
+                      setFieldValue("guardian2Phone", "");
+                    }
+                  }}
+                />
+                <FormikInput
+                  name="parentage2"
+                  label="Parentesco"
+                  placeholder="Ex: Pai"
+                  disabled={!values.guardian2Name?.trim()}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <PhoneInput name="guardian1Phone" label="Telefone do Responsável 1" required placeholder="Ex: (11) 99234-1234" />
-                <PhoneInput name="guardian2Phone" label="Telefone do Responsável 2" placeholder="Ex: (11) 99234-1234" />
+                <PhoneInput
+                  name="guardian2Phone"
+                  label="Telefone do Responsável 2"
+                  placeholder="Ex: (11) 99234-1234"
+                  disabled={!values.guardian2Name?.trim()}
+                />
               </div>
 
               <div className="grid grid-cols-3 gap-4">

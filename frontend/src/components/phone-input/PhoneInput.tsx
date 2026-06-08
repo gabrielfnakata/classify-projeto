@@ -8,6 +8,7 @@ interface PhoneInputProps {
   label?: string;
   required?: boolean;
   error?: string;
+  disabled?: boolean;
 }
 
 export default function PhoneInput({ name, ...props }: PhoneInputProps) {
@@ -22,7 +23,12 @@ export default function PhoneInput({ name, ...props }: PhoneInputProps) {
         {...field}
         placeholder={props.placeholder}
         required={props.required}
-        className="w-full h-8 rounded-xl border border-border bg-filter-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
+        disabled={props.disabled}
+        className={`w-full h-8 rounded-xl border border-border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 ${
+          props.disabled
+            ? "bg-filter-surface opacity-50 cursor-not-allowed"
+            : "bg-filter-surface"
+        }`}
       />
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </Field>
