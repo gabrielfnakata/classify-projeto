@@ -12,7 +12,11 @@ export const RegisterStudentsValidationSchema = Yup.object({
   email: Yup.string()
     .email("E-mail inválido")
     .matches(/@/, "E-mail deve conter @"),
-  birthDate: Yup.string().required("Data de nascimento é obrigatória"),
+  birthDate: Yup.string().required("Data de nascimento é obrigatória")
+    .test("not-future", "A data de nascimento não pode ser uma data futura", (value) => {
+    if (!value) return true;
+    return new Date(value) <= new Date();
+  }),
   address: Yup.string().required("Endereço é obrigatório"),
   neighborhood: Yup.string().required("Bairro é obrigatório"),
   school: Yup.string().required("Escola é obrigatória"),
