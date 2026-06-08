@@ -22,7 +22,7 @@ public class Utils {
 
     public static boolean cpfValidator(String cpf) {
         String formattedCPF = removeAllNonDigits(cpf);
-        if (formattedCPF.length() != 11)
+        if (formattedCPF.length() != 11 || formattedCPF.matches("(\\d)\\1{10}"))
             return false;
 
         if (!digitValidation(formattedCPF, true))
@@ -46,6 +46,10 @@ public class Utils {
             --numberToMultiply;
         }
 
-        return Character.getNumericValue(cpf.charAt(length)) == ((sum * 10) % 11);
+        int expectedDigit = ((sum * 10) % 11);
+        if (expectedDigit == 10)
+            expectedDigit = 0;
+
+        return Character.getNumericValue(cpf.charAt(length)) == expectedDigit;
     }
 }
