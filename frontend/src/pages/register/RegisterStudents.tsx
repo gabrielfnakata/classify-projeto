@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 import { Formik, Form } from "formik";
+import { useState, useEffect } from "react";
 import { FormikInput } from "@/components/formik-input/FormikInput";
 import { FormikSelectField } from "@/components/formik-input/FormikSelect";
 import { ContentCard } from "@/components/layout/content-card";
@@ -9,24 +10,11 @@ import { RegisterStudentsValidationSchema } from "@/validation/RegisterStudentsS
 import type { FormikHelpers } from "formik";
 import { type RegisterStudentsForm } from "@/shared/models/forms/registerStudentsForm";
 import { FieldLabel } from "@/components/ui/field";
+import { fetchGrades, registerStudent, type GradeOption } from "@/services/studentService";
 
-// TODO: passar isso pro backend
-const serieOptions = [
-  { label: "1º Ano", value: "1" },
-  { label: "2º Ano", value: "2" },
-  { label: "3º Ano", value: "3" },
-  { label: "4º Ano", value: "4" },
-  { label: "5º Ano", value: "5" },
-  { label: "6º Ano", value: "6" },
-  { label: "7º Ano", value: "7" },
-  { label: "8º Ano", value: "8" },
-  { label: "9º Ano", value: "9" },
-];
-
-// TODO: trocar por true e false
 const referralOptions = [
-  { label: "Sim", value: "sim" },
-  { label: "Não", value: "nao" },
+  { label: "Sim", value: "true" },
+  { label: "Não", value: "false" },
 ];
 
 const initialValues: RegisterStudentsForm = {
@@ -38,6 +26,7 @@ const initialValues: RegisterStudentsForm = {
   guardian1Phone: "",
   guardian2Phone: "",
   email: "",
+  birthDate: "",
   address: "",
   neighborhood: "",
   school: "",
@@ -60,14 +49,22 @@ function SelectWrapper({ label, required, children }: { label: string; required?
 
 export default function RegisterStudents() {
   const navigate = useNavigate();
+  const [serieOptions, setSerieOptions] = useState<GradeOption[]>([]);
+
+  useEffect(() => {
+    fetchGrades()
+      .then(setSerieOptions)
+      .catch(() => {
+        alert("Erro ao carregar as séries. Tente novamente mais tarde.");
+      });
+  }, []);
 
   const handleSubmit = async (
     values: RegisterStudentsForm,
     helpers: FormikHelpers<RegisterStudentsForm>
   ) => {
     try {
-      // TODO: integrar com api
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await registerStudent(values);
       navigate("/students");
     } catch (error) {
       alert("Ocorreu um erro ao cadastrar. Tente novamente mais tarde.");
@@ -107,11 +104,18 @@ export default function RegisterStudents() {
                 <PhoneInput name="guardian2Phone" label="Telefone do Responsável 2" placeholder="Ex: (11) 99234-1234" />
               </div>
 
-              <div className="flex flex-col gap-1">
-                <FormikInput name="email" label="E-mail" required type="text" placeholder="Ex: ana@email.com" />
-                {touched.email && errors.email && errors.email !== "E-mail é obrigatório" && (
-                  <p className="text-xs text-red-500 mt-1">{errors.email}</p>
-                )}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <div className="flex flex-col gap-1">
+                    <FormikInput name="email" label="E-mail" required type="text" placeholder="Ex: ana@email.com" />
+                    {touched.email && errors.email && errors.email !== "E-mail é obrigatório" && (
+                      <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="col-span-1">
+                  <FormikInput name="birthDate" label="Data de Nascimento" required type="date" />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -125,7 +129,7 @@ export default function RegisterStudents() {
                   <FormikSelectField
                     name="grade"
                     options={serieOptions}
-                    placeholder="Escolha uma série"
+                    placeholder={serieOptions.length === 0 ? "Carregando..." : "Escolha uma série"}
                     required
                   />
                 </SelectWrapper>
@@ -138,7 +142,7 @@ export default function RegisterStudents() {
                     options={referralOptions}
                     placeholder="Escolha uma opção"
                     onValueChange={(value) => {
-                      if (value !== "sim") setFieldValue("referrerName", "");
+                      if (value !== "true") setFieldValue("referrerName", "");
                     }}
                   />
                 </SelectWrapper>
@@ -146,7 +150,7 @@ export default function RegisterStudents() {
                   name="referrerName"
                   label="Se sim, quem indicou"
                   placeholder="Ex: Carolina Santos (Amiga)"
-                  disabled={values.referral !== "sim"}
+                  disabled={values.referral !== "true"}
                 />
               </div>
 

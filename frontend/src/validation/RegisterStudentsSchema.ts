@@ -12,6 +12,7 @@ export const RegisterStudentsValidationSchema = Yup.object({
   email: Yup.string()
     .email("E-mail inválido")
     .matches(/@/, "E-mail deve conter @"),
+  birthDate: Yup.string().required("Data de nascimento é obrigatória"),
   address: Yup.string().required("Endereço é obrigatório"),
   neighborhood: Yup.string().required("Bairro é obrigatório"),
   school: Yup.string().required("Escola é obrigatória"),

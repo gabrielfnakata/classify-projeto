@@ -7,6 +7,7 @@ export interface RegisterStudentsForm {
   guardian1Phone: string;
   guardian2Phone: string;
   email: string;
+  birthDate: string;
   address: string;
   neighborhood: string;
   school: string;
