@@ -135,6 +135,9 @@ export default function RegisterStudents() {
                 </div>
                 <div className="col-span-1">
                   <FormikInput name="birthDate" label="Data de Nascimento" required type="date" />
+                  {touched.birthDate && errors.birthDate && errors.birthDate !== "Data de nascimento é obrigatória" && (
+                    <p className="text-xs text-red-500 mt-1">{errors.birthDate}</p>
+                  )}
                 </div>
               </div>
 
