@@ -9,7 +9,7 @@ export default function SubjectRegistration() {
         {key: 'description', header: 'Descrição', cell: row => row.description}
     ];
     const filters: FilterConfig[] = [
-        {name: 'description', inputType: 'text', placeholder: 'Descrição', width: 50},
+        {name: 'description', inputType: 'text', placeholder: 'Descrição', width: 100},
     ];
     const {data} = useFetch<SubjectDTO>('/subject');
     return (

@@ -8,15 +8,10 @@ export function NavHeader() {
     <SidebarHeader className="border-b border-sidebar-border p-3 flex flex-row items-center justify-between group/header relative overflow-hidden">
       <div className={`flex items-center gap-3 shrink-0 ${isCollapsed ? "w-full justify-center" : ""}`}>
         <img
-          src="/puzzle-piece.svg"
+          src={isCollapsed ? "/small logo.svg" : "/dark logo.svg"}
           alt="Classify Logo"
-          className={`${isCollapsed ? "h-9 w-9" : "h-10 w-10"} object-contain block`}
+          className={`w-[7vw] h-10 object-contain block`}
         />
-        {!isCollapsed && (
-          <span className="font-bold text-xl tracking-tight text-sidebar-foreground">
-            Classify
-          </span>
-        )}
       </div>
 
       {!isCollapsed ? (

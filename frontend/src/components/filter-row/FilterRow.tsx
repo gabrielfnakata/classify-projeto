@@ -45,7 +45,8 @@ export default function FilterRow({
   const widthClasses: Record<string, string> = {
     "25": 'w-1/4',
     "33": 'w-1/3',
-    "50": 'w-1/2'
+    "50": 'w-1/2',
+    "100": 'w-full',
   };
 
   const validationSchema = Yup.object().shape(

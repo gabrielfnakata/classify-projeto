@@ -3,11 +3,26 @@ import { AppSidebar } from "@/components/layout/app-sidebar"
 import {
   SidebarInset,
   SidebarProvider,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 interface AppShellProps {
   children: ReactNode
+}
+
+function ShellContent({ children }: AppShellProps) {
+  const { state } = useSidebar();
+  
+  return (
+    <div className="min-h-svh bg-background text-foreground transition-colors">
+      <main className="flex-y overflow-y-auto">
+          <div className={`mx-auto ${state === 'collapsed' ? 'w-[calc(100vw-92px)]' : 'w-[calc(100vw-280px)]'} h-screen`}>
+            {children}
+          </div>
+      </main>
+    </div>
+  )
 }
 
 export function AppShell({ children }: AppShellProps) {
@@ -16,11 +31,7 @@ export function AppShell({ children }: AppShellProps) {
       <TooltipProvider delayDuration={0}>
         <AppSidebar />
         <SidebarInset>
-          <div className="min-h-svh bg-background text-foreground transition-colors">
-            <main className="p-6 md:p-8">
-              <div className="mx-auto max-w-7xl">{children}</div>
-            </main>
-          </div>
+          <ShellContent>{children}</ShellContent>
         </SidebarInset>
       </TooltipProvider>
     </SidebarProvider>
