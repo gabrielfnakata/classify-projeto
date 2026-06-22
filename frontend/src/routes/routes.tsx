@@ -6,6 +6,7 @@ import Components from "@/app/pages/Components";
 import ClassRegistration from "@/pages/classes/ClassRegistration";
 import StudentRegistration from "@/pages/students/StudentRegistration";
 import EmployeeRegistration from "@/pages/employees/EmployeeRegistration";
+import NewEmployee from "@/pages/employees/NewEmployee";
 import SubjectRegistration from "@/pages/subjects/SubjectRegistration";
 import ClassroomRegistration from "@/pages/classrooms/ClassroomRegistration";
 import { PublicShell } from "@/components/layout/public-shell";
@@ -42,7 +43,7 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<EmployeeRegistration />} />
             }/>
             <Route path="/new-employee" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute children={<NewEmployee />} />
             }/>
             <Route path="/subjects" element={
                 <ProtectedRoute children={<SubjectRegistration />} />

@@ -1,4 +1,4 @@
 export interface RoleDTO {
-    uuid: string;
+    id: string;
     description: string;
 }
