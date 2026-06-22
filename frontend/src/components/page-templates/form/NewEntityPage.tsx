@@ -20,7 +20,7 @@ interface NewEntityPageProps<T> {
     onSubmit: (payload: T) => void | Promise<void>;
 };
 
-interface Field {
+export interface Field {
     key: string;
     name: string;
     label: string;
