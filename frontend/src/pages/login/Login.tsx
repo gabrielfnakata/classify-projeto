@@ -29,7 +29,7 @@ export default function Login() {
     return (
         <div className="background w-screen h-screen flex flex-col items-center justify-center">
             <ContentCard className="card rounded-2xl w-[36.5vw] h-[64vh] g-[4vh] flex flex-col items-center justify-center">
-                <img className="w-[11.5vw] h-[16vh] mb-[5vh]" src="/react.svg" />
+                <img className="w-[25vw] h-[12vh] mb-[5vh]" src="/light logo.svg" />
                 <Formik
                     initialValues={{email: "", password: "", rememberMe: false}}
                     validationSchema={LoginValidationSchema}
