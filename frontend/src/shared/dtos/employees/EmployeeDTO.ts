@@ -1,12 +1,11 @@
-import type { RoleDTO } from "../role/RoleDTO";
+import type { TelephoneDTO } from "../telephone/TelephoneDTO";
 
 export interface EmployeeDTO {
     uuid: string;
     name: string;
+    birthDate: string;
     cpf: string;
-    birthDate: Date;
-    email: string;
-    telephone: string;
-    address: string;
-    role: RoleDTO;
+    hireDate: string;
+    telephones: TelephoneDTO[];
+    userUuid: string;
 }
