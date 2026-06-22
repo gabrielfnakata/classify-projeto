@@ -4,7 +4,10 @@ import java.time.LocalDateTime;
 
 public record ClassSessionUpdateDTO(
     String subjectTeacherId,
-    String classRoomId,
+    String classroomUuid,
     LocalDateTime startTime,
-    LocalDateTime endTime
+    LocalDateTime endTime,
+    ReportUpdateDTO report,
+    String classUuid,
+    String studentUuid
 ) {}

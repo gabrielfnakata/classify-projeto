@@ -7,7 +7,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "../ui/input-group"
 interface FormikInputProps {
     name: string;
     label?: string;
-    type?: "text" | "password" | "number";
+    type?: "text" | "password" | "number" | "date";
     className?: string;
     placeholder?: string;
     error?: string;

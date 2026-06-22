@@ -3,13 +3,10 @@ package br.com.ifsp.classify.controllers;
 import br.com.ifsp.classify.dtos.auth.LoginRequestDTO;
 import br.com.ifsp.classify.dtos.auth.LoginResponseDTO;
 import br.com.ifsp.classify.dtos.auth.RefreshRequestDTO;
-import br.com.ifsp.classify.exceptions.DtoException;
-import br.com.ifsp.classify.models.Employee;
-import br.com.ifsp.classify.repositories.EmployeeRepository;
+import br.com.ifsp.classify.models.User;
+import br.com.ifsp.classify.repositories.UserRepository;
 import br.com.ifsp.classify.security.JwtService;
-import br.com.ifsp.classify.specifications.EmployeeSpecification;
-
-import java.util.regex.Pattern;
+import br.com.ifsp.classify.specifications.UserSpecification;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,29 +19,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
     private final JwtService jwtService;
 
-    public AuthController(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
-        this.employeeRepository = employeeRepository;
-        this.passwordEncoder    = passwordEncoder;
-        this.jwtService         = jwtService;
+    public AuthController(PasswordEncoder passwordEncoder, UserRepository userRepository, JwtService jwtService) {
+        this.passwordEncoder = passwordEncoder;
+        this.userRepository = userRepository;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO body ) {
-        if (!Pattern.matches("^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$", body.cpf().trim()))
-            throw new DtoException("Formatação de CPF inválida.");
+        User user = userRepository
+            .findOne(UserSpecification.getByEmail(body.email()))
+            .orElse(null);
 
-        String formattedCpf = body.cpf().trim().replaceAll("[\\.|-]", "");
-        Employee employee = employeeRepository.findOne(EmployeeSpecification.getByCpf(formattedCpf)).orElse(null);
-        if (employee == null || !passwordEncoder.matches(body.password(), employee.getPassword()))
+        if (user == null || !passwordEncoder.matches(body.password(), user.getPassword()))
             return ResponseEntity.status(401).build();
 
-        String role = employee.getRole().getDescription();
-        String accessToken = jwtService.generateAccessToken(employee.getCpf(), role);
-        String refreshToken = jwtService.generateRefreshToken(employee.getCpf());
+        String role = user.getRole().getDescription();
+        String accessToken = jwtService.generateAccessToken(user.getEmail(), role);
+        String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
         return ResponseEntity.ok(new LoginResponseDTO(accessToken, refreshToken));
     }
@@ -54,13 +50,16 @@ public class AuthController {
         if (!jwtService.isRefreshTokenValid(body.refreshToken()))
             return ResponseEntity.status(401).build();
 
-        String cpf = jwtService.extractCpf(body.refreshToken());
-        Employee employee = employeeRepository.findOne(EmployeeSpecification.getByCpf(cpf)).orElse(null);
-        if (employee == null)
+        String email = jwtService.extractEmail(body.refreshToken());
+        User user = userRepository
+            .findOne(UserSpecification.getByEmail(email))
+            .orElse(null);
+
+        if (user == null)
             return ResponseEntity.status(401).build();
 
-        String role = employee.getRole().getDescription();
-        String accessToken = jwtService.generateAccessToken(cpf, role);
+        String role = user.getRole().getDescription();
+        String accessToken = jwtService.generateAccessToken(email, role);
 
         return ResponseEntity.ok(new LoginResponseDTO(accessToken, body.refreshToken()));
     }

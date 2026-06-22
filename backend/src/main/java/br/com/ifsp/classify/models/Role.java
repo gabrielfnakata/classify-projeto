@@ -12,36 +12,24 @@ import java.util.List;
 @Table(name = "ROLE")
 public class Role implements Serializable {
 
-    @JdbcTypeCode(SqlTypes.TINYINT)
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    @JdbcTypeCode(SqlTypes.BINARY)
-    @Column(nullable = false, unique = true)
-    private byte[] uuid;
+    @Column(length = 5)
+    private String id;
 
     @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(nullable = false, unique = true, length = 40)
+    @Column(nullable = false, length = 80)
     private String description;
 
     @OneToMany(mappedBy = "role")
-    private List<Employee> employees = new ArrayList<>();
+    private List<User> users = new ArrayList<>();
 
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
-    }
-
-    public byte[] getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(byte[] uuid) {
-        this.uuid = uuid;
     }
 
     public String getDescription() {
@@ -52,11 +40,11 @@ public class Role implements Serializable {
         this.description = description;
     }
 
-    public List<Employee> getEmployees() {
-        return employees;
+    public List<User> getUsers() {
+        return users;
     }
 
-    public void setEmployees(List<Employee> employees) {
-        this.employees = employees;
+    public void setUsers(List<User> users) {
+        this.users = users;
     }
 }

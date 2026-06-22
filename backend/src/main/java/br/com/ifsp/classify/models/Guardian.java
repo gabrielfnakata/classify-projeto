@@ -1,6 +1,10 @@
 package br.com.ifsp.classify.models;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -22,12 +26,31 @@ public class Guardian {
     private String name;
 
     @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(nullable = false, length = 11)
-    private String telephone;
+    @Column(nullable = true, length = 11)
+    private String cpf;
+
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, unique = true, length = 320)
+    private String email;
 
     @ManyToOne
-    @JoinColumn(name = "student_id")
-    private Student student;
+    @JoinColumn(name = "address_id", nullable = true)
+    private Address address;
+
+    @JdbcTypeCode(SqlTypes.BOOLEAN)
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
+
+    @ManyToMany
+    @JoinTable(
+        name = "STUDENT_GUARDIAN",
+        joinColumns = @JoinColumn(name = "guardian_id"),
+        inverseJoinColumns = @JoinColumn(name = "student_id")
+    )
+    private List<Student> students = new ArrayList<>();
+
+    @OneToMany(mappedBy = "guardian")
+    private List<Telephone> telephones = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -53,19 +76,62 @@ public class Guardian {
         this.name = name;
     }
 
-    public String getTelephone() {
-        return telephone;
+    public String getCpf() {
+        return cpf;
     }
 
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
     }
 
-    public Student getStudent() {
-        return student;
+    public String getEmail() {
+        return email;
     }
 
-    public void setStudent(Student student) {
-        this.student = student;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+
+    public List<Student> getStudents() {
+        return students;
+    }
+
+    public void setStudents(List<Student> students) {
+        this.students = students;
+    }
+
+    public List<Telephone> getTelephones() {
+        return telephones;
+    }
+
+    public void setTelephones(List<Telephone> telephones) {
+        this.telephones = telephones;
+    }
+
+    public void addStudent(Student student) {
+        if (students.add(student)) {
+            student.addGuardian(this);
+        }
+    }
+
+    public void addTelephone(Telephone telephone) {
+        telephones.add(telephone);
+        telephone.setGuardian(this);
     }
 }

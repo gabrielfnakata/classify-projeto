@@ -12,6 +12,7 @@ interface CpfInputProps {
   placeholder?: string;
   label?: string;
   isFilter?: boolean;
+  required?: boolean;
 }
 
 export default function CpfInput({...props}: CpfInputProps) {
@@ -37,7 +38,7 @@ export default function CpfInput({...props}: CpfInputProps) {
     </InputGroup>
   ) : (
     <Field>
-          {props.hasLabel ? <FieldLabel>CPF</FieldLabel> : null}
+          {props.label ? <FieldLabel>CPF</FieldLabel> : null}
           <InputMask 
             mask="999.999.999-99"
             {...field}

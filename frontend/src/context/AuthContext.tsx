@@ -20,7 +20,7 @@ export const AuthProvider = (params: { children: ReactNode }) => {
 
     async function login(values: LoginForm) {
         const response = await api.post<LoginResponseDTO>('/auth/login', {
-            cpf: values.cpf,
+            email: values.email,
             password: values.password
         });
 

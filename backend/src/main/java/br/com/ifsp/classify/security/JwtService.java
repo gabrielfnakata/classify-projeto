@@ -32,15 +32,15 @@ public class JwtService {
         this.refreshExpirationMs = refreshExpirationMs;
     }
 
-    public String generateAccessToken(String cpf, String role) {
-        return buildToken(cpf, expirationMs, Map.of(TOKEN_TYPE_CLAIM, ACCESS_TYPE, "role", role));
+    public String generateAccessToken(String email, String role) {
+        return buildToken(email, expirationMs, Map.of(TOKEN_TYPE_CLAIM, ACCESS_TYPE, "role", role));
     }
 
-    public String generateRefreshToken(String cpf) {
-        return buildToken(cpf, refreshExpirationMs, Map.of(TOKEN_TYPE_CLAIM, REFRESH_TYPE));
+    public String generateRefreshToken(String email) {
+        return buildToken(email, refreshExpirationMs, Map.of(TOKEN_TYPE_CLAIM, REFRESH_TYPE));
     }
 
-    public String extractCpf(String token) {
+    public String extractEmail(String token) {
         return parseClaims(token).getSubject();
     }
 

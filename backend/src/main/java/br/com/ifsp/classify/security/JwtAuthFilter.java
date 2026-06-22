@@ -36,11 +36,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(BEARER.length());
         if (jwtService.isAccessTokenValid(token)) {
-            String cpf = jwtService.extractCpf(token);
+            String email = jwtService.extractEmail(token);
             String role = jwtService.extractRole(token);
 
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-                    cpf,
+                    email,
                     null,
                     List.of(new SimpleGrantedAuthority("ROLE_" + role))
             );

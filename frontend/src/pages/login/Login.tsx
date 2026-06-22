@@ -9,7 +9,6 @@ import { FormikInput } from "@/components/formik-input/FormikInput";
 import { LoginValidationSchema } from "@/validation/LoginSchema";
 import { useEffect } from "react";
 import { ContentCard } from "@/components/layout/content-card";
-import CpfInput from "@/components/cpf-input/CpfInput";
 import type { LoginForm } from "@/shared/models/forms/loginForm";
 
 export default function Login() {
@@ -32,7 +31,7 @@ export default function Login() {
             <ContentCard className="card rounded-2xl w-[36.5vw] h-[64vh] g-[4vh] flex flex-col items-center justify-center">
                 <img className="w-[11.5vw] h-[16vh] mb-[5vh]" src="/react.svg" />
                 <Formik
-                    initialValues={{cpf: "", password: "", rememberMe: false}}
+                    initialValues={{email: "", password: "", rememberMe: false}}
                     validationSchema={LoginValidationSchema}
                     onSubmit={(values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
                         handleLogin(values, helpers)
@@ -41,11 +40,11 @@ export default function Login() {
                 >
                     {({isSubmitting, isValid, setFieldValue, values}) => (
                         <Form className="flex flex-col gap-[1.5vh] items-center justify-evenly">
-                            <CpfInput
-                                name="cpf"
-                                label="CPF"
-                                placeholder="XXX.XXX.XXX-XX"
-                                hasLabel={true}
+                            <FormikInput 
+                                name="email"
+                                placeholder="Email"
+                                label="Email"
+                                type="text"
                             />
                             <FormikInput
                                 name="password"
