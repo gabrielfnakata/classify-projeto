@@ -229,4 +229,28 @@ CREATE TABLE IF NOT EXISTS audit (
     CONSTRAINT audit_operation_ck CHECK (operation IN ('INSERT', 'DELETE', 'UPDATE')),
     CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES user (id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
-);
+)$$
+
+CREATE TABLE IF NOT EXISTS navigation_item (
+    id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    node_father TINYINT UNSIGNED,
+    title VARCHAR(50) NOT NULL,
+    url VARCHAR(100),
+
+    CONSTRAINT navigationItem_id_pk PRIMARY KEY (id),
+    CONSTRAINT navigationItem_nodeFather_fk FOREIGN KEY (node_father) REFERENCES navigation_item(id),
+    CONSTRAINT navigationItem_nodeFather_title_uk UNIQUE (node_father, title)
+)$$
+
+INSERT IGNORE INTO navigation_item (id, node_father, title, url) VALUES
+(1, NULL, 'Dashboard', NULL),
+(2, NULL, 'Registros', NULL),
+(3, NULL, 'Agenda',    NULL)$$
+
+INSERT IGNORE INTO navigation_item (id, node_father, title, url) VALUES
+(4, 1, 'Visão geral',   '/classes'),
+(5, 2, 'Alunos',        '/students'),
+(6, 2, 'Funcionários',  '/employees'),
+(7, 2, 'Salas',         '/classrooms'),
+(8, 2, 'Disciplinas',   '/subjects'),
+(9, 3, 'Agendamentos',  '/schedule')$$
