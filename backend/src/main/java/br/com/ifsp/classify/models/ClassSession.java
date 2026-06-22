@@ -38,13 +38,20 @@ public class ClassSession implements Serializable {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
-    @ManyToMany
-    @JoinTable(
-            name = "STUDENT_CLASS_SESSION",
-            joinColumns = @JoinColumn(name = "class_session_id"),
-            inverseJoinColumns = @JoinColumn(name = "student_id")
-    )
-    private List<Student> students = new ArrayList<>();
+    @ManyToOne
+    @JoinColumn(name = "report_id", nullable = true)
+    private Report report;
+
+    @ManyToOne
+    @JoinColumn(name = "class_id", nullable = true)
+    private Class classSessionClass;
+
+    @ManyToOne
+    @JoinColumn(name = "student_id", nullable = true)
+    private Student student;
+
+    @OneToMany(mappedBy = "classSession")
+    private List<Assessment> assessments = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -94,11 +101,35 @@ public class ClassSession implements Serializable {
         this.endTime = endTime;
     }
 
-    public List<Student> getStudents() {
-        return students;
+    public Report getReport() {
+        return report;
     }
 
-    public void setStudents(List<Student> students) {
-        this.students = students;
+    public void setReport(Report report) {
+        this.report = report;
+    }
+
+    public Class getClassSessionClass() {
+        return classSessionClass;
+    }
+
+    public void setClassSessionClass(Class classSessionClass) {
+        this.classSessionClass = classSessionClass;
+    }
+
+    public Student getStudent() {
+        return student;
+    }
+
+    public void setStudent(Student student) {
+        this.student = student;
+    }
+
+    public List<Assessment> getAssessments() {
+        return assessments;
+    }
+
+    public void setAssessments(List<Assessment> assessments) {
+        this.assessments = assessments;
     }
 }

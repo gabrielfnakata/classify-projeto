@@ -26,7 +26,7 @@ public abstract class AbstractController<CreateDTO, GetDTO, UpdateDTO> {
 
     @GetMapping("/{uuid}")
     public ResponseEntity<GetDTO> findById( @PathVariable String uuid ) {
-        GetDTO entity = service.findById(uuid);
+        GetDTO entity = service.getById(uuid);
 
         return (entity != null)
                 ? ResponseEntity.ok(entity)

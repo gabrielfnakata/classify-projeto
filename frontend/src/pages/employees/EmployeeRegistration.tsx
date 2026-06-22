@@ -7,9 +7,7 @@ import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO";
 export default function EmployeeRegistration() {
     const columns: DataTableColumn<EmployeeDTO>[] = [
         {key: 'name', header: 'Nome', cell: row => row.name},
-        {key: 'cpf', header: 'CPF', cell: row => row.cpf},
-        {key: 'email', header: 'E-mail', cell: row => row.email},
-        {key: 'role', header: 'Cargo', cell: row => row.role.description}
+        {key: 'cpf', header: 'CPF', cell: row => row.cpf}
     ];
     const filters: FilterConfig[] = [
         {name: 'name', inputType: 'text', placeholder: 'Nome', width: 25},

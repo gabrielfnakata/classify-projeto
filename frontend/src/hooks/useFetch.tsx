@@ -10,6 +10,11 @@ export default function useFetch<T>(url: string) {
         setLoading(true);
         api.get(url, {data: {}})
         .then((response) => {
+            if (response.status === 204) {
+                setData(null);
+                return;
+            }
+            
             setData(response.data);
         })
         .catch((error) => {

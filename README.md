@@ -23,10 +23,11 @@ docker ps
 ## Acessando a Aplicação
 Por padrão, ao iniciar um novo projeto, um usuário de administrador é criado para que você tenha livre acesso à aplicação. Suas credenciais são:
 
-- **CPF**: 111.111.111-11
+- **Email**: admin@gmail.com
 - **Senha**: 123456aA
 
 ## Observações
+- Na criação de entidades que exigem CPF, será necessário utilizar um gerador de CPF aleatório, pois ele só aceita sequências válidas.
 - No frontend, não é necessário utilizar a extensão **Dev Containers** para utilizar a modificação em tempo real. Já para o backend, ela é necessária.
 - **Just** é apenas um executador de comandos, não é necessário tê-lo instalado para rodar o projeto. É possível ver os seus comandos no arquivo `justfile` na raiz do projeto.
 - Alterações em dependências ainda necessitam de _rebuild_. Faça-o, por meio do comando `just build`.

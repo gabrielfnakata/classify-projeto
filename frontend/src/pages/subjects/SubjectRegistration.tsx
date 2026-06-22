@@ -5,8 +5,12 @@ import useFetch from "@/hooks/useFetch";
 import type { SubjectDTO } from "@/shared/dtos/subject/SubjectDTO";
 
 export default function SubjectRegistration() {
-    const columns: DataTableColumn<SubjectDTO>[] = [];
-    const filters: FilterConfig[] = [];
+    const columns: DataTableColumn<SubjectDTO>[] = [
+        {key: 'description', header: 'Descrição', cell: row => row.description}
+    ];
+    const filters: FilterConfig[] = [
+        {name: 'description', inputType: 'text', placeholder: 'Descrição', width: 50},
+    ];
     const {data} = useFetch<SubjectDTO>('/subject');
     return (
         <>

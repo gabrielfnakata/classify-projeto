@@ -1,13 +1,14 @@
 package br.com.ifsp.classify.dtos.get;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 public record ClassSessionGetDTO(
         String uuid,
-        ClassSessionSubjectTeacherGetDTO subjectTeacher,
-        ClassSessionClassroomGetDTO classroom,
+        SubjectTeacherGetDTO subjectTeacher,
+        String classroomUuid,
         LocalDateTime startTime,
         LocalDateTime endTime,
-        List<ClassSessionStudentGetDTO> students
+        ReportGetDTO report,
+        ClassGetDTO classDTO,
+        StudentGetDTO student
 ) {}

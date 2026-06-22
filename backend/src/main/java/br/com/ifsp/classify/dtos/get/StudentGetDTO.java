@@ -7,9 +7,9 @@ public record StudentGetDTO(
         String uuid,
         String name,
         LocalDate birthDate,
-        LocalDate registrationDate,
         String email,
-        String telephone,
-        String address,
-        List<GuardianGetDTO> guardians
+        String cpf,
+        LocalDate registrationDate,
+        List<GuardianGetDTO> guardians,
+        List<TelephoneGetDTO> telephones
 ) {}

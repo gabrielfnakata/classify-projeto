@@ -1,14 +1,13 @@
 package br.com.ifsp.classify.dtos.create;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record EmployeeCreateDTO(
         String name,
-        String password,
-        String cpf,
         LocalDate birthDate,
-        String email,
-        String telephone,
-        String address,
-        String roleId
+        String cpf,
+        LocalDate hireDate,
+        UserCreateDTO user,
+        List<TelephoneCreateDTO> telephones
 ) {}
