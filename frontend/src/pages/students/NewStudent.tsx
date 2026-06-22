@@ -50,7 +50,7 @@ export default function NewStudent<StudentCreateDTO>() {
 
     return (
         <NewEntityPage
-            title="Alunos"
+            title="Novo Aluno"
             fields={fields}
             backRoute="/students"
             initialFormValue={initialFormValue}

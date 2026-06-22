@@ -43,10 +43,10 @@ export default function NewEntityPage<T>({
             <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
                 <div className="flex flex-row w-4/5 items-center justify-between">
                     <PageHeader
-                        title={`Novo ${title}`}
+                        title={`${title}`}
                     />
                 </div>
-                <ContentCard className="flex flex-col w-4/5 h-[64vh] p-8 gap-[4vh]">
+                <ContentCard className="flex flex-col w-4/5 h-fit-content p-8 gap-[4vh]">
                     <Formik
                         initialValues={initialFormValue}
                         onSubmit={handleSubmit}

@@ -22,7 +22,7 @@ export default function ClassroomRegistration() {
                 data={data ?? []} 
                 columns={columns}
                 filters={filters}
-                title="Salas de Aula"
+                title="Sala de Aula"
                 registrationRoute="/new-classroom"
             >
             </RegistrationPage>  

@@ -37,7 +37,7 @@ export default function NewClassroom() {
 
     return (
         <NewEntityPage
-            title="Salas de Aula"
+            title="Nova Sala de Aula"
             fields={fields}
             backRoute="/classrooms"
             buildPayload={buildPayload}

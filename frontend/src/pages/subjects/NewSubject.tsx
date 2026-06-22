@@ -28,7 +28,7 @@ export default function NewSubject() {
 
     return (
         <NewEntityPage
-            title="Disciplina"
+            title="Nova Disciplina"
             fields={fields}
             backRoute="/subjects"
             initialFormValue={initialFormValue}

@@ -65,7 +65,7 @@ export default function NewEmployee() {
 
     return (
         <NewEntityPage
-            title="Funcionário"
+            title="Novo Funcionário"
             fields={fields}
             backRoute="/employees"
             initialFormValue={initialFormValue}
