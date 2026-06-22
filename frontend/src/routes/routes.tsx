@@ -57,7 +57,7 @@ export default function AppRoutes() {
             <Route path="/new-classroom" element={
                 <ProtectedRoute children={<OnDevelopment />} />
             }/>
-            <Route path="/agendamentos" element={
+            <Route path="/scheduling" element={
                 <ProtectedRoute children={<SchedulePage />} />
             }/>
         </Routes>
