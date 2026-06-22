@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS subject_teacher (
 
 	CONSTRAINT subjectTeacher_id_pk PRIMARY KEY (id),
 	CONSTRAINT subjectTeacher_uuid_uk UNIQUE (uuid),
-	CONSTRAINT subjectTeacher_idEmp_fk FOREIGN KEY (employee_id) REFERENCES student(id),
+	CONSTRAINT subjectTeacher_idEmp_fk FOREIGN KEY (employee_id) REFERENCES employee(id),
 	CONSTRAINT subjectTeacher_idSubj_fk FOREIGN KEY (subject_id) REFERENCES subject(id),
 	CONSTRAINT subjectTeacher_idEmp_idSubj_uk UNIQUE (employee_id, subject_id)
 )$$
