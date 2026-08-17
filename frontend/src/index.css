@@ -5,6 +5,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* pode alterar tudo */
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: "Noto Sans Variable", sans-serif;
