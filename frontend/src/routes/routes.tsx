@@ -14,6 +14,9 @@ import { PublicShell } from "@/components/layout/public-shell";
 import NewSubject from "@/pages/subjects/NewSubject";
 import NewStudent from "@/pages/students/NewStudent";
 import NewClassroom from "@/pages/classrooms/NewClassroom";
+import AdminDashboard from "@/pages/dashboard/AdminDashboard";
+import TeacherDashboard from "@/pages/dashboard/TeacherDashboard";
+import StudentDashboard from "@/pages/dashboard/StudentDashboard";
 
 export default function AppRoutes() {
     return (
@@ -30,6 +33,15 @@ export default function AppRoutes() {
             {/* Rotas protegidas */}
             <Route path="/classes" element={
                 <ProtectedRoute children={<OnDevelopment />} />
+            }/>
+            <Route path="/dashboard/admin" element={
+                <ProtectedRoute children={<AdminDashboard />} />
+            }/>
+            <Route path="/dashboard/teacher" element={
+                <ProtectedRoute children={<TeacherDashboard />} />
+            }/>
+            <Route path="/dashboard/student" element={
+                <ProtectedRoute children={<StudentDashboard />} />
             }/>
             <Route path="/account" element={
                 <ProtectedRoute children={<OnDevelopment />} />
