@@ -133,6 +133,15 @@
 
   --info: oklch(0.9 0.035 230);
   --info-foreground: oklch(0.36 0.065 230);
+
+  --viz-series-1: #2a78d6;
+  --viz-series-2: #eb6834;
+  --viz-series-3: #1baf7a;
+  --viz-series-4: #eda100;
+  --viz-series-5: #e87ba4;
+  --viz-series-6: #008300;
+  --viz-series-7: #4a3aa7;
+  --viz-series-8: #e34948;
 }
 
 .dark {
@@ -192,6 +201,15 @@
 
   --info: oklch(0.34 0.045 230);
   --info-foreground: oklch(0.93 0.02 230);
+
+  --viz-series-1: #3987e5;
+  --viz-series-2: #d95926;
+  --viz-series-3: #199e70;
+  --viz-series-4: #c98500;
+  --viz-series-5: #d55181;
+  --viz-series-6: #008300;
+  --viz-series-7: #9085e9;
+  --viz-series-8: #e66767;
 }
 
 
