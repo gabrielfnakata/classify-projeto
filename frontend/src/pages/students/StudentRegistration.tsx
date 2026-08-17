@@ -9,7 +9,13 @@ export default function StudentRegistration() {
         {key: 'name', header: 'Nome', cell: row => row.name},
         {key: 'email', header: 'E-mail', cell: row => row.email},
         {key: 'cpf', header: 'CPF', cell: row => row.cpf},
-        {key: 'telephone', header: 'Telefone', cell: row => `${row.telephones.at(0)?.ddd}-${row.telephones.at(0)?.number}`},
+        {key: 'telephone',header: 'Telefone',
+            cell: row => {
+                const tel = row.telephones.at(0);
+                if (!tel || !tel.number) return '';
+                return tel.ddd ? `${tel.ddd}-${tel.number}` : tel.number;
+            }
+        },
     ];
     const filters: FilterConfig[] = [
         {name: 'name', inputType: 'text', placeholder: 'Nome', width: 25},

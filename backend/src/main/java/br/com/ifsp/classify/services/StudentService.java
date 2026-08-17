@@ -1,12 +1,29 @@
 package br.com.ifsp.classify.services;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
-import br.com.ifsp.classify.dtos.get.AddressGetDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
-import br.com.ifsp.classify.dtos.get.TelephoneGetDTO;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
@@ -17,12 +34,11 @@ import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, Long> {
+
+    private static final DateTimeFormatter BR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final TelephoneService telephoneService;
     private final AddressService addressService;
@@ -241,5 +257,255 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         }
 
         return newGuardian;
+    }
+
+    public byte[] generateTemplate() {
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            var sheet = workbook.createSheet("students");
+            var header = sheet.createRow(0);
+            String[] headers = new String[]{"name","birthDate","email","cpf","registrationDate","telephone1","telephone2"};
+            var textFormat = workbook.createCellStyle();
+            textFormat.setDataFormat(workbook.createDataFormat().getFormat("@"));
+
+            for (int i = 0; i < headers.length; i++) {
+                var cell = header.createCell(i);
+                cell.setCellValue(headers[i]);
+                sheet.autoSizeColumn(i);
+            }
+
+            int[] textColumns = {1, 3, 4, 5, 6};
+            for (int col : textColumns) {
+                sheet.setDefaultColumnStyle(col, textFormat);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (Exception ex) {
+            throw new RuntimeException("Erro ao gerar template de planilha", ex);
+        }
+    }
+
+    public record ImportError(int row, String reason) {}
+
+    public record ImportResult(List<StudentGetDTO> created, List<ImportError> errors) {}
+
+    public ImportResult importFromExcel(MultipartFile file) {
+        if (file == null || file.isEmpty())
+            return new ImportResult(Collections.emptyList(), Collections.emptyList());
+
+        try (InputStream in = file.getInputStream();
+             Workbook workbook = WorkbookFactory.create(in)) {
+
+            var sheet = workbook.getSheetAt(0);
+            List<StudentGetDTO> imported = new ArrayList<>();
+            List<ImportError> errors = new ArrayList<>();
+
+            for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+                var row = sheet.getRow(r);
+                if (row == null) continue;
+
+                int humanRow = r + 1;
+
+                try {
+                    String name = getCellString(row, 0);
+
+                    if (Utils.isNullOrEmpty(name)) continue;
+
+                    String birthDateStr = getCellString(row, 1);
+                    String email = getCellString(row, 2);
+                    String cpf = getCellString(row, 3);
+                    String registrationDateStr = getCellString(row, 4);
+                    String telephone1 = getCellString(row, 5);
+                    String telephone2 = getCellString(row, 6);
+
+                    LocalDate birthDate = parseDate(birthDateStr);
+                    LocalDate registrationDate = parseDate(registrationDateStr);
+
+                    List<TelephoneCreateDTO> telephones = new ArrayList<>();
+                    if (!Utils.isNullOrEmpty(telephone1))
+                        telephones.add(new TelephoneCreateDTO(null, null, Utils.removeAllNonDigits(telephone1)));
+                    if (!Utils.isNullOrEmpty(telephone2))
+                        telephones.add(new TelephoneCreateDTO(null, null, Utils.removeAllNonDigits(telephone2)));
+
+                    var studentDTO = new StudentCreateDTO(
+                            name,
+                            birthDate,
+                            email,
+                            cpf,
+                            registrationDate,
+                            telephones,
+                            null
+                    );
+
+                    StudentGetDTO created = create(studentDTO);
+                    if (created != null) imported.add(created);
+
+                } catch (DtoException dtoEx) {
+                    errors.add(new ImportError(humanRow, dtoEx.getMessage()));
+                } catch (Exception rowEx) {
+                    String reason = (rowEx.getCause() != null)
+                            ? rowEx.getCause().getMessage()
+                            : rowEx.getMessage();
+                    errors.add(new ImportError(humanRow, reason != null ? reason : "Erro desconhecido ao processar a linha"));
+                }
+            }
+
+            return new ImportResult(imported, errors);
+        } catch (Exception ex) {
+            throw new RuntimeException("Erro ao importar alunos da planilha", ex);
+        }
+    }
+
+    public List<Map<String, String>> previewFromExcel(MultipartFile file) {
+        if (file == null || file.isEmpty())
+            return Collections.emptyList();
+
+        try (InputStream in = file.getInputStream();
+             Workbook workbook = WorkbookFactory.create(in)) {
+
+            var sheet = workbook.getSheetAt(0);
+            List<Map<String, String>> preview = new ArrayList<>();
+
+            for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+                var row = sheet.getRow(r);
+                if (row == null) continue;
+
+                String name = getCellString(row, 0);
+                if (Utils.isNullOrEmpty(name)) continue;
+
+                Map<String, String> rowData = new LinkedHashMap<>();
+                rowData.put("name", name);
+                rowData.put("birthDate", getCellString(row, 1));
+                rowData.put("email", getCellString(row, 2));
+                rowData.put("cpf", getCellString(row, 3));
+                rowData.put("registrationDate", getCellString(row, 4));
+                rowData.put("telephone1", getCellString(row, 5));
+                rowData.put("telephone2", getCellString(row, 6));
+
+                preview.add(rowData);
+            }
+
+            return preview;
+        } catch (Exception ex) {
+            throw new RuntimeException("Erro ao gerar pré-visualização", ex);
+        }
+    }
+
+    public byte[] exportToExcel(List<StudentGetDTO> students) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            var sheet = workbook.createSheet("students");
+            var header = sheet.createRow(0);
+            String[] headers = new String[]{"name","birthDate","email","cpf","registrationDate","telephone1","telephone2"};
+
+            for (int i = 0; i < headers.length; i++) {
+                var cell = header.createCell(i);
+                cell.setCellValue(headers[i]);
+            }
+
+            int rownum = 1;
+            for (StudentGetDTO s : students) {
+                var row = sheet.createRow(rownum++);
+                row.createCell(0).setCellValue(s.name() != null ? s.name() : "");
+                row.createCell(1).setCellValue(s.birthDate() != null ? s.birthDate().format(BR_DATE_FORMAT) : "");
+                row.createCell(2).setCellValue(s.email() != null ? s.email() : "");
+                row.createCell(3).setCellValue(s.cpf() != null ? s.cpf() : "");
+                row.createCell(4).setCellValue(s.registrationDate() != null ? s.registrationDate().format(BR_DATE_FORMAT) : "");
+
+                String tel1 = "";
+                String tel2 = "";
+                if (s.telephones() != null && !s.telephones().isEmpty()) {
+                    if (s.telephones().size() > 0) tel1 = s.telephones().get(0).number();
+                    if (s.telephones().size() > 1) tel2 = s.telephones().get(1).number();
+                }
+
+                row.createCell(5).setCellValue(tel1);
+                row.createCell(6).setCellValue(tel2);
+            }
+
+            for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (Exception ex) {
+            throw new RuntimeException("Erro ao exportar alunos para planilha", ex);
+        }
+    }
+
+    public List<StudentGetDTO> findAllFiltered(Map<String,String> filters) {
+        List<StudentGetDTO> all = this.findAll();
+        if (filters == null || filters.isEmpty()) return all;
+
+        String name = filters.getOrDefault("name", "").trim().toLowerCase();
+        String email = filters.getOrDefault("email", "").trim().toLowerCase();
+        String cpf = filters.getOrDefault("cpf", "").trim().replaceAll("\\D", "");
+        String telephone = filters.getOrDefault("telephone", "").trim();
+        String birthDate = filters.getOrDefault("birthDate", "").trim();
+
+        return all.stream().filter(s -> {
+            boolean ok = true;
+            if (!name.isEmpty()) ok &= s.name() != null && s.name().toLowerCase().contains(name);
+            if (!email.isEmpty()) ok &= s.email() != null && s.email().toLowerCase().contains(email);
+            if (!cpf.isEmpty()) ok &= s.cpf() != null && s.cpf().replaceAll("\\D", "").contains(cpf);
+            if (!telephone.isEmpty()) {
+                ok &= (s.telephones() != null && s.telephones().stream().anyMatch(t -> t.number() != null && t.number().contains(telephone)));
+            }
+            if (!birthDate.isEmpty()) {
+                ok &= (s.birthDate() != null && s.birthDate().toString().equals(birthDate));
+            }
+            return ok;
+        }).toList();
+    }
+
+    private String getCellString(Row row, int idx) {
+        Cell cell = row.getCell(idx);
+        if (cell == null) return null;
+
+        switch (cell.getCellType()) {
+            case STRING:
+                String s = cell.getStringCellValue();
+                return (s != null && !s.isBlank()) ? s.trim() : null;
+
+            case NUMERIC:
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    LocalDate date = cell.getLocalDateTimeCellValue().toLocalDate();
+                    return date.format(BR_DATE_FORMAT);
+                }
+                double num = cell.getNumericCellValue();
+                if (num == Math.floor(num)) {
+                    return String.valueOf((long) num);
+                }
+                return String.valueOf(num);
+
+            case FORMULA:
+                try {
+                    return cell.getStringCellValue().trim();
+                } catch (Exception ex) {
+                    return String.valueOf(cell.getNumericCellValue());
+                }
+
+            case BLANK:
+                return null;
+
+            default:
+                return cell.toString().trim();
+        }
+    }
+
+    private LocalDate parseDate(String s) {
+        if (Utils.isNullOrEmpty(s)) return null;
+
+        try {
+            return LocalDate.parse(s, BR_DATE_FORMAT);
+        } catch (Exception ex) {
+            try {
+                return LocalDate.parse(s);
+            } catch (Exception e) {
+                return null;
+            }
+        }
     }
 }
