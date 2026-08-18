@@ -10,7 +10,7 @@ export function ContentCard({ children, className }: ContentCardProps) {
   return (
     <div
       className={cn(
-        "rounded-[22px] border border-border bg-panel-soft p-6 text-card-foreground shadow-sm transition-colors",
+        "rounded-[22px] border border-border bg-card p-6 text-card-foreground shadow-sm transition-colors",
         className
       )}
     >

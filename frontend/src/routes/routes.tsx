@@ -43,6 +43,9 @@ export default function AppRoutes() {
             {/* <Route path="/schedule" element={
                 <ProtectedRoute children={<ClassRegistration />} />
             }/> */}
+            <Route path="/home" element={
+                <ProtectedRoute children={<OnDevelopment />} />
+            }/>
             <Route path="/new-class-session" element={
                 <ProtectedRoute children={<OnDevelopment />} />
             }/>

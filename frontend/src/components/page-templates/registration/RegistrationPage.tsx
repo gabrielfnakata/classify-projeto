@@ -38,18 +38,18 @@ export default function RegistrationPage<T extends dataType>({
         <>
             <div className="flex flex-col background h-full w-full items-center justify-center">
                 <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
-                    <div className="flex flex-row w-4/5 items-center justify-between">
+                    <div className="flex flex-row w-9/10 items-center justify-between">
                     <PageHeader
                         title={`Registro de ${title}`}
                         action={
-                            <Button className="h-10 px-5 rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
+                            <Button className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
                                 <Plus></Plus>
                                 Criar novo registro
                             </Button>
                         }
                     />
                     </div> 
-                    <ContentCard className="flex flex-col w-4/5 h-[64vh] p-8 gap-[4vh]">
+                    <ContentCard className="flex flex-col w-9/10 h-[70vh] p-8 gap-[4vh]">
                             <FilterRow
                             filters={filters}
                             onSubmit={() => {}}

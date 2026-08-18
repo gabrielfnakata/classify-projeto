@@ -35,10 +35,10 @@ export function NavUser() {
   const { theme, setTheme } = useTheme();
 
   const user = {
-    name: userData?.email,
-    cargo: userData?.role,
+    name: userData?.email ?? "Placeholder",
+    cargo: userData?.role ?? "Placeholder",
     avatar: "usuario-logado",
-  }
+  };
 
   return (
     <SidebarMenu>

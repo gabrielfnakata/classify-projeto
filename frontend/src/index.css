@@ -17,6 +17,12 @@
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
 
+  --color-table: var(--table);
+  --color-table-foreground: var(--table-foreground);
+  --color-table-header: var(--table-header);
+
+  --color-button-background: var(--button-background);
+
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
 
@@ -83,14 +89,20 @@
 :root {
   --sidebar-background-base: rgba(7, 60, 57, 0.341);
   --sidebar-background-gradient: rgba(0, 60, 137, 0.259);
-  --sidebar-primary: #0A4E4A;
+  --sidebar-primary: rgb(10, 78, 74);
   --sidebar-secondary: rgba(40, 102, 99, 0.2);
 
-  --background: oklch(0.96 0.008 235);
+  --background: rgb(248, 253, 255);
   --foreground: oklch(0.28 0.04 240);
 
-  --card: oklch(0.98 0.004 230);
+  --card: rgb(243, 246, 247);
   --card-foreground: oklch(0.28 0.04 240);
+
+  --table: rgba(246, 249, 251);
+  --table-foreground: rgb(94, 128, 152);
+  --table-header: rgb(255, 255, 255);
+
+  --button-background: rgb(42, 92, 132);
 
   --popover: oklch(0.99 0.002 230);
   --popover-foreground: oklch(0.28 0.04 240);
@@ -146,16 +158,22 @@
 }
 
 .dark {
-  --sidebar-background-base: rgba(7, 60, 57, 0.341);
-  --sidebar-background-gradient: rgba(0, 60, 137, 0.259);
-  --sidebar-primary: #0A4E4A;
-  --sidebar-secondary: rgba(40, 102, 99, 0.2);
+  --sidebar-background-base: rgb(63, 65, 67);
+  --sidebar-background-gradient: rgb(63, 65, 67);
+  --sidebar-primary: rgb(255, 255, 255);
+  --sidebar-secondary: rgb(48, 51, 53);
 
-  --background: oklch(0.18 0.014 255);
+  --background: rgb(56, 57, 58);
   --foreground: oklch(0.95 0.004 230);
 
-  --card: oklch(0.22 0.014 250);
+  --card: rgb(59, 61, 63);
   --card-foreground: oklch(0.95 0.004 230);
+
+  --table: rgb(65, 67, 69);
+  --table-foreground: rgb(133, 139, 139);
+  --table-header: rgba(39, 40, 42);
+
+  --button-background: rgb(214, 214, 214);
 
   --popover: oklch(0.21 0.014 250);
   --popover-foreground: oklch(0.95 0.004 230);
@@ -220,6 +238,17 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
   }
 }
 

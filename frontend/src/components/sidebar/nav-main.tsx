@@ -42,7 +42,7 @@ export function NavMain( {group}: { group: Group } ) {
     <Collapsible open={state === 'collapsed' ? false : open} defaultOpen={false} onOpenChange={() => setOpen(!open)} className="group/collapsible">
       <SidebarGroup className="group-data-[collapsible=icon]:p-2">
         <CollapsibleTrigger asChild className="group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:mx-auto">
-          <div className="flex h-full w-full px-2 py-3 cursor-pointer items-center justify-between group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-0 hover:bg-sidebar-secondary rounded-md">
+          <div className="flex h-full w-full px-2 py-3 cursor-pointer items-center justify-between group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-0 hover:bg-sidebar-secondary rounded-md transition-colors">
             <SidebarGroupLabel className="flex gap-3 text-base text-sidebar-primary font-bold">
               {groupIcon}
               <span className="group-data-[collapsible=icon]:hidden">
