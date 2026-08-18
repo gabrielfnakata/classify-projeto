@@ -3,6 +3,7 @@ import {
   Settings,
   LogOut,
   ChevronsUpDown,
+  Moon,
 } from "lucide-react"
 
 import { Avatar } from "@/components/common/avatar"
@@ -24,16 +25,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useTheme } from "../theme-provider"
 
 export function NavUser() {
   const { isMobile, state } = useSidebar()
   const isCollapsed = state === "collapsed"
-  const { logout } = useAuth()
+  const { userData, logout } = useAuth()
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme();
 
   const user = {
-    name: "Nome da pessoa",
-    cargo: "Cargo",
+    name: userData?.email,
+    cargo: userData?.role,
     avatar: "usuario-logado",
   }
 
@@ -77,6 +80,10 @@ export function NavUser() {
               <DropdownMenuItem onClick={() => navigate("/account")}>
                 <BadgeCheck className="mr-2 size-4" />
                 Conta
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                <Moon className="mr-2 size-4" />
+                Tema
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/settings")}>
                 <Settings className="mr-2 size-4" />

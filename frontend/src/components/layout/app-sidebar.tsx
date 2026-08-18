@@ -40,7 +40,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="relative sticky top-0 h-svh border-r border-sidebar-border cursor-pointer group-data-[state=expanded]:cursor-default"
+      className="relative sticky top-0 h-svh border-r border-sidebar-border cursor-pointer group-data-[state=expanded]:cursor-default bg-linear-to-t from-sidebar-background to-sidebar-gradient to-85%"
       style={{ "--sidebar-width-icon": "55px" } as React.CSSProperties}
       onClick={() => {
         if (isCollapsed) setOpen(true)
