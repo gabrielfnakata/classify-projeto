@@ -4,7 +4,10 @@ export const mainNavigation = [
   {
     title: "Dashboard",
     icon: LayoutDashboard,
-    items: [{ title: "Visão geral", url: "/classes" }],
+    items: [
+      { title: "Visão geral", url: "/classes" },
+      { title: "Visão do Aluno", url: "/student-dashboard" },
+    ],
   },
   {
     title: "Registros",

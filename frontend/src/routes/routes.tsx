@@ -14,6 +14,7 @@ import { PublicShell } from "@/components/layout/public-shell";
 import NewSubject from "@/pages/subjects/NewSubject";
 import NewStudent from "@/pages/students/NewStudent";
 import NewClassroom from "@/pages/classrooms/NewClassroom";
+import StudentDashboard from "@/pages/student-dashboard/StudentDashboard";
 
 export default function AppRoutes() {
     return (
@@ -72,6 +73,9 @@ export default function AppRoutes() {
             }/>
             <Route path="/schedule" element={
                 <ProtectedRoute children={<SchedulePage />} />
+            }/>
+            <Route path="/student-dashboard" element={
+                <ProtectedRoute children={<StudentDashboard />} />
             }/>
         </Routes>
     )
