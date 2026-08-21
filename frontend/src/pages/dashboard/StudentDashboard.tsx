@@ -18,7 +18,7 @@ import { EmptyState } from "@/components/common/empty-state"
 import { SelectField } from "@/components/common/select-field"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
-import type { ClassSessionDashboardDTO } from "@/shared/dtos/class-session/ClassSessionDashboardDTO"
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 import { formatYMD } from "@/shared/utils/date-formatter"
 import {
   buildCategoryBreakdown,
@@ -34,7 +34,7 @@ import { mockAttendance, mockGrade, mockGradeEvolution } from "@/shared/utils/mo
 
 export default function StudentDashboard() {
   const { data: students } = useFetch<StudentDTO>("/student")
-  const { data: sessions } = useFetch<ClassSessionDashboardDTO>("/classsession")
+  const { data: sessions } = useFetch<ClassSessionDTO>("/classsession")
   const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
 
   const [selectedUuid, setSelectedUuid] = useState<string>("")

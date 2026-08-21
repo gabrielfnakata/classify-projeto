@@ -1,8 +1,8 @@
-import type { ClassSessionDashboardDTO } from "@/shared/dtos/class-session/ClassSessionDashboardDTO"
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 import type { ShiftValue } from "@/lib/shift-options"
 import { formatDateLabel, formatShortDate, formatYMD } from "./date-formatter"
 
-function sessionStart(session: ClassSessionDashboardDTO): Date {
+function sessionStart(session: ClassSessionDTO): Date {
   return new Date(session.startTime as unknown as string)
 }
 
@@ -22,7 +22,7 @@ export function filterByPeriod<T>(items: T[], days: number, dateFn: (item: T) =>
   })
 }
 
-export function filterSessionsByPeriod(sessions: ClassSessionDashboardDTO[], days: number): ClassSessionDashboardDTO[] {
+export function filterSessionsByPeriod(sessions: ClassSessionDTO[], days: number): ClassSessionDTO[] {
   return filterByPeriod(sessions, days, sessionStart)
 }
 
@@ -59,7 +59,7 @@ export function buildDailyTrendFromDates(dates: Date[], days: number): TrendPoin
   return points
 }
 
-export function buildDailyTrend(sessions: ClassSessionDashboardDTO[], days: number): TrendPoint[] {
+export function buildDailyTrend(sessions: ClassSessionDTO[], days: number): TrendPoint[] {
   return buildDailyTrendFromDates(sessions.map(sessionStart), days)
 }
 
@@ -71,8 +71,8 @@ export interface CategoryDatum {
 }
 
 export function buildCategoryBreakdown(
-  sessions: ClassSessionDashboardDTO[],
-  keyFn: (session: ClassSessionDashboardDTO) => string,
+  sessions: ClassSessionDTO[],
+  keyFn: (session: ClassSessionDTO) => string,
   limit = 6
 ): CategoryDatum[] {
   const counts = new Map<string, number>()
@@ -108,11 +108,11 @@ function buildOrderedBreakdown<T>(
 // Dia da semana
 export const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
 
-export function buildWeekdayBreakdown(sessions: ClassSessionDashboardDTO[]): CategoryDatum[] {
+export function buildWeekdayBreakdown(sessions: ClassSessionDTO[]): CategoryDatum[] {
   return buildOrderedBreakdown(sessions, WEEKDAY_LABELS, (s) => WEEKDAY_LABELS[sessionStart(s).getDay()])
 }
 
-export function filterSessionsByWeekdays(sessions: ClassSessionDashboardDTO[], weekdays: number[]): ClassSessionDashboardDTO[] {
+export function filterSessionsByWeekdays(sessions: ClassSessionDTO[], weekdays: number[]): ClassSessionDTO[] {
   if (weekdays.length === 0) return sessions
   return sessions.filter((s) => weekdays.includes(sessionStart(s).getDay()))
 }
@@ -126,14 +126,14 @@ const SHIFT_LABELS: Record<Exclude<ShiftValue, "all">, string> = {
 
 const SHIFT_ORDER: Exclude<ShiftValue, "all">[] = ["morning", "afternoon", "night"]
 
-function sessionShift(session: ClassSessionDashboardDTO): Exclude<ShiftValue, "all"> {
+function sessionShift(session: ClassSessionDTO): Exclude<ShiftValue, "all"> {
   const hour = sessionStart(session).getHours()
   if (hour >= 6 && hour < 12) return "morning"
   if (hour >= 12 && hour < 18) return "afternoon"
   return "night"
 }
 
-export function buildShiftBreakdown(sessions: ClassSessionDashboardDTO[]): CategoryDatum[] {
+export function buildShiftBreakdown(sessions: ClassSessionDTO[]): CategoryDatum[] {
   return buildOrderedBreakdown(
     sessions,
     SHIFT_ORDER.map((shift) => SHIFT_LABELS[shift]),
@@ -141,7 +141,7 @@ export function buildShiftBreakdown(sessions: ClassSessionDashboardDTO[]): Categ
   )
 }
 
-export function filterSessionsByShift(sessions: ClassSessionDashboardDTO[], shift: ShiftValue): ClassSessionDashboardDTO[] {
+export function filterSessionsByShift(sessions: ClassSessionDTO[], shift: ShiftValue): ClassSessionDTO[] {
   if (shift === "all") return sessions
   return sessions.filter((s) => sessionShift(s) === shift)
 }

@@ -19,7 +19,7 @@ import { EmptyState } from "@/components/common/empty-state"
 import { SelectField } from "@/components/common/select-field"
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
-import type { ClassSessionDashboardDTO } from "@/shared/dtos/class-session/ClassSessionDashboardDTO"
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 import { formatYMD } from "@/shared/utils/date-formatter"
 import {
   buildCategoryBreakdown,
@@ -32,7 +32,7 @@ import {
 } from "@/shared/utils/session-analytics"
 import { classroomNameMap, resolveClassroomName, sessionStudents } from "@/shared/utils/class-session-helpers"
 
-function sessionDate(dto: ClassSessionDashboardDTO): string {
+function sessionDate(dto: ClassSessionDTO): string {
   return formatYMD(new Date(dto.startTime as unknown as string))
 }
 
@@ -45,7 +45,7 @@ function formatTime(value: unknown): string {
 
 export default function TeacherDashboard() {
   const { data: subjectTeachers } = useFetch<SubjectTeacherDTO>("/subjectteacher")
-  const { data: sessions } = useFetch<ClassSessionDashboardDTO>("/classsession")
+  const { data: sessions } = useFetch<ClassSessionDTO>("/classsession")
   const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
 
   const teachers = useMemo(() => {

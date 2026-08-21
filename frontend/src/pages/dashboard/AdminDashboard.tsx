@@ -42,7 +42,7 @@ import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO"
 import type { SubjectDTO } from "@/shared/dtos/subject/SubjectDTO"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
-import type { ClassSessionDashboardDTO } from "@/shared/dtos/class-session/ClassSessionDashboardDTO"
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 
 const AGE_BUCKETS = [
   { label: "Até 10 anos", min: 0, max: 10 },
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
   const { data: subjects } = useFetch<SubjectDTO>("/subject")
   const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
   const { data: subjectTeachers } = useFetch<SubjectTeacherDTO>("/subjectteacher")
-  const { data: sessions } = useFetch<ClassSessionDashboardDTO>("/classsession")
+  const { data: sessions } = useFetch<ClassSessionDTO>("/classsession")
 
   const [period, setPeriod] = useState<PeriodValue>("30")
   const [shift, setShift] = useState<ShiftValue>("all")
