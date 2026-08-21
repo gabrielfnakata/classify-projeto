@@ -1,6 +1,7 @@
 import { useRef, useEffect, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { formatYMD, formatMonthYearLabel } from "@/shared/utils/date-formatter"
+import { resolveClassroomName } from "@/shared/utils/class-session-helpers"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 
 interface ScheduleCalendarProps {
@@ -8,6 +9,7 @@ interface ScheduleCalendarProps {
   viewMode: "day" | "week" | "month"
   currentDate: Date
   onSessionClick: (session: ClassSessionDTO) => void
+  classroomNames: Map<string, string>
 }
 
 const HOUR_HEIGHT = 64
@@ -143,11 +145,13 @@ function SessionBlock({
   col,
   colCount,
   onSessionClick,
+  classroomNames,
 }: {
   session: ClassSessionDTO
   col: number
   colCount: number
   onSessionClick: (s: ClassSessionDTO) => void
+  classroomNames: Map<string, string>
 }) {
   const start = toHHMM(session.startTime)
   const end = toHHMM(session.endTime)
@@ -175,14 +179,16 @@ function SessionBlock({
         borderLeftColor: statusBorderColors[status],
       }}
     >
-      <div className="truncate font-semibold leading-tight">{session.subjectTeacher.subject}</div>
+      <div className="truncate font-semibold leading-tight">{session.subjectTeacher.subject.description}</div>
       {height >= 40 && (
         <div className="mt-0.5 truncate leading-tight opacity-70">
           {start}–{end}
         </div>
       )}
       {height >= 56 && (
-        <div className="truncate leading-tight opacity-60">{session.classroom.name}</div>
+        <div className="truncate leading-tight opacity-60">
+          {resolveClassroomName(classroomNames, session.classroomUuid)}
+        </div>
       )}
     </button>
   )
@@ -193,11 +199,13 @@ function DayView({
   currentDate,
   scrollRef,
   onSessionClick,
+  classroomNames,
 }: {
   sessions: ClassSessionDTO[]
   currentDate: Date
   scrollRef: { current: HTMLDivElement | null }
   onSessionClick: (s: ClassSessionDTO) => void
+  classroomNames: Map<string, string>
 }) {
   const layouted = useMemo(
     () => layoutSessions(sessions.filter((s) => sessionDate(s) === formatYMD(currentDate))),
@@ -217,6 +225,7 @@ function DayView({
               col={col}
               colCount={colCount}
               onSessionClick={onSessionClick}
+              classroomNames={classroomNames}
             />
           ))}
           <CurrentTimeLine date={currentDate} />
@@ -231,11 +240,13 @@ function WeekView({
   currentDate,
   scrollRef,
   onSessionClick,
+  classroomNames,
 }: {
   sessions: ClassSessionDTO[]
   currentDate: Date
   scrollRef: { current: HTMLDivElement | null }
   onSessionClick: (s: ClassSessionDTO) => void
+  classroomNames: Map<string, string>
 }) {
   const todayStr = formatYMD(new Date())
 
@@ -304,6 +315,7 @@ function WeekView({
                     col={col}
                     colCount={colCount}
                     onSessionClick={onSessionClick}
+                    classroomNames={classroomNames}
                   />
                 ))}
                 <CurrentTimeLine date={day} />
@@ -389,7 +401,7 @@ function MonthView({
                       statusBgClasses[sessionStatus(session)]
                     )}
                   >
-                    {session.subjectTeacher.subject}
+                    {session.subjectTeacher.subject.description}
                   </button>
                 ))}
                 {hidden > 0 && (
@@ -411,6 +423,7 @@ export function ScheduleCalendar({
   viewMode,
   currentDate,
   onSessionClick,
+  classroomNames,
 }: ScheduleCalendarProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -448,6 +461,7 @@ export function ScheduleCalendar({
           currentDate={currentDate}
           scrollRef={scrollRef}
           onSessionClick={onSessionClick}
+          classroomNames={classroomNames}
         />
       )}
       {viewMode === "day" && (
@@ -456,6 +470,7 @@ export function ScheduleCalendar({
           currentDate={currentDate}
           scrollRef={scrollRef}
           onSessionClick={onSessionClick}
+          classroomNames={classroomNames}
         />
       )}
     </div>

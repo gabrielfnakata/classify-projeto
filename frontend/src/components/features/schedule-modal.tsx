@@ -1,5 +1,4 @@
-import { useState } from "react"
-import { BookOpen, ChevronDown, Clock, MapPin, Pencil, Users } from "lucide-react"
+import { BookOpen, Clock, MapPin, Pencil, Users } from "lucide-react"
 
 import { StatusBadge } from "@/components/features/status-badge"
 import { Button } from "@/components/ui/button"
@@ -11,12 +10,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
 import { formatYMD } from "@/shared/utils/date-formatter"
+import { resolveClassroomName } from "@/shared/utils/class-session-helpers"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 
 interface ScheduleModalProps {
   session: ClassSessionDTO | null
+  classroomNames: Map<string, string>
   onClose: () => void
   onEdit: () => void
 }
@@ -40,9 +40,9 @@ function sessionStatus(dto: ClassSessionDTO): SessionStatus {
 }
 
 function studentOrClass(dto: ClassSessionDTO): string {
-  return dto.students.length === 1
-    ? dto.students[0].name
-    : `${dto.students.length} aluno${dto.students.length !== 1 ? "s" : ""}`
+  if (dto.student) return dto.student.name
+  if (dto.classDTO) return dto.classDTO.name
+  return "—"
 }
 
 function formatDisplayDate(raw: unknown): string {
@@ -67,16 +67,9 @@ function Initials({ name }: { name: string }) {
   )
 }
 
-export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) {
-  const [studentsOpen, setStudentsOpen] = useState(false)
-  const students = session?.students ?? []
-  const hasMultiple = students.length > 1
-
+export function ScheduleModal({ session, classroomNames, onClose, onEdit }: ScheduleModalProps) {
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      onClose()
-      setStudentsOpen(false)
-    }
+    if (!open) onClose()
   }
 
   const status = session ? sessionStatus(session) : "info"
@@ -90,7 +83,7 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
               <BookOpen className="h-4 w-4 text-primary" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="truncate">{session?.subjectTeacher.subject ?? ""}</DialogTitle>
+              <DialogTitle className="truncate">{session?.subjectTeacher.subject.description ?? ""}</DialogTitle>
               {session && (
                 <div className="mt-0.5">
                   <StatusBadge variant={status}>{statusLabels[status]}</StatusBadge>
@@ -110,8 +103,8 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                 Professor
               </div>
               <div className="flex items-center gap-2">
-                <Initials name={session.subjectTeacher.employee} />
-                <span className="text-sm text-foreground">{session.subjectTeacher.employee}</span>
+                <Initials name={session.subjectTeacher.employee.name} />
+                <span className="text-sm text-foreground">{session.subjectTeacher.employee.name}</span>
               </div>
             </div>
 
@@ -134,7 +127,9 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                 </div>
                 <div className="flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="text-sm text-foreground">{session.classroom.name}</span>
+                  <span className="text-sm text-foreground">
+                    {resolveClassroomName(classroomNames, session.classroomUuid)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -145,27 +140,7 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
               </div>
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
-                {hasMultiple ? (
-                  <div className="flex-1">
-                    <button
-                      type="button"
-                      onClick={() => setStudentsOpen((o) => !o)}
-                      className="flex items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-primary"
-                    >
-                      {studentOrClass(session)}
-                      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", studentsOpen && "rotate-180")} />
-                    </button>
-                    {studentsOpen && (
-                      <ul className="mt-1.5 space-y-0.5 pl-0.5">
-                        {students.map((s) => (
-                          <li key={s.uuid} className="text-sm text-foreground">• {s.name}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-sm text-foreground">{studentOrClass(session)}</span>
-                )}
+                <span className="text-sm text-foreground">{studentOrClass(session)}</span>
               </div>
             </div>
           </div>
