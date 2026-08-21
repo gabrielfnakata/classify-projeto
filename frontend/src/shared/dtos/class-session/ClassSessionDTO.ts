@@ -1,7 +1,15 @@
-import type { ClassSessionClassDTO } from "./ClassSessionClassDTO";
-import type { ClassSessionReportDTO } from "./ClassSessionReportDTO";
 import type { ClassSessionStudentDTO } from "./ClassSessionStudentDTO";
 import type { ClassSessionSubjectTeacherDTO } from "./ClassSessionSubjectTeacherDTO";
+
+export interface ClassSessionClassDTO {
+    uuid: string,
+    name: string,
+    description: string | null,
+};
+
+export interface ClassSessionReportDTO {
+    content: string,
+};
 
 export interface ClassSessionDTO {
     uuid: string,
