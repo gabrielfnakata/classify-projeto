@@ -8,5 +8,5 @@ export const ScheduleFormSchema = (isEditing: boolean) =>
     teacherId: isEditing ? yup.string() : yup.string().required(),
     subjectId: isEditing ? yup.string() : yup.string().required(),
     classroomId: isEditing ? yup.string() : yup.string().required(),
-    studentIds: isEditing ? yup.array() : yup.array().min(1),
+    studentId: isEditing ? yup.string() : yup.string().required(),
   })
