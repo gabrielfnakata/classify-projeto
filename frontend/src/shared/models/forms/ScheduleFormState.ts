@@ -5,10 +5,10 @@ export interface ScheduleFormState {
   teacherId: string
   subjectId: string
   classroomId: string
-  studentIds: string[]
+  studentId: string
 }
 
 export const EMPTY_SCHEDULE_FORM: ScheduleFormState = {
   date: "", startTime: "", endTime: "",
-  teacherId: "", subjectId: "", classroomId: "", studentIds: [],
+  teacherId: "", subjectId: "", classroomId: "", studentId: "",
 }
