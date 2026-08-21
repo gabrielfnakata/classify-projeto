@@ -18,6 +18,8 @@ import api from "@/services/api"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSessionCreateDTO"
+import type { ClassSessionUpdateDTO } from "@/shared/dtos/class-session/ClassSessionUpdateDTO"
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import useFetch from "@/hooks/useFetch"
 import { type ScheduleFormState, EMPTY_SCHEDULE_FORM } from "@/shared/models/forms/ScheduleFormState"
@@ -29,6 +31,11 @@ function toHHMM(raw: unknown): string {
   const d = new Date(raw as string)
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
+
+// A API exige um relatório não vazio para criar a sessão, mas escrever um
+// relatório antes da aula acontecer não faz sentido — usamos um texto fixo,
+// sem expor esse campo no formulário.
+const DEFAULT_REPORT_CONTENT = "Aula agendada."
 
 interface ScheduleFormProps {
   open: boolean
@@ -64,10 +71,10 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSession }: Sched
             date: formatYMD(new Date(editingSession.startTime as unknown as string)),
             startTime: toHHMM(editingSession.startTime),
             endTime: toHHMM(editingSession.endTime),
-            teacherId: editingSession.subjectTeacher.uuidEmployee,
-            subjectId: editingSession.subjectTeacher.uuidSubject,
-            classroomId: editingSession.classroom.uuid,
-            studentIds: editingSession.students.map((s) => s.uuid),
+            teacherId: editingSession.subjectTeacher.employee.uuid,
+            subjectId: editingSession.subjectTeacher.subject.uuid,
+            classroomId: editingSession.classroomUuid,
+            studentId: editingSession.student?.uuid ?? "",
           }
         : EMPTY_SCHEDULE_FORM,
     [editingSession, open]
@@ -82,21 +89,24 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSession }: Sched
         )?.uuid ?? ""
 
       if (isEditing && editingSession) {
-        const payload: Record<string, unknown> = {
+        const payload: ClassSessionUpdateDTO = {
           startTime: `${values.date}T${values.startTime}:00`,
           endTime: `${values.date}T${values.endTime}:00`,
+          studentUuid: values.studentId,
         }
         if (subjectTeacherId) payload.subjectTeacherId = subjectTeacherId
-        if (values.classroomId) payload.classRoomId = values.classroomId
+        if (values.classroomId) payload.classroomUuid = values.classroomId
         await api.put(`/classsession/${editingSession.uuid}`, payload)
       } else {
-        await api.post("/classsession", {
-          subjectTeacherId,
-          classroomId: values.classroomId,
+        const payload: ClassSessionCreateDTO = {
+          subjectTeacherUuid: subjectTeacherId,
+          classroomUuid: values.classroomId,
           startTime: `${values.date}T${values.startTime}:00`,
           endTime: `${values.date}T${values.endTime}:00`,
-          studentIds: values.studentIds,
-        })
+          report: { content: DEFAULT_REPORT_CONTENT },
+          studentUuid: values.studentId,
+        }
+        await api.post("/classsession", payload)
       }
       onSuccess(values.date)
       onClose()
@@ -135,12 +145,10 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSession }: Sched
               ).values(),
             ]
 
-            const filteredStudents = students.filter((st) =>
+            const selectableStudents = students.filter((st) =>
               st.name.toLowerCase().includes(studentSearch.toLowerCase())
             )
-            const selectableStudents = filteredStudents.filter(
-              (s) => !values.studentIds.includes(s.uuid)
-            )
+            const selectedStudent = students.find((s) => s.uuid === values.studentId) ?? null
 
             return (
               <Form className="flex flex-1 flex-col overflow-hidden">
@@ -292,69 +300,52 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSession }: Sched
                     {!isEditing && (
                       <div className="space-y-2">
                         <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Alunos
-                          {values.studentIds.length > 0 && (
-                            <span className="ml-1.5 normal-case font-normal text-muted-foreground">
-                              ({values.studentIds.length} selecionado{values.studentIds.length > 1 ? "s" : ""})
-                            </span>
-                          )}
+                          Aluno
                         </Label>
 
-                        <div className="relative">
-                          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                          <Input
-                            placeholder="Buscar aluno para adicionar..."
-                            value={studentSearch}
-                            onChange={(e) => setStudentSearch(e.target.value)}
-                            className="pl-8"
-                          />
-                          {studentSearch && (
-                            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-md">
-                              {selectableStudents.length === 0 ? (
-                                <p className="px-3 py-3 text-center text-sm text-muted-foreground">
-                                  Nenhum aluno encontrado
-                                </p>
-                              ) : (
-                                selectableStudents.map((st) => (
-                                  <button
-                                    key={st.uuid}
-                                    type="button"
-                                    onClick={() => {
-                                      setFieldValue("studentIds", [...values.studentIds, st.uuid])
-                                      setStudentSearch("")
-                                    }}
-                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50"
-                                  >
-                                    {st.name}
-                                  </button>
-                                ))
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {values.studentIds.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {values.studentIds.map((id) => {
-                              const student = students.find((s) => s.uuid === id)
-                              return student ? (
-                                <span
-                                  key={id}
-                                  className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
-                                >
-                                  {student.name}
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setFieldValue("studentIds", values.studentIds.filter((i) => i !== id))
-                                    }
-                                    className="ml-0.5 rounded-full hover:text-primary/70"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </span>
-                              ) : null
-                            })}
+                        {selectedStudent ? (
+                          <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                            <span className="text-sm font-medium text-foreground">{selectedStudent.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => setFieldValue("studentId", "")}
+                              className="rounded-full p-0.5 text-muted-foreground hover:text-foreground"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              placeholder="Buscar aluno..."
+                              value={studentSearch}
+                              onChange={(e) => setStudentSearch(e.target.value)}
+                              className="pl-8"
+                            />
+                            {studentSearch && (
+                              <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-md">
+                                {selectableStudents.length === 0 ? (
+                                  <p className="px-3 py-3 text-center text-sm text-muted-foreground">
+                                    Nenhum aluno encontrado
+                                  </p>
+                                ) : (
+                                  selectableStudents.map((st) => (
+                                    <button
+                                      key={st.uuid}
+                                      type="button"
+                                      onClick={() => {
+                                        setFieldValue("studentId", st.uuid)
+                                        setStudentSearch("")
+                                      }}
+                                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50"
+                                    >
+                                      {st.name}
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
