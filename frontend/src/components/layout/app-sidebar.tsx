@@ -1,41 +1,12 @@
-import { useState, useMemo } from "react"
 import { Sidebar, SidebarContent, SidebarFooter, useSidebar } from "@/components/ui/sidebar"
 import { NavMain } from "../sidebar/nav-main"
 import { NavUser } from "../sidebar/nav-user"
 import { NavHeader } from "../sidebar/nav-header"
-import { NavSearch } from "../sidebar/nav-search"
 import { mainNavigation } from "../sidebar/sidebar-items"
 
 export function AppSidebar() {
   const { state, setOpen } = useSidebar()
-  const [searchQuery, setSearchQuery] = useState("")
   const isCollapsed = state === "collapsed"
-
-  // const filteredNavigation = useMemo(() => {
-  //   if (!searchQuery) return mainNavigation
-
-  //   const normalize = (text: string) =>
-  //     text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-
-  //   const query = normalize(searchQuery)
-
-  //   return mainNavigation
-  //     .map((group) => {
-  //       const groupTitle = normalize(group.title)
-  //       const matchesGroup = groupTitle.includes(query)
-
-  //       const filteredSubItems = group.items?.filter((sub) => {
-  //         const subTitle = normalize(sub.title)
-  //         return subTitle.includes(query)
-  //       })
-
-  //       if (matchesGroup || (filteredSubItems && filteredSubItems.length > 0)) {
-  //         return { ...group, items: filteredSubItems }
-  //       }
-  //       return null
-  //     })
-  //     .filter(Boolean) as typeof mainNavigation
-  // }, [searchQuery])
 
   return (
     <Sidebar

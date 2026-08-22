@@ -7,4 +7,5 @@ export interface Group {
   title: string
   icon: React.ComponentType<{ size?: number; className?: string }>; 
   items: SubItem[]
+  url?: string;
 }

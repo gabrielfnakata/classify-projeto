@@ -1,11 +1,12 @@
-import { Calendar, File, Home, Settings, Users } from "lucide-react"
+import { Calendar, File, Home, Users } from "lucide-react"
 import type { Group } from "./sidebar-item"
 
 export const mainNavigation: Group[] = [
   {
     title: "Início",
     icon: Home,
-    items: []
+    items: [],
+    url: '/home'
   },
   {
     title: "Registros",
@@ -31,15 +32,6 @@ export const mainNavigation: Group[] = [
     items: [
       { title: 'Criar relatório', url: '/home' },
       { title: 'Todos os relatórios', url: '/home' }
-    ]
-  },
-  {
-    title: 'Outros',
-    icon: Settings,
-    items: [
-      { title: 'Meus dados', url: '/home' },
-      { title: 'Configurações', url: '/home' },
-      { title: 'Sair', url: '/login' }
     ]
   }
 ]

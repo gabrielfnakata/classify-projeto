@@ -22,19 +22,20 @@ export function NavMain( {group}: { group: Group } ) {
     <group.icon className="!h-5 !w-5 shrink-0"/>
   );
   
-  // TODO: Link para os que não possuem subitem
   if (!hasItems) {
     return (
-      <SidebarGroup className="group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:px-2 first:pt-2 group-data-[collapsible=icon]:first:pt-4">
-        <div className="flex h-full w-full px-2 py-3  cursor-pointer items-center justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:mx-auto hover:bg-sidebar-secondary rounded-md transition-colors">
-          <SidebarGroupLabel className="flex gap-3 text-base text-sidebar-primary font-bold">
-            {groupIcon}
-            <span className="group-data-[collapsible=icon]:hidden">
-              {group.title}
-            </span>
-          </SidebarGroupLabel>
-        </div>
-      </SidebarGroup>
+      <Link to={group.url!}>
+        <SidebarGroup className="group-data-[collapsible=icon]:py-2 group-data-[collapsible=icon]:px-2 first:pt-2 group-data-[collapsible=icon]:first:pt-4">
+          <div className="flex h-full w-full px-2 py-3  cursor-pointer items-center justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:mx-auto hover:bg-sidebar-secondary rounded-md transition-colors">
+            <SidebarGroupLabel className="flex gap-3 text-base text-sidebar-primary font-bold">
+              {groupIcon}
+              <span className="group-data-[collapsible=icon]:hidden">
+                {group.title}
+              </span>
+            </SidebarGroupLabel>
+          </div>
+        </SidebarGroup>
+      </Link>
     );
   }
 
@@ -76,71 +77,4 @@ export function NavMain( {group}: { group: Group } ) {
       </SidebarGroup>
     </Collapsible>
   );
-
-    // <SidebarGroup className="pt-0 group-data-[collapsible=icon]:pt-1">
-    //   <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
-    //     Navegação
-    //   </SidebarGroupLabel>
-    //   <SidebarGroupContent>
-    //     <SidebarMenu>
-    //       {groups.map((item, index) => (
-    //         <Collapsible
-    //           key={item.title}
-    //           asChild
-    //           open={searchQuery ? true : openItems.includes(item.title)}
-    //           onOpenChange={(isOpen) => {
-    //             setOpenItems((prev) =>
-    //               isOpen ? [...prev, item.title] : prev.filter((t) => t !== item.title)
-    //             )
-    //           }}
-    //           className="group/collapsible"
-    //         >
-    //           <SidebarMenuItem
-    //             className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center animate-in fade-in-0 slide-in-from-top-2 duration-200"
-    //             style={{ animationDelay: `${index * 50}ms`, animationFillMode: "backwards" }}
-    //           >
-    //             <CollapsibleTrigger asChild>
-    //               <SidebarMenuButton
-    //                 tooltip={item.title}
-    //                 onClick={handleItemClick}
-    //                 className="group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:mx-auto"
-    //               >
-    //                 <div className="flex h-full w-full items-center justify-start group-data-[collapsible=icon]:justify-center">
-    //                   {item.icon && (
-    //                     <item.icon className="!h-5 !w-5 shrink-0" strokeWidth={2} />
-    //                   )}
-    //                   <span className="text-base ml-3 group-data-[collapsible=icon]:hidden">
-    //                     {item.title}
-    //                   </span>
-    //                   { item.items.length ? 
-    //                     state === 'expanded' ?
-    //                     <ChevronDown className="ml-auto"/>
-    //                     : <ChevronRight className="ml-auto" />
-    //                     : null
-    //                   }
-    //                 </div>
-    //               </SidebarMenuButton>
-    //             </CollapsibleTrigger>
-    //             <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
-    //               <SidebarMenuSub className="ml-[1.15rem] flex flex-col gap-0 border-l border-sidebar-border">
-    //                 {item.items.length ? 
-    //                 item.items?.filter(sub => sub.url !== null).map((subItem) => (
-    //                   <SidebarMenuSubItem key={subItem.title}>
-    //                     <Link
-    //                       to={subItem.url!}
-    //                       className="flex h-5.5 w-full items-center rounded-md px-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
-    //                     >
-    //                       {subItem.title}
-    //                     </Link>
-    //                   </SidebarMenuSubItem>
-    //                 )
-    //               ) : null}
-    //               </SidebarMenuSub>
-    //             </CollapsibleContent>
-    //           </SidebarMenuItem>
-    //         </Collapsible>
-    //       ))}
-    //     </SidebarMenu>
-    //   </SidebarGroupContent>
-    // </SidebarGroup>
 }
