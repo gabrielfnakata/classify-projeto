@@ -155,7 +155,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
 
         header.getCell(1).setCellComment(makeComment(workbook, sheet, "Formato: DD/MM/AAAA"));
         header.getCell(3).setCellComment(makeComment(workbook, sheet, "Formato: DD/MM/AAAA"));
-        header.getCell(5).setCellComment(makeComment(workbook, sheet, "Cargos válidos: roleId cadastrado no sistema"));
+        header.getCell(5).setCellComment(makeComment(workbook, sheet, "Cargos válidos: Admin,Profe,Secre"));
         header.getCell(6).setCellComment(makeComment(workbook, sheet, "Formato: (99)99999-9999"));
         header.getCell(7).setCellComment(makeComment(workbook, sheet, "Formato: (99)99999-9999 (opcional)"));
     }
