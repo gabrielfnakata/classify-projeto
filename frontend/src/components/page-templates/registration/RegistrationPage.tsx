@@ -17,6 +17,7 @@ interface registrationPageProps<T> {
     filters: FilterConfig[];
     columns: DataTableColumn<T>[];
     registrationRoute: string;
+    onRefresh?: () => void;
 } 
 
 interface dataType {
@@ -34,7 +35,7 @@ interface ImportResult {
 }
 
 export default function RegistrationPage<T extends dataType>({
-    title, data, filters, columns, registrationRoute
+    title, data, filters, columns, registrationRoute, onRefresh
 }: registrationPageProps<T>) {
     const [filterValues, setFilterValues] = useState<Record<string,string>>({});
     const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -42,6 +43,7 @@ export default function RegistrationPage<T extends dataType>({
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
     const [importLoading, setImportLoading] = useState(false);
+    const entityPath = registrationRoute.includes('student') ? '/student' : registrationRoute.includes('employee') ? '/employee' : null;
     const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
     const navigate = useNavigate();
@@ -66,9 +68,11 @@ export default function RegistrationPage<T extends dataType>({
     }
 
     const handleDownloadTemplate = async () => {
+        if (!entityPath) return;
         try {
-            const response = await api.get('/student/template', { responseType: 'blob' });
-            downloadBlob(response.data, 'students-template.xlsx');
+            const response = await api.get(`${entityPath}/template`, { responseType: 'blob' });
+            const filename = entityPath.includes('student') ? 'students-template.xlsx' : 'employees-template.xlsx';
+            downloadBlob(response.data, filename);
         } catch (e) {
             console.error(e);
             alert('Erro ao baixar template');
@@ -76,9 +80,11 @@ export default function RegistrationPage<T extends dataType>({
     }
 
     const handleExport = async () => {
+        if (!entityPath) return;
         try {
-            const response = await api.get('/student/export', { responseType: 'blob', params: filterValues });
-            downloadBlob(response.data, 'students-export.xlsx');
+            const response = await api.get(`${entityPath}/export`, { responseType: 'blob', params: filterValues });
+            const filename = entityPath.includes('student') ? 'students-export.xlsx' : 'employees-export.xlsx';
+            downloadBlob(response.data, filename);
         } catch (e) {
             console.error(e);
             alert('Erro ao exportar');
@@ -101,9 +107,10 @@ export default function RegistrationPage<T extends dataType>({
         setImportDialogOpen(true);
 
         try {
+            if (!entityPath) throw new Error('Operação de importação não disponível para este recurso');
             const form = new FormData();
             form.append('file', f);
-            const response = await api.post('/student/import/preview', form);
+            const response = await api.post(`${entityPath}/import/preview`, form);
             setPreviewRows(response.data ?? []);
         } catch (e) {
             console.error(e);
@@ -120,21 +127,24 @@ export default function RegistrationPage<T extends dataType>({
         setImportResult(null);
 
         try {
-            const form = new FormData();
-            form.append('file', selectedFile);
-            const response = await api.post<ImportResult>('/student/import', form);
+        if (!entityPath) throw new Error('Operação de importação não disponível para este recurso');
+        const form = new FormData();
+        form.append('file', selectedFile);
+        const response = await api.post<ImportResult>(`${entityPath}/import`, form);
 
-            const result = response.data;
-            setImportResult(result);
+        const result = response.data;
+        setImportResult(result);
 
-            if (!result.errors || result.errors.length === 0) {
-                window.location.reload();
+        if (!result.errors || result.errors.length === 0) {
+            if (onRefresh) {
+                onRefresh();
             }
+        }
         } catch (e) {
-            console.error(e);
-            alert('Erro ao importar; verifique o arquivo e tente novamente');
+        console.error(e);
+        alert('Erro ao importar; verifique o arquivo e tente novamente');
         } finally {
-            setImportLoading(false);
+        setImportLoading(false);
         }
     }
 
@@ -147,34 +157,36 @@ export default function RegistrationPage<T extends dataType>({
                         title={`Registro de ${title}`}
                         action={
                             <div className="flex items-center gap-2">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button className="h-10 px-4 rounded-xl text-sm font-semibold flex items-center gap-2">
-                                            <FileText />
-                                            Importar / Exportar
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem onClick={handleDownloadTemplate}>
-                                            <Download className="mr-2" /> Baixar modelo
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => { document.getElementById('file-input')?.click(); }}>
-                                            <Upload className="mr-2"/> Importar
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={handleExport}>
-                                            <FileText className="mr-2"/> Exportar
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                        {entityPath ? (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button className="h-10 px-4 rounded-xl text-sm font-semibold flex items-center gap-2">
+                                                        <FileText />
+                                                        Importar / Exportar
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem onClick={() => handleDownloadTemplate()}>
+                                                        <Download className="mr-2" /> Baixar modelo
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => { document.getElementById('file-input')?.click(); }}>
+                                                        <Upload className="mr-2"/> Importar
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleExport()}>
+                                                        <FileText className="mr-2"/> Exportar
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        ) : null}
 
-                                <Button className="h-10 px-5 rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
-                                    <Plus></Plus>
-                                    Criar novo registro
-                                </Button>
-                            </div>
-                        }
-                    />
-                    </div> 
+                                        <Button className="h-10 px-5 rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
+                                            <Plus></Plus>
+                                            Criar novo registro
+                                        </Button>
+                                    </div>
+                                }
+                            />
+                            </div> 
                     <ContentCard className="flex flex-col w-4/5 h-[64vh] p-8 gap-[4vh]">
                             <FilterRow
                             filters={filters}
@@ -190,17 +202,19 @@ export default function RegistrationPage<T extends dataType>({
                 </div>
             </div>
 
-            <input
-                id="file-input"
-                type="file"
-                accept=".xlsx"
-                style={{display: 'none'}}
-                onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleFileSelected(f);
-                    e.target.value = '';
-                }}
-            />
+            {entityPath && (
+                <input
+                    id="file-input"
+                    type="file"
+                    accept=".xlsx"
+                    style={{display: 'none'}}
+                    onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileSelected(f);
+                        e.target.value = '';
+                    }}
+                />
+            )}
 
             <Dialog open={importDialogOpen} onOpenChange={(open) => { if (!open) resetImportState(); setImportDialogOpen(open); }}>
                 <DialogContent className="max-w-2xl">
@@ -267,9 +281,19 @@ export default function RegistrationPage<T extends dataType>({
                                         <tr>
                                             <th className="border px-2 py-1">Nome</th>
                                             <th className="border px-2 py-1">Data Nasc</th>
-                                            <th className="border px-2 py-1">E-mail</th>
                                             <th className="border px-2 py-1">CPF</th>
-                                            <th className="border px-2 py-1">Data Matr.</th>
+                                            {entityPath?.includes('/student') ? (
+                                                <>
+                                                    <th className="border px-2 py-1">E-mail</th>
+                                                    <th className="border px-2 py-1">Data Matr.</th>
+                                                </>
+                                            ) : entityPath?.includes('/employee') ? (
+                                                <>
+                                                    <th className="border px-2 py-1">E-mail</th>
+                                                    <th className="border px-2 py-1">Cargo</th>
+                                                    <th className="border px-2 py-1">Data Admissão</th>
+                                                </>
+                                            ) : null}
                                             <th className="border px-2 py-1">Telefone1</th>
                                             <th className="border px-2 py-1">Telefone2</th>
                                         </tr>
@@ -279,9 +303,19 @@ export default function RegistrationPage<T extends dataType>({
                                             <tr key={idx} className="odd:bg-muted">
                                                 <td className="border px-2 py-1">{row.name}</td>
                                                 <td className="border px-2 py-1">{row.birthDate}</td>
-                                                <td className="border px-2 py-1">{row.email}</td>
                                                 <td className="border px-2 py-1">{row.cpf}</td>
-                                                <td className="border px-2 py-1">{row.registrationDate}</td>
+                                                {entityPath?.includes('/student') ? (
+                                                    <>
+                                                        <td className="border px-2 py-1">{row.email}</td>
+                                                        <td className="border px-2 py-1">{row.registrationDate}</td>
+                                                    </>
+                                                ) : entityPath?.includes('/employee') ? (
+                                                    <>
+                                                        <td className="border px-2 py-1">{row.email}</td>
+                                                        <td className="border px-2 py-1">{row.roleId}</td>
+                                                        <td className="border px-2 py-1">{row.hireDate}</td>
+                                                    </>
+                                                ) : null}
                                                 <td className="border px-2 py-1">{row.telephone1}</td>
                                                 <td className="border px-2 py-1">{row.telephone2}</td>
                                             </tr>
@@ -295,7 +329,7 @@ export default function RegistrationPage<T extends dataType>({
                     <DialogFooter>
                         <div className="flex w-full justify-end gap-2">
                             {importResult ? (
-                                <Button onClick={() => { setImportDialogOpen(false); resetImportState(); window.location.reload(); }}>
+                                                            <Button onClick={() => { setImportDialogOpen(false); resetImportState(); if (onRefresh) onRefresh(); }}>
                                     Fechar e atualizar listagem
                                 </Button>
                             ) : (
