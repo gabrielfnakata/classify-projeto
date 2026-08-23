@@ -38,8 +38,6 @@ import br.com.ifsp.classify.utils.UuidUtils;
 @Service
 public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, Long> {
 
-    private static final DateTimeFormatter BR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
     private final TelephoneService telephoneService;
     private final AddressService addressService;
 
@@ -259,26 +257,75 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         return newGuardian;
     }
 
-    public byte[] generateTemplate() {
-        try (XSSFWorkbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+    public record ImportError(int row, String reason) {}
+    public record ImportResult(List<StudentGetDTO> created, List<ImportError> errors) {}
 
-            var sheet = workbook.createSheet("students");
+    private static final DateTimeFormatter BR_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private org.apache.poi.ss.usermodel.CellStyle buildStudentHeaderStyle(Workbook workbook) {
+        var headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
+
+        var headerStyle = workbook.createCellStyle();
+        headerStyle.setFont(headerFont);
+        headerStyle.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.TEAL.getIndex());
+        headerStyle.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+        headerStyle.setVerticalAlignment(org.apache.poi.ss.usermodel.VerticalAlignment.CENTER);
+        headerStyle.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        headerStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        headerStyle.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        headerStyle.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+        return headerStyle;
+    }
+
+    private void applyStudentHeaderFormatting(Workbook workbook, org.apache.poi.ss.usermodel.Sheet sheet, Row header) {
+        var headerStyle = buildStudentHeaderStyle(workbook);
+        for (int i = 0; i < header.getLastCellNum(); i++) {
+            var cell = header.getCell(i);
+            if (cell == null) {
+                cell = header.createCell(i);
+            }
+            cell.setCellStyle(headerStyle);
+        }
+
+        var textFormat = workbook.createCellStyle();
+        textFormat.setDataFormat(workbook.createDataFormat().getFormat("@"));
+        int[] textColumns = {1, 3, 4, 5, 6};
+        for (int col : textColumns) {
+            sheet.setDefaultColumnStyle(col, textFormat);
+        }
+
+        header.getCell(1).setCellComment(makeComment(workbook, sheet, "Formato: DD/MM/AAAA"));
+        header.getCell(4).setCellComment(makeComment(workbook, sheet, "Formato: DD/MM/AAAA"));
+        header.getCell(5).setCellComment(makeComment(workbook, sheet, "Formato: (99)99999-9999"));
+        header.getCell(6).setCellComment(makeComment(workbook, sheet, "Formato: (99)99999-9999 (opcional)"));
+    }
+
+    public byte[] generateTemplate() {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            var sheet = workbook.createSheet("Alunos");
             var header = sheet.createRow(0);
-            String[] headers = new String[]{"name","birthDate","email","cpf","registrationDate","telephone1","telephone2"};
-            var textFormat = workbook.createCellStyle();
-            textFormat.setDataFormat(workbook.createDataFormat().getFormat("@"));
+
+            String[] headers = new String[]{
+                "Nome",
+                "Data de Nascimento",
+                "E-mail",
+                "CPF",
+                "Data de Matrícula",
+                "Telefone 1",
+                "Telefone 2"
+            };
 
             for (int i = 0; i < headers.length; i++) {
                 var cell = header.createCell(i);
                 cell.setCellValue(headers[i]);
-                sheet.autoSizeColumn(i);
             }
 
-            int[] textColumns = {1, 3, 4, 5, 6};
-            for (int col : textColumns) {
-                sheet.setDefaultColumnStyle(col, textFormat);
-            }
+            applyStudentHeaderFormatting(workbook, sheet, header);
+
+            for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
 
             workbook.write(out);
             return out.toByteArray();
@@ -287,17 +334,21 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         }
     }
 
-    public record ImportError(int row, String reason) {}
-
-    public record ImportResult(List<StudentGetDTO> created, List<ImportError> errors) {}
+    private org.apache.poi.ss.usermodel.Comment makeComment(Workbook workbook, org.apache.poi.ss.usermodel.Sheet sheet, String text) {
+        var factory = workbook.getCreationHelper();
+        var drawing = sheet.createDrawingPatriarch();
+        var anchor = factory.createClientAnchor();
+        var comment = drawing.createCellComment(anchor);
+        comment.setString(factory.createRichTextString(text));
+        comment.setAuthor("Sistema");
+        return comment;
+    }
 
     public ImportResult importFromExcel(MultipartFile file) {
         if (file == null || file.isEmpty())
             return new ImportResult(Collections.emptyList(), Collections.emptyList());
 
-        try (InputStream in = file.getInputStream();
-             Workbook workbook = WorkbookFactory.create(in)) {
-
+        try (InputStream in = file.getInputStream(); Workbook workbook = WorkbookFactory.create(in)) {
             var sheet = workbook.getSheetAt(0);
             List<StudentGetDTO> imported = new ArrayList<>();
             List<ImportError> errors = new ArrayList<>();
@@ -362,9 +413,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         if (file == null || file.isEmpty())
             return Collections.emptyList();
 
-        try (InputStream in = file.getInputStream();
-             Workbook workbook = WorkbookFactory.create(in)) {
-
+        try (InputStream in = file.getInputStream(); Workbook workbook = WorkbookFactory.create(in)) {
             var sheet = workbook.getSheetAt(0);
             List<Map<String, String>> preview = new ArrayList<>();
 
@@ -394,17 +443,24 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     }
 
     public byte[] exportToExcel(List<StudentGetDTO> students) {
-        try (XSSFWorkbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-
-            var sheet = workbook.createSheet("students");
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            var sheet = workbook.createSheet("Alunos");
             var header = sheet.createRow(0);
-            String[] headers = new String[]{"name","birthDate","email","cpf","registrationDate","telephone1","telephone2"};
+            String[] headers = new String[]{
+                "Nome",
+                "Data de Nascimento",
+                "E-mail",
+                "CPF",
+                "Data de Matrícula",
+                "Telefone 1",
+                "Telefone 2"
+            };
 
             for (int i = 0; i < headers.length; i++) {
                 var cell = header.createCell(i);
                 cell.setCellValue(headers[i]);
             }
+            applyStudentHeaderFormatting(workbook, sheet, header);
 
             int rownum = 1;
             for (StudentGetDTO s : students) {
