@@ -4,7 +4,9 @@ import { cn } from "@/lib/utils"
 import { formatHHMM } from "@/shared/utils/date-formatter"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 
-const HOUR_HEIGHT = 48
+const HOUR_HEIGHT = 56
+const VISIBLE_HOURS = 5 // preenche a altura fixa do container (VISIBLE_HOURS * HOUR_HEIGHT)
+const CONTAINER_HEIGHT = VISIBLE_HOURS * HOUR_HEIGHT
 
 // Mesma paleta de status usada em schedule-calendar.tsx (agenda do professor),
 // reaproveitada aqui para manter consistência visual entre as duas telas.
@@ -22,14 +24,33 @@ interface MiniDayAgendaProps<T extends ClassSessionDTO> {
 
 export function MiniDayAgenda<T extends ClassSessionDTO>({ sessions, activeUuid, onSelect }: MiniDayAgendaProps<T>) {
   const hours = useMemo(() => {
-    const allHours = sessions.flatMap((s) => [
-      new Date(s.startTime as unknown as string).getHours(),
-      new Date(s.endTime as unknown as string).getHours(),
-    ])
-    // sempre mostra pelo menos uma janela de 3h, com folga de 1h antes/depois
-    const minHour = Math.max(0, Math.min(...allHours) - 1)
-    const maxHour = Math.max(Math.min(23, Math.max(...allHours) + 1), minHour + 2)
-    return Array.from({ length: maxHour - minHour + 1 }, (_, i) => minHour + i)
+    const startHours = sessions.map((s) => new Date(s.startTime as unknown as string).getHours())
+    const endHours = sessions.map((s) => new Date(s.endTime as unknown as string).getHours())
+    const coreStart = Math.min(...startHours)
+    const coreEnd = Math.max(...endHours)
+    const coreSpan = Math.max(coreEnd - coreStart, 1)
+
+    // sempre mostra pelo menos VISIBLE_HOURS, com a(s) aula(s) centralizada(s)
+    // na janela — só ultrapassa isso (e aí sim aparece o scroll) quando as
+    // aulas do dia realmente não cabem, aí mantém 1h de folga de cada lado
+    const targetSpan = Math.max(VISIBLE_HOURS, coreSpan + 2)
+    const padding = targetSpan - coreSpan
+    const before = Math.floor(padding / 2)
+    const after = padding - before
+
+    let minHour = coreStart - before
+    let maxHourExclusive = coreEnd + after
+
+    if (minHour < 0) {
+      maxHourExclusive += -minHour
+      minHour = 0
+    }
+    if (maxHourExclusive > 24) {
+      minHour = Math.max(0, minHour - (maxHourExclusive - 24))
+      maxHourExclusive = 24
+    }
+
+    return Array.from({ length: maxHourExclusive - minHour }, (_, i) => minHour + i)
   }, [sessions])
 
   const rangeStart = hours[0]
@@ -39,7 +60,7 @@ export function MiniDayAgenda<T extends ClassSessionDTO>({ sessions, activeUuid,
   }
 
   return (
-    <div className="scrollbar-themed max-h-72 overflow-y-auto rounded-lg border border-border">
+    <div className="scrollbar-themed overflow-y-auto rounded-lg border border-border" style={{ height: CONTAINER_HEIGHT }}>
       <div className="relative flex" style={{ height: hours.length * HOUR_HEIGHT }}>
         <div className="w-14 shrink-0 border-r border-border">
           {hours.map((h) => (

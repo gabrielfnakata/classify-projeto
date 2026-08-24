@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/layout/page-header"
 import { SectionTitle } from "@/components/features/section-title"
 import { ContentCard } from "@/components/layout/content-card"
 import { CircularProgress } from "@/components/common/circular-progress"
-import { MetricCard } from "@/components/features/metric-card"
 import { MiniDayAgenda } from "@/components/features/mini-day-agenda"
 import { MonthCalendar } from "@/components/features/month-calendar"
 import { StatusBadge } from "@/components/features/status-badge"
@@ -122,7 +121,7 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 p-6 md:p-8">
+    <div className="space-y-8 animate-in fade-in duration-500 p-8 md:p-10">
       <PageHeader title="Olá, Nome da pessoa!" />
 
       <div>
@@ -161,30 +160,37 @@ export default function StudentDashboard() {
 
       <div>
         <SectionTitle title="Resumo do aluno" />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <ContentCard className="flex items-center gap-6">
-            <CircularProgress percent={MOCK_ATTENDANCE.percent} />
-            <div>
-              <div className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Frequência Total</div>
-              <p className="mt-1 text-base text-foreground">{MOCK_ATTENDANCE.presences} presenças</p>
-              <p className="text-base text-muted-foreground">{MOCK_ATTENDANCE.absences} falta registrada</p>
+        <div className="grid gap-8 sm:grid-cols-2">
+          <ContentCard className="flex min-h-72 flex-col p-8">
+            <div className="text-base font-bold uppercase tracking-wider text-muted-foreground">Frequência Total</div>
+            <div className="flex flex-1 items-center gap-8">
+              <CircularProgress percent={MOCK_ATTENDANCE.percent} size={140} stroke={22} />
+              <div className="space-y-1">
+                <p className="text-xl font-semibold text-foreground">{MOCK_ATTENDANCE.presences} presenças</p>
+                <p className="text-lg text-muted-foreground">{MOCK_ATTENDANCE.absences} falta registrada</p>
+              </div>
             </div>
           </ContentCard>
 
-          <MetricCard
-            variant="detailed"
-            title="Pendências Atuais"
-            value={`${MOCK_PENDING.total} itens`}
-            subtitle={`${MOCK_PENDING.reports} relatórios · ${MOCK_PENDING.activities} atividades`}
-            tone="neutral"
-            footer={<Button size="sm">Enviar pendências</Button>}
-          />
+          <ContentCard className="flex min-h-72 flex-col p-8">
+            <div className="text-base font-bold uppercase tracking-wider text-muted-foreground">Pendências Atuais</div>
+            <div className="flex flex-1 flex-col justify-center gap-1">
+              <p className="flex items-baseline gap-2">
+                <span className="text-5xl font-bold text-foreground">{MOCK_PENDING.total}</span>
+                <span className="text-xl text-muted-foreground">itens</span>
+              </p>
+              <p className="text-lg text-muted-foreground">
+                {MOCK_PENDING.reports} relatórios · {MOCK_PENDING.activities} atividades
+              </p>
+              <Button className="mt-4 h-11 self-start px-6 text-base">Enviar pendências</Button>
+            </div>
+          </ContentCard>
         </div>
       </div>
 
       <div>
         <SectionTitle title="Calendário" />
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-8 lg:grid-cols-2">
           <MonthCalendar
             month={month}
             sessionsByDate={sessionsByDate}
@@ -193,7 +199,7 @@ export default function StudentDashboard() {
             onNavigate={navigateMonth}
           />
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <ContentCard className="space-y-4">
               <h3 className="text-sm font-bold capitalize text-foreground">
                 {formatFullDateLabel(new Date(selectedDate + "T00:00:00"))}

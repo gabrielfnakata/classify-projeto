@@ -38,21 +38,21 @@ export function MonthCalendar<T extends ClassSessionDTO>({
   })
 
   return (
-    <ContentCard className="flex h-full flex-col">
-      <div className="mb-6 flex items-center justify-between">
-        <Button variant="ghost" size="icon-sm" onClick={() => onNavigate(-1)}>
-          <ChevronLeft />
+    <ContentCard className="flex h-full flex-col p-10">
+      <div className="mb-8 flex items-center justify-between">
+        <Button variant="ghost" size="icon" onClick={() => onNavigate(-1)}>
+          <ChevronLeft className="h-5 w-5" />
         </Button>
-        <span className="text-base font-semibold text-foreground capitalize">{formatMonthYearLabel(month)}</span>
-        <Button variant="ghost" size="icon-sm" onClick={() => onNavigate(1)}>
-          <ChevronRight />
+        <span className="text-lg font-semibold text-foreground capitalize">{formatMonthYearLabel(month)}</span>
+        <Button variant="ghost" size="icon" onClick={() => onNavigate(1)}>
+          <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
 
       <div className="flex flex-1 flex-col justify-center">
-        <div className="grid grid-cols-7 gap-y-3 text-center">
+        <div className="grid grid-cols-7 gap-y-6 text-center">
           {WEEKDAY_LABELS_SHORT.map((label, i) => (
-            <div key={i} className="pb-3 text-sm font-bold text-info-foreground">
+            <div key={i} className="pb-4 text-base font-bold text-info-foreground">
               {label}
             </div>
           ))}
@@ -71,7 +71,7 @@ export function MonthCalendar<T extends ClassSessionDTO>({
                   type="button"
                   onClick={() => onSelectDate(dateStr)}
                   className={cn(
-                    "flex h-11 w-11 items-center justify-center rounded-full text-base font-medium transition-colors",
+                    "flex h-14 w-14 items-center justify-center rounded-full text-lg font-medium transition-colors",
                     isSelected
                       ? "bg-primary text-primary-foreground"
                       : hasSessions
