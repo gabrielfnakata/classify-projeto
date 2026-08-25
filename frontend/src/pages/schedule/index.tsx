@@ -4,6 +4,7 @@ import useFetch from "@/hooks/useFetch"
 
 import { ScheduleForm } from "@/components/features/schedule-form"
 import { ScheduleModal } from "@/components/features/schedule-modal"
+import { ScheduleSeriesForm } from "@/components/features/schedule-series-form"
 import { MetricCard } from "@/components/features/metric-card"
 import { SectionTitle } from "@/components/features/section-title"
 import { ScheduleCalendar } from "@/components/features/schedule-calendar"
@@ -15,6 +16,7 @@ import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDT
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 import { formatDateLabel, formatMonthYearLabel, formatYMD } from "@/shared/utils/date-formatter"
 import { classroomNameMap, resolveClassroomName } from "@/shared/utils/class-session-helpers"
+import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping"
 
 type ViewMode = "day" | "week" | "month"
 
@@ -29,11 +31,13 @@ export default function SchedulePage() {
   const classroomNames = useMemo(() => classroomNameMap(classrooms ?? []), [classrooms])
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedSession, setSelectedSession] = useState<ClassSessionDTO | null>(null)
+  const [selectedGroup, setSelectedGroup] = useState<SessionGroup | null>(null)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>("day")
   const [formOpen, setFormOpen] = useState(false)
-  const [editingSession, setEditingSession] = useState<ClassSessionDTO | null>(null)
+  const [editingSessions, setEditingSessions] = useState<ClassSessionDTO[] | null>(null)
+  const [seriesFormOpen, setSeriesFormOpen] = useState(false)
+  const [editingSeries, setEditingSeries] = useState<ClassSessionDTO[] | null>(null)
 
   const fetchSessions = () => setRefreshKey((k) => k + 1)
 
@@ -83,9 +87,31 @@ export default function SchedulePage() {
   }
 
   const openEditForm = () => {
-    setEditingSession(selectedSession)
-    setSelectedSession(null)
+    setEditingSessions(selectedGroup?.sessions ?? null)
+    setSelectedGroup(null)
     setFormOpen(true)
+  }
+
+  const openEditSeries = () => {
+    if (!selectedGroup) return
+    const recurrenceUuid = groupRecurrenceUuid(selectedGroup)
+    if (!recurrenceUuid) return
+
+    const anchor = new Date(selectedGroup.sessions[0].startTime as unknown as string)
+    const seriesSessions = sessions
+      .filter(
+        (s) =>
+          s.recurrenceGroupUuid === recurrenceUuid &&
+          new Date(s.startTime as unknown as string) >= anchor
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.startTime as unknown as string).getTime() - new Date(b.startTime as unknown as string).getTime()
+      )
+
+    setEditingSeries(seriesSessions)
+    setSelectedGroup(null)
+    setSeriesFormOpen(true)
   }
 
   const dateLabel =
@@ -97,7 +123,7 @@ export default function SchedulePage() {
         title="Agendamentos de Aula"
         description="Controle de cronograma e fluxo de alunos."
         action={
-          <Button onClick={() => { setEditingSession(null); setFormOpen(true) }}>
+          <Button onClick={() => { setEditingSessions(null); setFormOpen(true) }}>
             <Plus />
             Novo Agendamento
           </Button>
@@ -186,17 +212,18 @@ export default function SchedulePage() {
             sessions={filteredSessions}
             viewMode={viewMode}
             currentDate={currentDate}
-            onSessionClick={setSelectedSession}
+            onGroupClick={setSelectedGroup}
             classroomNames={classroomNames}
           />
         )}
       </ContentCard>
 
       <ScheduleModal
-        session={selectedSession}
+        group={selectedGroup}
         classroomNames={classroomNames}
-        onClose={() => setSelectedSession(null)}
+        onClose={() => setSelectedGroup(null)}
         onEdit={openEditForm}
+        onEditSeries={openEditSeries}
       />
       <ScheduleForm
         open={formOpen}
@@ -205,7 +232,13 @@ export default function SchedulePage() {
           fetchSessions()
           setCurrentDate(new Date(date + "T00:00:00"))
         }}
-        editingSession={editingSession}
+        editingSessions={editingSessions}
+      />
+      <ScheduleSeriesForm
+        open={seriesFormOpen}
+        onClose={() => setSeriesFormOpen(false)}
+        onSuccess={fetchSessions}
+        sessions={editingSeries}
       />
     </div>
   )

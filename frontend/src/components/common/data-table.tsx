@@ -36,9 +36,9 @@ export function DataTable<T>({
       )}
     >
       {data.length > 0 ? (
-        <div className="overflow-x-auto">
+        <div className="h-full overflow-auto scrollbar-slim">
           <table className="w-full border-collapse text-sm">
-            <thead className="bg-panel-strong/70">
+            <thead className="sticky top-0 z-10 bg-panel-strong">
               <tr>
                 {columns.map((column) => (
                   <th
@@ -85,7 +85,7 @@ export function DataTable<T>({
           </table>
         </div>
         ) : (
-          <EmptyState 
+          <EmptyState
             className="w-full h-full"
             title={emptyTitle}
             description={emptyDescription}
