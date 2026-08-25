@@ -10,13 +10,50 @@ import { MonthCalendar } from "@/components/features/month-calendar"
 import { StatusBadge } from "@/components/features/status-badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { formatFullDateLabel, formatHHMM, formatYMD } from "@/shared/utils/date-formatter"
+import useFetch from "@/hooks/useFetch"
+import { formatFullDateLabel, formatHHMM, formatYMD, toDate } from "@/shared/utils/date-formatter"
+import { sessionStatus } from "@/shared/utils/class-session"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 
-// Ainda não há dados reais no banco para esta tela (nem tabela de presença/
-// pendências). Tudo abaixo é mock só para validar o layout com a API real
-// futuramente — trocar por useFetch('/classsession') quando houver dados.
-type MockSession = ClassSessionDTO & { content?: string }
+// sem tabela de presença/pendências no banco ainda — mock por enquanto
+const MOCK_ATTENDANCE = { percent: 90, presences: 9, absences: 1 }
+const MOCK_PENDING = { total: 5, reports: 2, activities: 3 }
+
+type StudentSession = ClassSessionDTO & { content: string | null }
+
+// formato real de /classsession — difere do ClassSessionDTO compartilhado
+// (usado pela agenda do professor)
+interface ClassSessionApiDTO {
+  uuid: string
+  subjectTeacher: {
+    uuid: string
+    employee: { uuid: string; name: string }
+    subject: { uuid: string; description: string }
+  }
+  classroomUuid: string
+  startTime: string
+  endTime: string
+  report: { content: string } | null
+  student: { uuid: string; name: string } | null
+}
+
+function toStudentSession(session: ClassSessionApiDTO, roomName: string): StudentSession {
+  return {
+    uuid: session.uuid,
+    subjectTeacher: {
+      uuidEmployee: session.subjectTeacher.employee.uuid,
+      employee: session.subjectTeacher.employee.name,
+      uuidSubject: session.subjectTeacher.subject.uuid,
+      subject: session.subjectTeacher.subject.description,
+    },
+    classroom: { uuid: session.classroomUuid, name: roomName },
+    startTime: session.startTime as unknown as Date,
+    endTime: session.endTime as unknown as Date,
+    students: [],
+    content: session.report?.content ?? null,
+  }
+}
 
 function atToday(hour: number, minute = 0, dayOffset = 0): Date {
   const d = new Date()
@@ -25,80 +62,43 @@ function atToday(hour: number, minute = 0, dayOffset = 0): Date {
   return d
 }
 
-function mockSession(
-  id: string,
-  dayOffset: number,
-  h1: number,
-  h2: number,
-  subject: string,
-  teacher: string,
-  room: string,
-  content?: string
-): MockSession {
-  return {
-    uuid: id,
-    subjectTeacher: { uuidEmployee: `emp-${teacher}`, employee: teacher, uuidSubject: `sub-${subject}`, subject },
-    classroom: { uuid: `room-${room}`, name: room },
-    startTime: atToday(h1, 0, dayOffset),
-    endTime: atToday(h2, 0, dayOffset),
-    students: [],
-    content,
-  }
-}
-
 const TODAY = new Date()
 const MONDAY_OFFSET = 1 - TODAY.getDay() // deslocamento até a segunda-feira desta semana
-
-const MOCK_SESSIONS: MockSession[] = [
-  mockSession("s1", MONDAY_OFFSET, 14, 15, "Matemática", "Glauco Condo", "Sala 12", "Frações e divisões"),
-  mockSession("s2", MONDAY_OFFSET, 15, 16, "Matemática", "Glauco Condo", "Sala 12", "Exercícios de fixação"),
-  mockSession("s3", MONDAY_OFFSET + 1, 14, 15, "Português", "Maria Silva", "Sala 4", "Interpretação de texto"),
-  // Aulas bem espaçadas no mesmo dia, pra testar o scroll da mini agenda.
-  mockSession("s3b", MONDAY_OFFSET + 2, 7, 8, "Educação Física", "Carlos Dias", "Quadra 1", "Alongamento e resistência"),
-  mockSession("s3c", MONDAY_OFFSET + 2, 19, 20, "Inglês", "Beatriz Nunes", "Sala 9", "Verbos irregulares"),
-  mockSession("s4", MONDAY_OFFSET + 3, 9, 10, "História", "João Pereira", "Sala 7"),
-  mockSession("s5", MONDAY_OFFSET - 4, 10, 11, "Geografia", "Ana Souza", "Sala 2", "Relevo e clima"),
-  mockSession("s6", MONDAY_OFFSET + 9, 13, 14, "Ciências", "Paulo Lima", "Sala 5"),
-]
-
-const MOCK_ATTENDANCE = { percent: 90, presences: 9, absences: 1 }
-const MOCK_PENDING = { total: 5, reports: 2, activities: 3 }
-
 const WEEKDAY_LABELS_LONG = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
 const WEEK_VIEW_OFFSETS = [0, 1, 2, 3, 4, 5] // segunda a sábado, a partir de MONDAY_OFFSET
 
-// Mesma paleta de status usada em schedule-calendar.tsx (agenda do professor),
-// reaproveitada aqui para manter consistência visual entre as duas telas.
-type SessionStatus = "info" | "success"
-
-function sessionStatus(session: ClassSessionDTO): SessionStatus {
-  return new Date(session.endTime as unknown as string) < new Date() ? "success" : "info"
-}
-
 function sessionDateKey(session: ClassSessionDTO): string {
-  return formatYMD(new Date(session.startTime as unknown as string))
+  return formatYMD(toDate(session.startTime))
 }
 
-export default function StudentDashboard() {
+export default function StudentHomePage() {
+  const { data: rawSessions } = useFetch<ClassSessionApiDTO>("/classsession")
+  const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
+
   const [month, setMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(formatYMD(new Date()))
   const [activeSessionUuid, setActiveSessionUuid] = useState<string | null>(null)
 
+  const roomNameByUuid = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const room of classrooms ?? []) map.set(room.uuid, room.name)
+    return map
+  }, [classrooms])
+
   const sessionsByDate = useMemo(() => {
-    const map = new Map<string, MockSession[]>()
-    for (const s of MOCK_SESSIONS) {
-      const key = sessionDateKey(s)
+    const map = new Map<string, StudentSession[]>()
+    for (const raw of rawSessions ?? []) {
+      const session = toStudentSession(raw, roomNameByUuid.get(raw.classroomUuid) ?? "Sala")
+      const key = sessionDateKey(session)
       const list = map.get(key) ?? []
-      list.push(s)
+      list.push(session)
       map.set(key, list)
     }
     for (const list of map.values()) {
-      list.sort(
-        (a, b) => new Date(a.startTime as unknown as string).getTime() - new Date(b.startTime as unknown as string).getTime()
-      )
+      list.sort((a, b) => toDate(a.startTime).getTime() - toDate(b.startTime).getTime())
     }
     return map
-  }, [])
+  }, [rawSessions, roomNameByUuid])
 
   const weekDays = useMemo(
     () => WEEK_VIEW_OFFSETS.map((offset) => atToday(0, 0, MONDAY_OFFSET + offset)),
@@ -108,6 +108,7 @@ export default function StudentDashboard() {
   const selectedDaySessions = sessionsByDate.get(selectedDate) ?? []
   const activeSession =
     selectedDaySessions.find((s) => s.uuid === activeSessionUuid) ?? selectedDaySessions[0] ?? null
+  const activeStatus = activeSession ? sessionStatus(activeSession) : null
 
   const handleSelectDate = (dateStr: string) => {
     setSelectedDate(dateStr)
@@ -135,7 +136,7 @@ export default function StudentDashboard() {
             return (
               <ContentCard
                 key={dayStr}
-                className={cn("min-h-[132px] p-5 text-center", isToday && "border-primary/50 bg-primary/[0.06]")}
+                className={cn("min-h-[160px] p-5 text-center", isToday && "border-primary/50 bg-primary/[0.06]")}
               >
                 <div className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   {WEEKDAY_LABELS_LONG[day.getDay()]}
@@ -221,8 +222,8 @@ export default function StudentDashboard() {
                         <BookOpen className="h-4 w-4 shrink-0 text-primary" />
                         <span className="font-bold text-foreground">{activeSession.subjectTeacher.subject}</span>
                         <span className="text-sm text-muted-foreground">{formatHHMM(activeSession.startTime)}</span>
-                        <StatusBadge variant={sessionStatus(activeSession) === "success" ? "success" : "info"}>
-                          {sessionStatus(activeSession) === "success" ? "Concluída" : "Agendada"}
+                        <StatusBadge variant={activeStatus === "success" ? "success" : "info"}>
+                          {activeStatus === "success" ? "Concluída" : "Agendada"}
                         </StatusBadge>
                       </div>
 

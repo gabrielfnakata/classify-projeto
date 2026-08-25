@@ -1,19 +1,31 @@
-import { useMemo } from "react"
+import { useEffect, useRef } from "react"
 
 import { cn } from "@/lib/utils"
-import { formatHHMM } from "@/shared/utils/date-formatter"
+import { formatHHMM, toDate } from "@/shared/utils/date-formatter"
+import { sessionStatus } from "@/shared/utils/class-session"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 
-const HOUR_HEIGHT = 56
-const VISIBLE_HOURS = 5 // preenche a altura fixa do container (VISIBLE_HOURS * HOUR_HEIGHT)
-const CONTAINER_HEIGHT = VISIBLE_HOURS * HOUR_HEIGHT
+const START_HOUR = 6
+const END_HOUR = 23
+const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
+const HOUR_HEIGHT = 64
+// rótulo = linha divisória, não uma hora inteira — evita sobra no fim
+const TIMELINE_HEIGHT = (HOURS.length - 1) * HOUR_HEIGHT
+const CONTAINER_HEIGHT = 280
+const EDGE_PADDING = 40 // respiro no topo/fim, pra nada ficar cortado
 
-// Mesma paleta de status usada em schedule-calendar.tsx (agenda do professor),
-// reaproveitada aqui para manter consistência visual entre as duas telas.
-type SessionStatus = "info" | "success"
+function minutesFromStart(date: Date) {
+  return (date.getHours() - START_HOUR) * 60 + date.getMinutes()
+}
 
-function sessionStatus(session: ClassSessionDTO): SessionStatus {
-  return new Date(session.endTime as unknown as string) < new Date() ? "success" : "info"
+function sessionLayout(session: ClassSessionDTO) {
+  const start = toDate(session.startTime)
+  const end = toDate(session.endTime)
+  const top = (minutesFromStart(start) / 60) * HOUR_HEIGHT + 2
+  // timestamp direto, não getHours() — funciona mesmo cruzando meia-noite
+  const durationMinutes = (end.getTime() - start.getTime()) / 60000
+  const height = Math.max((durationMinutes / 60) * HOUR_HEIGHT - 4, 44)
+  return { start, end, top, height }
 }
 
 interface MiniDayAgendaProps<T extends ClassSessionDTO> {
@@ -23,97 +35,80 @@ interface MiniDayAgendaProps<T extends ClassSessionDTO> {
 }
 
 export function MiniDayAgenda<T extends ClassSessionDTO>({ sessions, activeUuid, onSelect }: MiniDayAgendaProps<T>) {
-  const hours = useMemo(() => {
-    const startHours = sessions.map((s) => new Date(s.startTime as unknown as string).getHours())
-    const endHours = sessions.map((s) => new Date(s.endTime as unknown as string).getHours())
-    const coreStart = Math.min(...startHours)
-    const coreEnd = Math.max(...endHours)
-    const coreSpan = Math.max(coreEnd - coreStart, 1)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
-    // sempre mostra pelo menos VISIBLE_HOURS, com a(s) aula(s) centralizada(s)
-    // na janela — só ultrapassa isso (e aí sim aparece o scroll) quando as
-    // aulas do dia realmente não cabem, aí mantém 1h de folga de cada lado
-    const targetSpan = Math.max(VISIBLE_HOURS, coreSpan + 2)
-    const padding = targetSpan - coreSpan
-    const before = Math.floor(padding / 2)
-    const after = padding - before
+  // centraliza na primeira aula ao trocar de dia (mesmo padrão do schedule-calendar.tsx)
+  useEffect(() => {
+    if (!scrollRef.current) return
 
-    let minHour = coreStart - before
-    let maxHourExclusive = coreEnd + after
+    const first = [...sessions].sort((a, b) => toDate(a.startTime).getTime() - toDate(b.startTime).getTime())[0]
+    if (!first) return
 
-    if (minHour < 0) {
-      maxHourExclusive += -minHour
-      minHour = 0
-    }
-    if (maxHourExclusive > 24) {
-      minHour = Math.max(0, minHour - (maxHourExclusive - 24))
-      maxHourExclusive = 24
-    }
-
-    return Array.from({ length: maxHourExclusive - minHour }, (_, i) => minHour + i)
+    const { top, height } = sessionLayout(first)
+    const blockCenter = EDGE_PADDING + top + height / 2
+    scrollRef.current.scrollTop = blockCenter - CONTAINER_HEIGHT / 2
   }, [sessions])
 
-  const rangeStart = hours[0]
-
-  function minutesFromStart(date: Date) {
-    return (date.getHours() - rangeStart) * 60 + date.getMinutes()
-  }
-
   return (
-    <div className="scrollbar-themed overflow-y-auto rounded-lg border border-border" style={{ height: CONTAINER_HEIGHT }}>
-      <div className="relative flex" style={{ height: hours.length * HOUR_HEIGHT }}>
-        <div className="w-14 shrink-0 border-r border-border">
-          {hours.map((h) => (
-            <div key={h} className="relative" style={{ height: HOUR_HEIGHT }}>
-              <span className="absolute -top-2.5 right-2 text-xs font-semibold text-muted-foreground">
+    <div
+      ref={scrollRef}
+      className="scrollbar-themed overflow-y-auto rounded-lg border border-border"
+      style={{ height: CONTAINER_HEIGHT }}
+    >
+      <div style={{ paddingBlock: EDGE_PADDING }}>
+        <div className="relative flex" style={{ height: TIMELINE_HEIGHT }}>
+          <div className="relative w-14 shrink-0 border-r border-border">
+            {HOURS.map((h, i) => (
+              <span
+                key={h}
+                className="absolute right-2 text-xs font-semibold text-muted-foreground"
+                style={{ top: i * HOUR_HEIGHT - 10 }}
+              >
                 {String(h).padStart(2, "0")}:00
               </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div className="relative flex-1">
-          {hours.map((h, i) => (
-            <div
-              key={h}
-              className="pointer-events-none absolute left-0 right-0 border-t border-border/50"
-              style={{ top: i * HOUR_HEIGHT }}
-            />
-          ))}
+          <div className="relative flex-1">
+            {HOURS.map((h, i) => (
+              <div
+                key={h}
+                className="pointer-events-none absolute left-0 right-0 border-t border-border/50"
+                style={{ top: i * HOUR_HEIGHT }}
+              />
+            ))}
 
-          {sessions.map((s) => {
-            const start = new Date(s.startTime as unknown as string)
-            const end = new Date(s.endTime as unknown as string)
-            const top = (minutesFromStart(start) / 60) * HOUR_HEIGHT
-            const height = Math.max(((minutesFromStart(end) - minutesFromStart(start)) / 60) * HOUR_HEIGHT - 4, 44)
-            const status = sessionStatus(s)
-            const isActive = activeUuid === s.uuid
+            {sessions.map((s) => {
+              const { start, end, top, height } = sessionLayout(s)
+              const status = sessionStatus(s)
+              const isActive = activeUuid === s.uuid
 
-            return (
-              <button
-                key={s.uuid}
-                type="button"
-                onClick={() => onSelect(s.uuid)}
-                style={{ top: top + 2, height }}
-                className={cn(
-                  "absolute left-2 right-2 overflow-hidden rounded-lg border-l-[3px] px-2.5 py-1.5 text-left text-xs transition-colors",
-                  status === "success" ? "border-l-[color:var(--success)]" : "border-l-[color:var(--info)]",
-                  isActive
-                    ? status === "success"
-                      ? "bg-success/35"
-                      : "bg-info/35"
-                    : status === "success"
-                      ? "bg-success/15 hover:bg-success/25"
-                      : "bg-info/15 hover:bg-info/25"
-                )}
-              >
-                <div className="font-semibold text-foreground">
-                  {formatHHMM(start)}–{formatHHMM(end)}
-                </div>
-                <div className="truncate text-muted-foreground">{s.subjectTeacher.subject}</div>
-              </button>
-            )
-          })}
+              return (
+                <button
+                  key={s.uuid}
+                  type="button"
+                  onClick={() => onSelect(s.uuid)}
+                  style={{ top, height }}
+                  className={cn(
+                    "absolute left-2 right-2 overflow-hidden rounded-lg border-l-[3px] px-2.5 py-1.5 text-left text-xs transition-colors",
+                    status === "success" ? "border-l-[color:var(--success)]" : "border-l-[color:var(--info)]",
+                    isActive
+                      ? status === "success"
+                        ? "bg-success/35"
+                        : "bg-info/35"
+                      : status === "success"
+                        ? "bg-success/15 hover:bg-success/25"
+                        : "bg-info/15 hover:bg-info/25"
+                  )}
+                >
+                  <div className="font-semibold text-foreground">
+                    {formatHHMM(start)}–{formatHHMM(end)}
+                  </div>
+                  <div className="truncate text-muted-foreground">{s.subjectTeacher.subject}</div>
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>

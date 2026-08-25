@@ -6,7 +6,7 @@ export const mainNavigation = [
     icon: LayoutDashboard,
     items: [
       { title: "Visão geral", url: "/classes" },
-      { title: "Visão do Aluno", url: "/student-dashboard" },
+      { title: "Visão do Aluno", url: "/student-home-page" },
     ],
   },
   {
