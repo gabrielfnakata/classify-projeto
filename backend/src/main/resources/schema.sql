@@ -239,6 +239,7 @@ CREATE TABLE form (
     title VARCHAR(255) NOT NULL,
     description VARCHAR(255),
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    limit_date DATETIME,
     has_score BIT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_form_teacher

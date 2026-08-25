@@ -38,6 +38,10 @@ public class Form {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @JdbcTypeCode(SqlTypes.LOCAL_DATE_TIME)
+    @Column(nullable = false)
+    private LocalDateTime limitDate;
+
     @JdbcTypeCode(SqlTypes.BIT)
     @Column(nullable = false)
     private Boolean hasScore = false;
@@ -80,12 +84,28 @@ public class Form {
         this.title = title;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLimitDate() {
+        return limitDate;
+    }
+
+    public void setLimitDate(LocalDateTime limitDate) {
+        this.limitDate = limitDate;
     }
 
     public Boolean getHasScore() {
@@ -123,13 +143,5 @@ public class Form {
     @Override
     public int hashCode() {
         return getUuid().hashCode();
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 }

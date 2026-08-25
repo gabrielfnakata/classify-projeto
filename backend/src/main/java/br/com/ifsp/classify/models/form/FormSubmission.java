@@ -7,6 +7,8 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -28,6 +30,9 @@ public class FormSubmission {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
+
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "submission")
+    private List<FormAnswer> formAnswer;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -69,6 +74,14 @@ public class FormSubmission {
         this.startedAt = startedAt;
     }
 
+    public LocalDateTime getCorrectedAt() {
+        return correctedAt;
+    }
+
+    public void setCorrectedAt(LocalDateTime correctedAt) {
+        this.correctedAt = correctedAt;
+    }
+
     public FormStatus getStatus() {
         return status;
     }
@@ -101,6 +114,14 @@ public class FormSubmission {
         this.form = form;
     }
 
+    public List<FormAnswer> getFormAnswer() {
+        return formAnswer;
+    }
+
+    public void setFormAnswer(List<FormAnswer> formAnswer) {
+        this.formAnswer = formAnswer;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
@@ -112,13 +133,5 @@ public class FormSubmission {
     @Override
     public int hashCode() {
         return getUuid().hashCode();
-    }
-
-    public LocalDateTime getCorrectedAt() {
-        return correctedAt;
-    }
-
-    public void setCorrectedAt(LocalDateTime correctedAt) {
-        this.correctedAt = correctedAt;
     }
 }

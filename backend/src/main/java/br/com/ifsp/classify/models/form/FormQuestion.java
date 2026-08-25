@@ -32,11 +32,11 @@ public class FormQuestion {
     @Column(name = "type_answer", nullable = false, length = 50)
     private AnswerType typeAnswer;
 
-    @OneToMany(mappedBy = "question")
-    private Set<FormAnswer> formAnswers = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
+    private Set<FormAnswer> formAnswers;
 
-    @OneToMany(mappedBy = "question")
-    private Set<FormQuestionOption> formQuestionOptions = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
+    private Set<FormQuestionOption> formQuestionOptions;
 
     public Set<FormQuestionOption> getFormQuestionOptions() {
         return formQuestionOptions;

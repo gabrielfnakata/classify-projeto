@@ -23,7 +23,7 @@ public class FormAnswer {
     private FormSubmission submission;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
+    @JoinColumn(name = "question_id", nullable = false)
     private FormQuestion question;
 
     @ManyToOne(fetch = FetchType.LAZY)

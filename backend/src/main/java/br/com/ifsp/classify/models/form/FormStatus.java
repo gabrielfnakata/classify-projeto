@@ -1,5 +1,5 @@
 package br.com.ifsp.classify.models.form;
 
 public enum FormStatus {
-    PENDING, CORRECTED
+    PENDING, ANSWERED, CORRECTED
 }
