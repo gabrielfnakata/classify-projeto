@@ -38,7 +38,7 @@ public class ClassSession implements Serializable {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "report_id", nullable = true)
     private Report report;
 
@@ -49,6 +49,10 @@ public class ClassSession implements Serializable {
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = true)
     private Student student;
+
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(name = "recurrence_group_id", nullable = true)
+    private byte[] recurrenceGroupId;
 
     @OneToMany(mappedBy = "classSession")
     private List<Assessment> assessments = new ArrayList<>();
@@ -131,5 +135,13 @@ public class ClassSession implements Serializable {
 
     public void setAssessments(List<Assessment> assessments) {
         this.assessments = assessments;
+    }
+
+    public byte[] getRecurrenceGroupId() {
+        return recurrenceGroupId;
+    }
+
+    public void setRecurrenceGroupId(byte[] recurrenceGroupId) {
+        this.recurrenceGroupId = recurrenceGroupId;
     }
 }
