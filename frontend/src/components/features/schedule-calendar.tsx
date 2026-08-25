@@ -1,14 +1,15 @@
 import { useRef, useEffect, useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { formatYMD, formatMonthYearLabel } from "@/shared/utils/date-formatter"
+import { formatYMD } from "@/shared/utils/date-formatter"
 import { resolveClassroomName } from "@/shared/utils/class-session-helpers"
+import { groupSessions, type SessionGroup } from "@/shared/utils/session-grouping"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 
 interface ScheduleCalendarProps {
   sessions: ClassSessionDTO[]
   viewMode: "day" | "week" | "month"
   currentDate: Date
-  onSessionClick: (session: ClassSessionDTO) => void
+  onGroupClick: (group: SessionGroup) => void
   classroomNames: Map<string, string>
 }
 
@@ -35,12 +36,8 @@ function toHHMM(raw: unknown): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-function sessionDate(dto: ClassSessionDTO): string {
-  return formatYMD(new Date(dto.startTime as unknown as string))
-}
-
-function sessionStatus(dto: ClassSessionDTO): SessionStatus {
-  return new Date(dto.endTime as unknown as string) < new Date() ? "success" : "info"
+function groupStatus(group: SessionGroup): SessionStatus {
+  return new Date(group.sessions[0].endTime as unknown as string) < new Date() ? "success" : "info"
 }
 
 function timeToMinutes(time: string): number {
@@ -48,23 +45,23 @@ function timeToMinutes(time: string): number {
   return h * 60 + m
 }
 
-interface LayoutedSession {
-  session: ClassSessionDTO
+interface LayoutedGroup {
+  group: SessionGroup
   col: number
   colCount: number
 }
 
-function layoutSessions(sessions: ClassSessionDTO[]): LayoutedSession[] {
-  const sorted = [...sessions].sort(
-    (a, b) => timeToMinutes(toHHMM(a.startTime)) - timeToMinutes(toHHMM(b.startTime))
+function layoutGroups(groups: SessionGroup[]): LayoutedGroup[] {
+  const sorted = [...groups].sort(
+    (a, b) => timeToMinutes(toHHMM(a.sessions[0].startTime)) - timeToMinutes(toHHMM(b.sessions[0].startTime))
   )
 
   const columnEnds: number[] = []
-  const assignments: { session: ClassSessionDTO; col: number }[] = []
+  const assignments: { group: SessionGroup; col: number }[] = []
 
-  for (const session of sorted) {
-    const start = timeToMinutes(toHHMM(session.startTime))
-    const end = timeToMinutes(toHHMM(session.endTime))
+  for (const group of sorted) {
+    const start = timeToMinutes(toHHMM(group.sessions[0].startTime))
+    const end = timeToMinutes(toHHMM(group.sessions[0].endTime))
     let col = columnEnds.findIndex((e) => e <= start)
     if (col === -1) {
       col = columnEnds.length
@@ -72,20 +69,20 @@ function layoutSessions(sessions: ClassSessionDTO[]): LayoutedSession[] {
     } else {
       columnEnds[col] = end
     }
-    assignments.push({ session, col })
+    assignments.push({ group, col })
   }
 
-  return assignments.map(({ session, col }) => {
-    const start = timeToMinutes(toHHMM(session.startTime))
-    const end = timeToMinutes(toHHMM(session.endTime))
+  return assignments.map(({ group, col }) => {
+    const start = timeToMinutes(toHHMM(group.sessions[0].startTime))
+    const end = timeToMinutes(toHHMM(group.sessions[0].endTime))
     const overlapCols = assignments
       .filter((a) => {
-        const s = timeToMinutes(toHHMM(a.session.startTime))
-        const e = timeToMinutes(toHHMM(a.session.endTime))
+        const s = timeToMinutes(toHHMM(a.group.sessions[0].startTime))
+        const e = timeToMinutes(toHHMM(a.group.sessions[0].endTime))
         return s < end && e > start
       })
       .map((a) => a.col)
-    return { session, col, colCount: Math.max(...overlapCols) + 1 }
+    return { group, col, colCount: Math.max(...overlapCols) + 1 }
   })
 }
 
@@ -141,32 +138,33 @@ function CurrentTimeLine({ date }: { date: Date }) {
 }
 
 function SessionBlock({
-  session,
+  group,
   col,
   colCount,
-  onSessionClick,
+  onGroupClick,
   classroomNames,
 }: {
-  session: ClassSessionDTO
+  group: SessionGroup
   col: number
   colCount: number
-  onSessionClick: (s: ClassSessionDTO) => void
+  onGroupClick: (g: SessionGroup) => void
   classroomNames: Map<string, string>
 }) {
-  const start = toHHMM(session.startTime)
-  const end = toHHMM(session.endTime)
+  const primary = group.sessions[0]
+  const start = toHHMM(primary.startTime)
+  const end = toHHMM(primary.endTime)
   const startMins = timeToMinutes(start)
   const endMins = timeToMinutes(end)
   const top = (startMins / 60) * HOUR_HEIGHT
   const height = Math.max(((endMins - startMins) / 60) * HOUR_HEIGHT, 22)
   const widthPct = 100 / colCount
   const leftPct = col * widthPct
-  const status = sessionStatus(session)
+  const status = groupStatus(group)
 
   return (
     <button
       type="button"
-      onClick={() => onSessionClick(session)}
+      onClick={() => onGroupClick(group)}
       className={cn(
         "absolute overflow-hidden rounded border-l-[3px] px-1.5 py-0.5 text-left text-xs transition-all active:scale-[0.98]",
         statusBgClasses[status]
@@ -179,7 +177,10 @@ function SessionBlock({
         borderLeftColor: statusBorderColors[status],
       }}
     >
-      <div className="truncate font-semibold leading-tight">{session.subjectTeacher.subject.description}</div>
+      <div className="truncate font-semibold leading-tight">
+        {primary.subjectTeacher.subject.description}
+        {group.sessions.length > 1 && ` · ${group.sessions.length} alunos`}
+      </div>
       {height >= 40 && (
         <div className="mt-0.5 truncate leading-tight opacity-70">
           {start}–{end}
@@ -187,7 +188,7 @@ function SessionBlock({
       )}
       {height >= 56 && (
         <div className="truncate leading-tight opacity-60">
-          {resolveClassroomName(classroomNames, session.classroomUuid)}
+          {resolveClassroomName(classroomNames, primary.classroomUuid)}
         </div>
       )}
     </button>
@@ -198,17 +199,17 @@ function DayView({
   sessions,
   currentDate,
   scrollRef,
-  onSessionClick,
+  onGroupClick,
   classroomNames,
 }: {
   sessions: ClassSessionDTO[]
   currentDate: Date
   scrollRef: { current: HTMLDivElement | null }
-  onSessionClick: (s: ClassSessionDTO) => void
+  onGroupClick: (g: SessionGroup) => void
   classroomNames: Map<string, string>
 }) {
   const layouted = useMemo(
-    () => layoutSessions(sessions.filter((s) => sessionDate(s) === formatYMD(currentDate))),
+    () => layoutGroups(groupSessions(sessions.filter((s) => formatYMD(new Date(s.startTime as unknown as string)) === formatYMD(currentDate)))),
     [sessions, currentDate]
   )
 
@@ -218,13 +219,13 @@ function DayView({
         <TimeGutter />
         <div className="relative flex-1">
           <HourLines />
-          {layouted.map(({ session, col, colCount }) => (
+          {layouted.map(({ group, col, colCount }) => (
             <SessionBlock
-              key={session.uuid}
-              session={session}
+              key={group.key}
+              group={group}
               col={col}
               colCount={colCount}
-              onSessionClick={onSessionClick}
+              onGroupClick={onGroupClick}
               classroomNames={classroomNames}
             />
           ))}
@@ -239,13 +240,13 @@ function WeekView({
   sessions,
   currentDate,
   scrollRef,
-  onSessionClick,
+  onGroupClick,
   classroomNames,
 }: {
   sessions: ClassSessionDTO[]
   currentDate: Date
   scrollRef: { current: HTMLDivElement | null }
-  onSessionClick: (s: ClassSessionDTO) => void
+  onGroupClick: (g: SessionGroup) => void
   classroomNames: Map<string, string>
 }) {
   const todayStr = formatYMD(new Date())
@@ -296,8 +297,8 @@ function WeekView({
           {weekDays.map((day) => {
             const dayStr = formatYMD(day)
             const isToday = dayStr === todayStr
-            const daySessions = sessions.filter((s) => sessionDate(s) === dayStr)
-            const layouted = layoutSessions(daySessions)
+            const daySessions = sessions.filter((s) => formatYMD(new Date(s.startTime as unknown as string)) === dayStr)
+            const layouted = layoutGroups(groupSessions(daySessions))
 
             return (
               <div
@@ -308,13 +309,13 @@ function WeekView({
                 )}
               >
                 <HourLines />
-                {layouted.map(({ session, col, colCount }) => (
+                {layouted.map(({ group, col, colCount }) => (
                   <SessionBlock
-                    key={session.uuid}
-                    session={session}
+                    key={group.key}
+                    group={group}
                     col={col}
                     colCount={colCount}
-                    onSessionClick={onSessionClick}
+                    onGroupClick={onGroupClick}
                     classroomNames={classroomNames}
                   />
                 ))}
@@ -331,11 +332,11 @@ function WeekView({
 function MonthView({
   sessions,
   currentDate,
-  onSessionClick,
+  onGroupClick,
 }: {
   sessions: ClassSessionDTO[]
   currentDate: Date
-  onSessionClick: (s: ClassSessionDTO) => void
+  onGroupClick: (g: SessionGroup) => void
 }) {
   const todayStr = formatYMD(new Date())
   const year = currentDate.getFullYear()
@@ -354,9 +355,6 @@ function MonthView({
 
   return (
     <div className="overflow-auto p-4">
-      <div className="mb-2 text-center text-sm font-semibold text-foreground capitalize">
-        {formatMonthYearLabel(currentDate)}
-      </div>
       <div className="mb-1 grid grid-cols-7">
         {WEEK_DAY_LABELS.map((label) => (
           <div
@@ -374,9 +372,10 @@ function MonthView({
           }
           const dateStr = formatYMD(date)
           const isToday = dateStr === todayStr
-          const daySessions = sessions.filter((s) => sessionDate(s) === dateStr)
-          const visible = daySessions.slice(0, 3)
-          const hidden = daySessions.length - visible.length
+          const daySessions = sessions.filter((s) => formatYMD(new Date(s.startTime as unknown as string)) === dateStr)
+          const dayGroups = groupSessions(daySessions)
+          const visible = dayGroups.slice(0, 3)
+          const hidden = dayGroups.length - visible.length
 
           return (
             <div key={dateStr} className="min-h-[96px] bg-background p-1.5">
@@ -391,17 +390,18 @@ function MonthView({
                 {date.getDate()}
               </div>
               <div className="space-y-0.5">
-                {visible.map((session) => (
+                {visible.map((group) => (
                   <button
-                    key={session.uuid}
+                    key={group.key}
                     type="button"
-                    onClick={() => onSessionClick(session)}
+                    onClick={() => onGroupClick(group)}
                     className={cn(
                       "w-full truncate rounded px-1 py-0.5 text-left text-[10px] font-medium transition-opacity hover:opacity-80",
-                      statusBgClasses[sessionStatus(session)]
+                      statusBgClasses[groupStatus(group)]
                     )}
                   >
-                    {session.subjectTeacher.subject.description}
+                    {group.sessions[0].subjectTeacher.subject.description}
+                    {group.sessions.length > 1 && ` · ${group.sessions.length}`}
                   </button>
                 ))}
                 {hidden > 0 && (
@@ -422,7 +422,7 @@ export function ScheduleCalendar({
   sessions,
   viewMode,
   currentDate,
-  onSessionClick,
+  onGroupClick,
   classroomNames,
 }: ScheduleCalendarProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -433,7 +433,7 @@ export function ScheduleCalendar({
     const isToday = formatYMD(currentDate) === formatYMD(now)
 
     const currentDateSessions = sessions.filter(
-      (s) => sessionDate(s) === formatYMD(currentDate)
+      (s) => formatYMD(new Date(s.startTime as unknown as string)) === formatYMD(currentDate)
     )
     const earliest = currentDateSessions.sort(
       (a, b) => timeToMinutes(toHHMM(a.startTime)) - timeToMinutes(toHHMM(b.startTime))
@@ -452,7 +452,7 @@ export function ScheduleCalendar({
         <MonthView
           sessions={sessions}
           currentDate={currentDate}
-          onSessionClick={onSessionClick}
+          onGroupClick={onGroupClick}
         />
       )}
       {viewMode === "week" && (
@@ -460,7 +460,7 @@ export function ScheduleCalendar({
           sessions={sessions}
           currentDate={currentDate}
           scrollRef={scrollRef}
-          onSessionClick={onSessionClick}
+          onGroupClick={onGroupClick}
           classroomNames={classroomNames}
         />
       )}
@@ -469,7 +469,7 @@ export function ScheduleCalendar({
           sessions={sessions}
           currentDate={currentDate}
           scrollRef={scrollRef}
-          onSessionClick={onSessionClick}
+          onGroupClick={onGroupClick}
           classroomNames={classroomNames}
         />
       )}

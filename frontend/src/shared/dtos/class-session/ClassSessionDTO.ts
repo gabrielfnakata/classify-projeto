@@ -20,4 +20,5 @@ export interface ClassSessionDTO {
     report: ClassSessionReportDTO | null,
     classDTO: ClassSessionClassDTO | null,
     student: ClassSessionStudentDTO | null,
+    recurrenceGroupUuid: string | null,
 };

@@ -8,4 +8,5 @@ export interface ClassSessionCreateDTO {
     report: ReportCreateDTO;
     classUuid?: string;
     studentUuid?: string;
+    recurrenceGroupUuid?: string;
 }
