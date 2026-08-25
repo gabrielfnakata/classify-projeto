@@ -2,6 +2,7 @@ import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import useFetch from "@/hooks/useFetch";
+import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
 
 export default function StudentRegistration() {
@@ -21,7 +22,7 @@ export default function StudentRegistration() {
     return (
         <>
             <RegistrationPage
-                data={data ?? []} 
+                data={sortedByName(data ?? [])} 
                 columns={columns}
                 filters={filters}
                 title="Alunos"
