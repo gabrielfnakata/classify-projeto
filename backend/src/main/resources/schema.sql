@@ -230,3 +230,79 @@ CREATE TABLE IF NOT EXISTS audit (
     CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES user (id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
 )$$
+
+
+CREATE TABLE form (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    teacher_id BIGINT UNSIGNED NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    has_score BIT NOT NULL DEFAULT 0,
+
+    CONSTRAINT fk_form_teacher
+    FOREIGN KEY (teacher_id) REFERENCES employee (id)
+)$$
+
+CREATE TABLE form_question (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    form_id BIGINT UNSIGNED NOT NULL,
+    question VARCHAR(255) NOT NULL,
+    type_answer VARCHAR(50) NOT NULL,
+
+    CONSTRAINT fk_form_questions_form
+    FOREIGN KEY (form_id) REFERENCES form (id)
+)$$
+
+CREATE TABLE form_question_option (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    question_id BIGINT UNSIGNED NOT NULL,
+    option_text VARCHAR(255) NOT NULL,
+    correct BIT NOT NULL DEFAULT 0,
+
+    CONSTRAINT fk_form_question_options_question
+    FOREIGN KEY (question_id) REFERENCES form_question (id)
+)$$
+
+CREATE TABLE form_submission (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    student_id BIGINT UNSIGNED NOT NULL,
+    form_id BIGINT UNSIGNED NOT NULL,
+    status BIGINT UNSIGNED NOT NULL,
+    started_at DATETIME,
+    submitted_at DATETIME,
+    corrected_at DATETIME,
+    score DECIMAL(5,2),
+
+    CONSTRAINT fk_form_submission_student
+    FOREIGN KEY (student_id) REFERENCES student (id),
+
+    CONSTRAINT fk_form_submission_form
+    FOREIGN KEY (form_id) REFERENCES form (id)
+)$$
+
+CREATE TABLE form_answer (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    question_id BIGINT UNSIGNED NOT NULL,
+    submission_id BIGINT UNSIGNED NOT NULL,
+    option_id BIGINT UNSIGNED,
+    type_answer VARCHAR(50) NOT NULL,
+    answer_text VARCHAR(500),
+    corrected_at DATETIME,
+    teacher_feedback  VARCHAR(500),
+
+    CONSTRAINT fk_form_answers_question
+    FOREIGN KEY (question_id) REFERENCES form_question (id),
+
+    CONSTRAINT fk_form_answers_submission
+    FOREIGN KEY (submission_id) REFERENCES form_submission (id),
+
+    CONSTRAINT fk_form_answers_option
+    FOREIGN KEY (option_id) REFERENCES form_question_option (id)
+)$$
+
