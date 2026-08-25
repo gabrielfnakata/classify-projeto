@@ -14,6 +14,8 @@ import { PublicShell } from "@/components/layout/public-shell";
 import NewSubject from "@/pages/subjects/NewSubject";
 import NewStudent from "@/pages/students/NewStudent";
 import NewClassroom from "@/pages/classrooms/NewClassroom";
+import StudentForms from "@/pages/forms/StudentForms";
+import TeacherForms from "@/pages/forms/TeacherForms";
 
 export default function AppRoutes() {
     return (
@@ -75,6 +77,15 @@ export default function AppRoutes() {
             }/>
             <Route path="/schedule" element={
                 <ProtectedRoute children={<SchedulePage />} />
+            }/>
+            <Route path="/pending-forms" element={
+                <ProtectedRoute children={<StudentForms />} />
+            }/>
+            <Route path="/posted-forms" element={
+                <ProtectedRoute children={<TeacherForms />} />
+            }/>
+            <Route path="/new-form" element={
+                <ProtectedRoute children={<OnDevelopment />} />
             }/>
         </Routes>
     )
