@@ -1,4 +1,4 @@
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, X } from "lucide-react"
 import { Avatar } from "@/components/common/avatar"
 import { cn } from "@/lib/utils"
 
@@ -8,6 +8,7 @@ interface EntityCardProps {
   description?: string
   seed?: string | number
   className?: string
+  onRemove?: () => void
 }
 
 export function EntityCard({
@@ -16,6 +17,7 @@ export function EntityCard({
   description,
   seed,
   className,
+  onRemove,
 }: EntityCardProps) {
   return (
     <div
@@ -54,9 +56,13 @@ export function EntityCard({
 
             <button
               type="button"
-              className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              onClick={onRemove}
+              className={cn(
+                "rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+                onRemove && "hover:text-destructive"
+              )}
             >
-              <MoreHorizontal className="h-5 w-5" />
+              {onRemove ? <X className="h-5 w-5" /> : <MoreHorizontal className="h-5 w-5" />}
             </button>
           </div>
         </div>
