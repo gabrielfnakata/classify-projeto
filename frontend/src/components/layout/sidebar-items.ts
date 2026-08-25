@@ -14,11 +14,15 @@ export const mainNavigation = [
       { title: "Funcionários", url: "/employees" },
       { title: "Salas", url: "/classrooms" },
       { title: "Disciplinas", url: "/subjects" },
+      { title: "Turmas", url: "/class-groups" },
     ],
   },
   {
     title: "Agenda",
     icon: CalendarDays,
-    items: [{ title: "Agendamentos", url: "/schedule" }],
+    items: [
+      { title: "Agendamentos", url: "/schedule" },
+      { title: "Chamada", url: "/attendance" },
+    ],
   },
 ]
