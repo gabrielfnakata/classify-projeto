@@ -1,15 +1,16 @@
 package br.com.ifsp.classify.services;
 
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.repositories.AbstractRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, ID> implements InterfaceService<CreateDTO, GetDTO, UpdateDTO> {
+public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, FilterDTO, ID> implements InterfaceService<CreateDTO, GetDTO, UpdateDTO, FilterDTO> {
 
     protected final AbstractRepository<Model, ID> repository;
     private final String uuid = "uuid";
@@ -21,13 +22,15 @@ public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, ID> i
     abstract GetDTO returnDTO(Model entity);
     public abstract GetDTO create(CreateDTO entity);
     public abstract GetDTO update(String uuid, UpdateDTO entity);
+    public abstract Specification<Model> createSpecificationFromFilter(FilterDTO filterDTO);
 
     @Override
-    public List<GetDTO> findAll() {
-        return repository.findAll()
-                .stream()
-                .map(this::returnDTO)
-                .collect(Collectors.toList());
+    public PageResponseGetDTO<GetDTO> findAll(Pageable pageable, FilterDTO filterDTO) {
+        Page<GetDTO> pageResponse = repository
+            .findAll(createSpecificationFromFilter(filterDTO), pageable)
+            .map(this::returnDTO);
+
+        return returnPageResponseDTO(pageResponse);
     }
 
     @Override
@@ -52,5 +55,11 @@ public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, ID> i
                 cb.equal(root.get(this.uuid), UuidUtils.convertUUIDToBytes(uuid));
 
         return repository.findOne(spec).orElse(null);
+    }
+
+    private PageResponseGetDTO<GetDTO> returnPageResponseDTO(Page<GetDTO> pageable) {
+        return (pageable == null)
+            ? null
+            : PageResponseGetDTO.from(pageable);
     }
 }

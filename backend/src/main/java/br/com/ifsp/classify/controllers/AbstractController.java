@@ -1,27 +1,29 @@
 package br.com.ifsp.classify.controllers;
 
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.services.InterfaceService;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+public abstract class AbstractController<CreateDTO, GetDTO, UpdateDTO, FilterDTO> {
 
-public abstract class AbstractController<CreateDTO, GetDTO, UpdateDTO> {
+    protected final InterfaceService<CreateDTO, GetDTO, UpdateDTO, FilterDTO> service;
 
-    protected final InterfaceService<CreateDTO, GetDTO, UpdateDTO> service;
-
-    protected AbstractController(InterfaceService<CreateDTO, GetDTO, UpdateDTO> service) {
+    protected AbstractController(InterfaceService<CreateDTO, GetDTO, UpdateDTO, FilterDTO> service) {
         this.service = service;
     }
 
     @GetMapping
-    public ResponseEntity<List<GetDTO>> findAll() {
-        List<GetDTO> allEntities = service.findAll();
+    public ResponseEntity<PageResponseGetDTO<GetDTO>> findAll( @PageableDefault(size = 10, sort = "id") Pageable pageable, FilterDTO filterDTO ) {
+        PageResponseGetDTO<GetDTO> responseDTO = service.findAll(pageable, filterDTO);
 
-        return (allEntities.isEmpty())
+        return (responseDTO.content().isEmpty())
                 ? ResponseEntity.noContent().build()
-                : ResponseEntity.ok(allEntities);
+                : ResponseEntity.ok(responseDTO);
     }
 
     @GetMapping("/{uuid}")

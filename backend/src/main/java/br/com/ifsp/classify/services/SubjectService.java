@@ -1,17 +1,21 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.SubjectCreateDTO;
+import br.com.ifsp.classify.dtos.filter.SubjectFilterDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
 import br.com.ifsp.classify.dtos.update.SubjectUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.models.Subject;
 import br.com.ifsp.classify.repositories.SubjectRepository;
+import br.com.ifsp.classify.specifications.SubjectSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, Integer> {
+public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, SubjectFilterDTO, Integer> {
 
     public SubjectService(SubjectRepository repository) {
         super(repository);
@@ -57,5 +61,16 @@ public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, S
         repository.save(subject);
 
         return returnDTO(subject);
+    }
+
+    @Override
+    public Specification<Subject> createSpecificationFromFilter(SubjectFilterDTO filterDTO) {
+        Specification<Subject> conditions = Specification.unrestricted();
+
+        if (!Utils.isNullOrEmpty(filterDTO.description())) {
+            conditions = conditions.and(SubjectSpecification.getByDescription(filterDTO.description()));
+        }
+
+        return conditions;
     }
 }

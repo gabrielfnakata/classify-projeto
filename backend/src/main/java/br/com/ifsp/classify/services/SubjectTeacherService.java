@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.SubjectTeacherCreateDTO;
+import br.com.ifsp.classify.dtos.filter.SubjectTeacherFilterDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
 import br.com.ifsp.classify.dtos.get.SubjectTeacherEmployeeGetDTO;
 import br.com.ifsp.classify.dtos.get.SubjectTeacherGetDTO;
@@ -16,10 +17,12 @@ import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.specifications.SubjectSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SubjectTeacherService extends AbstractService<SubjectTeacher, SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO, Long> {
+public class SubjectTeacherService extends AbstractService<SubjectTeacher, SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO, SubjectTeacherFilterDTO, Long> {
 
     private final EmployeeRepository employeeRepository;
     private final SubjectRepository subjectRepository;
@@ -117,5 +120,12 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
         repository.save(subjectTeacher);
 
         return returnDTO(subjectTeacher);
+    }
+
+    @Override
+    public Specification<SubjectTeacher> createSpecificationFromFilter(SubjectTeacherFilterDTO filterDTO) {
+        Specification<SubjectTeacher> conditions = Specification.unrestricted();
+
+        return conditions;
     }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import type { FilterConfig } from "../../filter-row/FilterRow";
 import FilterRow from "../../filter-row/FilterRow";
@@ -7,32 +7,47 @@ import { useNavigate } from "react-router";
 import { Button } from "../../ui/button";
 import { ContentCard } from "../../layout/content-card";
 import { PageHeader } from "../../layout/page-header";
+import useFetch from "@/hooks/useFetch";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 interface registrationPageProps<T> {
     title: string;
-    data: T[];
+    url: string;
+    // data: T[];
     filters: FilterConfig[];
     columns: DataTableColumn<T>[];
     registrationRoute: string;
+    // totalPages: number;
 } 
 
 interface dataType {
     uuid: string;
 }
 
+function getUrlWithFilters(endpoint: string, page: number, filters: object): string {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        ...Object.fromEntries(
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            Object.entries(filters).filter(([_, value]) => value !== undefined && value !== null)
+        ),
+    });
+
+    return `${endpoint}?${params.toString()}`;
+}
+
 export default function RegistrationPage<T extends dataType>({
-    title, data, filters, columns, registrationRoute
+    title, url, filters, columns, registrationRoute
 }: registrationPageProps<T>) {
     const [filterValues, setFilterValues] = useState({});
+    const [page, setPage] = useState(0);
     const navigate = useNavigate();
 
     const handleFilterSubmit = (values: Record<string, string>) => {
         setFilterValues(values);
     }
 
-    useEffect(() => {
-        // TODO: Chamada à API com a filtragem dos dados
-    }, [filterValues]);
+    const { data } = useFetch<PaginationDTO<T>>(getUrlWithFilters(url, page, filterValues));
     
     return (
         <>
@@ -56,9 +71,12 @@ export default function RegistrationPage<T extends dataType>({
                             onValuesChange={handleFilterSubmit}
                             />
                             <DataTable
-                                data={data}
+                                data={data?.content ?? []}
                                 columns={columns}
                                 rowKey={(row) => row.uuid}
+                                totalPages={data?.totalPages ?? 1}
+                                page={page ?? 0}
+                                onPageChange={setPage}
                             />
                     </ContentCard>
                 </div>

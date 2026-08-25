@@ -1,10 +1,12 @@
 package br.com.ifsp.classify.services;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
+import br.com.ifsp.classify.dtos.filter.EmployeeFilterDTO;
 import br.com.ifsp.classify.dtos.get.EmployeeGetDTO;
 import br.com.ifsp.classify.dtos.update.EmployeeUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
@@ -13,11 +15,12 @@ import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.repositories.RoleRepository;
+import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 
 @Service
-public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO, Long> {
+public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO, EmployeeFilterDTO, Long> {
 
     private final TelephoneService telephoneService;
     private final UserService userService;
@@ -116,5 +119,24 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         repository.save(employee);
 
         return returnDTO(employee);
+    }
+
+    @Override
+    public Specification<Employee> createSpecificationFromFilter(EmployeeFilterDTO filterDTO) {
+        Specification<Employee> conditions = Specification.unrestricted();
+
+        if (!Utils.isNullOrEmpty(filterDTO.name())) {
+            conditions = conditions.and(EmployeeSpecification.getByName(filterDTO.name()));
+        }
+
+        if (!Utils.isNullOrEmpty(filterDTO.cpf())) {
+            conditions = conditions.and(EmployeeSpecification.getByCpf(Utils.removeAllNonDigits(filterDTO.cpf())));
+        }
+
+        if (!Utils.isNullOrEmpty(filterDTO.email())) {
+            conditions = conditions.and(EmployeeSpecification.getByEmail(filterDTO.email()));
+        }
+
+        return conditions;
     }
 }

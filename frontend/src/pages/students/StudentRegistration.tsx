@@ -1,10 +1,10 @@
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
-import useFetch from "@/hooks/useFetch";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
 
 export default function StudentRegistration() {
+    const STUDENT_URL = "/student";
     const columns: DataTableColumn<StudentDTO>[] = [
         {key: 'name', header: 'Nome', cell: row => row.name},
         {key: 'email', header: 'E-mail', cell: row => row.email},
@@ -17,12 +17,12 @@ export default function StudentRegistration() {
         {name: 'cpf', inputType: 'cpf', placeholder: 'CPF', width: 25},
         {name: 'telephone', inputType: 'text', placeholder: 'Telefone', width: 25},
     ];
-    const {data} = useFetch<StudentDTO>('/student');
+    
     return (
         <>
             <RegistrationPage
-                data={data ?? []} 
                 columns={columns}
+                url={STUDENT_URL}
                 filters={filters}
                 title="Alunos"
                 registrationRoute="/new-student"

@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.SubjectCreateDTO;
+import br.com.ifsp.classify.dtos.filter.SubjectFilterDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
 import br.com.ifsp.classify.dtos.update.SubjectUpdateDTO;
 import br.com.ifsp.classify.services.SubjectService;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/subject", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-public class SubjectController extends AbstractController<SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO> {
+public class SubjectController extends AbstractController<SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, SubjectFilterDTO> {
 
     public SubjectController(SubjectService service) {
         super(service);

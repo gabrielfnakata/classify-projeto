@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.ClassSessionCreateDTO;
+import br.com.ifsp.classify.dtos.filter.ClasssessionFilterDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
 import br.com.ifsp.classify.dtos.update.ClassSessionUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
@@ -21,10 +22,12 @@ import br.com.ifsp.classify.specifications.StudentSpecification;
 import br.com.ifsp.classify.specifications.SubjectTeacherSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ClassSessionService extends AbstractService<ClassSession, ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, Long> {
+public class ClassSessionService extends AbstractService<ClassSession, ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, ClasssessionFilterDTO, Long> {
 
     private final SubjectTeacherRepository subjectTeacherRepository;
     private final ClassroomRepository classroomRepository;
@@ -275,5 +278,12 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         repository.save(classSession);
 
         return returnDTO(classSession);
+    }
+
+    @Override
+    public Specification<ClassSession> createSpecificationFromFilter(ClasssessionFilterDTO filterDTO) {
+        Specification<ClassSession> conditions = Specification.unrestricted();
+
+        return conditions;
     }
 }
