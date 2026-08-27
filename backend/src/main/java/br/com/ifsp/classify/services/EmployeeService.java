@@ -8,6 +8,7 @@ import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.get.EmployeeGetDTO;
 import br.com.ifsp.classify.dtos.update.EmployeeUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Employee;
 import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.models.User;
@@ -53,13 +54,13 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
             return null;
 
         if (Utils.isNullOrEmpty(employeeDTO.name()))
-            throw new DtoException("O nome do funcionário não pode ser vazio ou nulo");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "O nome do funcionário não pode ser vazio ou nulo.");
 
         if (Utils.isNullOrEmpty(employeeDTO.cpf())) {
-            throw new DtoException("O CPF do funcionário não pode ser nulo ou vazio");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "O CPF do funcionário não pode ser nulo ou vazio.");
         }
         else if (!Utils.cpfValidator(employeeDTO.cpf())) {
-            throw new DtoException("O CPF informado é inválido");
+            throw new DtoException(ExceptionCode.INVALID_CPF, "O CPF informado é inválido.");
         }
 
         Employee newEmployee = new Employee();
@@ -108,7 +109,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
             User userUpdated = userService.updateUser(employeeUuid, employeeDTO.user());
 
             if (userUpdated == null)
-                throw new DtoException("Erro ao atualizar o usuário");    
+                throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Erro ao atualizar o usuário.");    
             
             employee.setUser(userUpdated);
         }

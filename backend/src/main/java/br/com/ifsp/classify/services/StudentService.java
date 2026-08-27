@@ -3,13 +3,12 @@ package br.com.ifsp.classify.services;
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
-import br.com.ifsp.classify.dtos.get.AddressGetDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
-import br.com.ifsp.classify.dtos.get.TelephoneGetDTO;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Address;
 import br.com.ifsp.classify.models.Guardian;
 import br.com.ifsp.classify.models.Student;
@@ -82,13 +81,13 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             return null;
 
         if (Utils.isNullOrEmpty(studentDTO.name()))
-            throw new DtoException("O nome do aluno não pode ser nulo ou vazio");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o nome do aluno.");
 
         if (!Utils.isNullOrEmpty(studentDTO.cpf()) && !Utils.cpfValidator(studentDTO.cpf()))
-            throw new DtoException("O CPF informado é inválido");
+            throw new DtoException(ExceptionCode.INVALID_CPF, "O CPF informado é inválido.");
 
         if (studentDTO.registrationDate() == null)
-            throw new DtoException("A data de matrícula do aluno não pode ser nula");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a data de matrícula do aluno.");
 
         Student newStudent = new Student();
         newStudent.setUuid(UuidUtils.generateUUID());
@@ -159,7 +158,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
 
         Student student = getEntityById(studentUuid);
         if (student == null)
-            throw new DtoException("O aluno informado não existe");
+            throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O aluno informado não foi encontrado.");
 
         for (GuardianCreateDTO guardian : guardiansDTO) {
             Guardian newGuardian = create(guardian);
@@ -211,13 +210,13 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             return null;
 
         if (Utils.isNullOrEmpty(guardianDTO.name()))
-            throw new DtoException("O nome do responsável não pode ser nulo ou vazio");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o nome do responsável.");
 
         if (!Utils.isNullOrEmpty(guardianDTO.cpf()) && !Utils.cpfValidator(guardianDTO.cpf()))
-            throw new DtoException("O CPF informado é inválido");
+            throw new DtoException(ExceptionCode.INVALID_CPF, "O CPF informado é inválido.");
 
         if (Utils.isNullOrEmpty(guardianDTO.email()))
-            throw new DtoException("O email do responsável não pode ser nulo");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail do responsável.");
 
         Guardian newGuardian = new Guardian();
         newGuardian.setUuid(UuidUtils.generateUUID());

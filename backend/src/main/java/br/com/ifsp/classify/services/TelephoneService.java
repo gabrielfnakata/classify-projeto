@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.get.TelephoneGetDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.utils.Utils;
 
@@ -28,16 +29,16 @@ public class TelephoneService {
         
         if (!Utils.isNullOrEmpty(telephoneDTO.country()) && 
             (telephoneDTO.country().trim().matches("\\D") || telephoneDTO.country().trim().length() > 3))
-            throw new DtoException("Foi informado um código de país inválido");
+            throw new DtoException(ExceptionCode.INVALID_PHONE, "Foi informado um código de país inválido.");
         
         if (!Utils.isNullOrEmpty(telephoneDTO.ddd()) && 
             (telephoneDTO.ddd().trim().matches("\\D") || telephoneDTO.ddd().trim().length() > 5))
-            throw new DtoException("Foi informado um DDD inválido");
+            throw new DtoException(ExceptionCode.INVALID_PHONE, "Foi informado um DDD inválido.");
 
         if (Utils.isNullOrEmpty(telephoneDTO.number()))
-            throw new DtoException("É necessário informar um número");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar um número de telefone.");
         else if (telephoneDTO.number().trim().matches("\\D") || telephoneDTO.number().trim().length() != 11)
-            throw new DtoException("Foi informado um número inválido");
+            throw new DtoException(ExceptionCode.INVALID_PHONE, "Foi informado um número de telefone inválido.");
 
         Telephone newTelephone = new Telephone();
         newTelephone.setCountry(Utils.trimAndUpper(telephoneDTO.country().trim()));

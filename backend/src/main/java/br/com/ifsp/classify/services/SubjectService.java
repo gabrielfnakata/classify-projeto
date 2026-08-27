@@ -4,6 +4,7 @@ import br.com.ifsp.classify.dtos.create.SubjectCreateDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
 import br.com.ifsp.classify.dtos.update.SubjectUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Subject;
 import br.com.ifsp.classify.repositories.SubjectRepository;
 import br.com.ifsp.classify.utils.Utils;
@@ -34,7 +35,7 @@ public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, S
             return null;
 
         if (Utils.isNullOrEmpty(subjectDTO.description()))
-            throw new DtoException("A descrição da matéria não pode ser nula");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "A descrição da matéria não pode ser nula.");
 
         Subject newSubject = new Subject();
         newSubject.setUuid(UuidUtils.generateUUID());

@@ -1,19 +1,21 @@
 package br.com.ifsp.classify.services;
 
+import org.springframework.stereotype.Service;
+
 import br.com.ifsp.classify.dtos.create.ClassroomCreateDTO;
 import br.com.ifsp.classify.dtos.get.ClassroomGetDTO;
 import br.com.ifsp.classify.dtos.update.ClassroomUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Classroom;
 import br.com.ifsp.classify.repositories.ClassroomRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
-import org.springframework.stereotype.Service;
 
 @Service
 public class ClassroomService extends AbstractService<Classroom, ClassroomCreateDTO, ClassroomGetDTO, ClassroomUpdateDTO, Integer> {
 
-    private final String CAPACITY_ZERO_OR_LESS_MESSAGE = "A capacidade da sala deve ser maior do que 0";
+    private final String CAPACITY_ZERO_OR_LESS_MESSAGE = "A capacidade da sala deve ser maior do que zero";
 
     public ClassroomService(ClassroomRepository repository) {
         super(repository);
@@ -38,9 +40,9 @@ public class ClassroomService extends AbstractService<Classroom, ClassroomCreate
             return null;
 
         if (classroomDTO.capacity() == null)
-            throw new DtoException("A capacidade da sala não pode ser nula");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "A capacidade da sala não pode ser nula.");
         else if (classroomDTO.capacity() <= 0)
-            throw new DtoException(CAPACITY_ZERO_OR_LESS_MESSAGE);
+            throw new DtoException(ExceptionCode.INVALID_CLASSROOM_CAPACITY, CAPACITY_ZERO_OR_LESS_MESSAGE);
 
         Classroom newClassroom = new Classroom();
         newClassroom.setUuid(UuidUtils.generateUUID());
@@ -67,7 +69,7 @@ public class ClassroomService extends AbstractService<Classroom, ClassroomCreate
 
         if (classroomDTO.capacity() != null) {
             if (classroomDTO.capacity() <= 0)
-                throw new DtoException(CAPACITY_ZERO_OR_LESS_MESSAGE);
+                throw new DtoException(ExceptionCode.INVALID_CLASSROOM_CAPACITY, CAPACITY_ZERO_OR_LESS_MESSAGE);
 
             classroom.setCapacity(classroomDTO.capacity());
         }
