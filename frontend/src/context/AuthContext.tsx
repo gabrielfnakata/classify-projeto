@@ -27,7 +27,7 @@ export const AuthProvider = (params: { children: ReactNode }) => {
         const response = await api.post<LoginResponseDTO>('/auth/login', {
             email: values.email,
             password: values.password
-        });
+        }, { skipExceptionModal: true });
 
         setLoginData(response.data);
         api.defaults.headers.Authorization = `Bearer ${response.data?.accessToken}`;

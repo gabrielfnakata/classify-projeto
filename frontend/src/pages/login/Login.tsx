@@ -7,18 +7,23 @@ import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FormikInput } from "@/components/formik-input/FormikInput";
 import { LoginValidationSchema } from "@/validation/LoginSchema";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ContentCard } from "@/components/layout/content-card";
 import type { LoginForm } from "@/shared/models/forms/loginForm";
 
 export default function Login() {
     const { login, logout } = useAuth();
     const navigate = useNavigate();
+    const [erroLogin, setErroLogin] = useState<string | null>(null);
 
     const handleLogin = async (values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
+        setErroLogin(null);
         await login(values)
         .then(() => navigate('/classes'))
-        .catch(() => alert("Ocorreu um erro ao logar. Tente novamente mais tarde."))
+        .catch((err) => {
+            const mensagem = err?.response?.data?.mensagem ?? err?.message ?? "E-mail ou senha inválidos.";
+            setErroLogin(mensagem);
+        })
         .finally(() => helpers.setSubmitting(false));
     }
 
@@ -40,6 +45,12 @@ export default function Login() {
                 >
                     {({isSubmitting, isValid, setFieldValue, values}) => (
                         <Form className="flex flex-col gap-[1.5vh] items-center justify-evenly">
+                            {erroLogin && (
+                                <div className="w-[20vw] rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+                                    <p className="leading-relaxed">{erroLogin}</p>
+                                </div>
+                            )}
+
                             <FormikInput 
                                 name="email"
                                 placeholder="Email"
@@ -56,9 +67,9 @@ export default function Login() {
                                 <FieldGroup className="w-[36%]">
                                     <UIField orientation="horizontal">
                                         <Checkbox 
-                                          className="bg-[#D9D9D9] dark:bg-[#f1f1f1] data-checked:bg-[#f1f1f1] dark:data-checked:bg-[#f1f1f1] data-checked:text-[#119E96]"
-                                          checked={values.rememberMe}
-                                          onCheckedChange={(checked) => setFieldValue("rememberMe", checked)}
+                                        className="bg-[#D9D9D9] dark:bg-[#f1f1f1] data-checked:bg-[#f1f1f1] dark:data-checked:bg-[#f1f1f1] data-checked:text-[#119E96]"
+                                        checked={values.rememberMe}
+                                        onCheckedChange={(checked) => setFieldValue("rememberMe", checked)}
                                         />
                                         <FieldLabel className="text-xs"> Lembrar de mim </FieldLabel>
                                     </UIField>
