@@ -152,18 +152,30 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         //oiii eu fiz aqui a alteração do ngc do telefone, pra dar pra atualizar no meu modal, se nao funcionar avisa
 
         if (studentDTO.telephones() != null) {
-            student.getTelephones().clear();
+            List<String> newNumbers = studentDTO.telephones()
+                .stream()
+                .map(TelephoneUpdateDTO::number)
+                .toList();
 
+            student.getTelephones().removeIf(telephone -> !newNumbers.contains(telephone.getNumber()));
+
+            List<String> existingNumbers = student.getTelephones()
+                .stream()
+                .map(Telephone::getNumber)
+                .toList();
+                
             for (TelephoneUpdateDTO telephoneDTO : studentDTO.telephones()) {
-                TelephoneCreateDTO createDTO = new TelephoneCreateDTO(
-                    telephoneDTO.country(),
-                    telephoneDTO.ddd(),
-                    telephoneDTO.number()
-                );
-                Telephone newTelephone = telephoneService.create(createDTO);
+                if (!existingNumbers.contains(telephoneDTO.number())) {
+                    TelephoneCreateDTO createDTO = new TelephoneCreateDTO(
+                        telephoneDTO.country(),
+                        telephoneDTO.ddd(),
+                        telephoneDTO.number()
+                    );
+                    Telephone newTelephone = telephoneService.create(createDTO);
 
-                if (newTelephone != null)
-                    student.addTelephone(newTelephone);
+                    if (newTelephone != null)
+                        student.addTelephone(newTelephone);
+                }
             }
         }
 

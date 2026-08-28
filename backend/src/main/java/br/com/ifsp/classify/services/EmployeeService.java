@@ -16,6 +16,8 @@ import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 
+import java.util.List;
+
 @Service
 public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO, Long> {
 
@@ -120,13 +122,25 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         }
 
         if (employeeDTO.telephones() != null) {
-            employee.getTelephones().clear();
+            List<String> newNumbers = employeeDTO.telephones()
+                .stream()
+                .map(TelephoneCreateDTO::number)
+                .toList();
+
+            employee.getTelephones().removeIf(telephone -> !newNumbers.contains(telephone.getNumber()));
+
+            List<String> existingNumbers = employee.getTelephones()
+                .stream()
+                .map(Telephone::getNumber)
+                .toList();
 
             for (TelephoneCreateDTO telephoneDTO : employeeDTO.telephones()) {
-                Telephone newTelephone = telephoneService.create(telephoneDTO);
+                if (!existingNumbers.contains(telephoneDTO.number())) {
+                    Telephone newTelephone = telephoneService.create(telephoneDTO);
 
-                if (newTelephone != null)
-                    employee.addTelephone(newTelephone);
+                    if (newTelephone != null)
+                        employee.addTelephone(newTelephone);
+                }
             }
         }
 
