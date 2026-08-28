@@ -6,10 +6,11 @@ export function parseTelephone(maskedPhone: string): TelephoneCreateDTO {
     return {
         country: "BR",
         ddd: digits.slice(0, 2),
-        number: digits.slice(2),
+        number: digits, 
     };
 }
 
 export function formatTelephone(telephone: { ddd: string; number: string }): string {
-    return `(${telephone.ddd}) ${telephone.number.slice(0, 5)}-${telephone.number.slice(5)}`;
+    const localNumber = telephone.number.slice(2); 
+    return `(${telephone.ddd}) ${localNumber.slice(0, 5)}-${localNumber.slice(5)}`;
 }
