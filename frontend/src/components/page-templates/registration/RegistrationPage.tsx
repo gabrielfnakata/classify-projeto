@@ -36,8 +36,8 @@ export default function RegistrationPage<T extends dataType>({
     
     return (
         <>
-            <div className="flex flex-col background h-full w-full items-center justify-center">
-                <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
+            <div className="flex flex-col background h-screen w-full items-center justify-center">
+                <div className="flex flex-col w-full h-screen gap-[2vh] justify-center items-center">
                     <div className="flex flex-row w-9/10 items-center justify-between">
                     <PageHeader
                         title={`Registro de ${title}`}

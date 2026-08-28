@@ -39,7 +39,7 @@ export default function NewEntityPage<T>({
     };
 
     return (
-        <div className="flex flex-col background h-full w-full items-center justify-center">
+        <div className="flex flex-col background h-screen w-full items-center justify-center">
             <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
                 <div className="flex flex-row w-4/5 items-center justify-between">
                     <PageHeader

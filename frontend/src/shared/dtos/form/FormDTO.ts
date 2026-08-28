@@ -1,4 +1,4 @@
-export type FormStatus = "PENDING" | "ANSWERED" | "CORRECTED";
+import type {FormStatus} from "@/shared/models/enums/form-status";
 
 export interface FormDTO {
     uuid: string;

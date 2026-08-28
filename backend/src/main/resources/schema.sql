@@ -232,7 +232,7 @@ CREATE TABLE IF NOT EXISTS audit (
 )$$
 
 
-CREATE TABLE form (
+CREATE TABLE IF NOT EXISTS form (
     id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     uuid BINARY(16) NOT NULL,
     teacher_id BIGINT UNSIGNED NOT NULL,
@@ -246,7 +246,7 @@ CREATE TABLE form (
     FOREIGN KEY (teacher_id) REFERENCES employee (id)
 )$$
 
-CREATE TABLE form_question (
+CREATE TABLE IF NOT EXISTS form_question (
     id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     uuid BINARY(16) NOT NULL,
     form_id BIGINT UNSIGNED NOT NULL,
@@ -257,7 +257,7 @@ CREATE TABLE form_question (
     FOREIGN KEY (form_id) REFERENCES form (id)
 )$$
 
-CREATE TABLE form_question_option (
+CREATE TABLE IF NOT EXISTS form_question_option (
     id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     uuid BINARY(16) NOT NULL,
     question_id BIGINT UNSIGNED NOT NULL,
@@ -268,12 +268,12 @@ CREATE TABLE form_question_option (
     FOREIGN KEY (question_id) REFERENCES form_question (id)
 )$$
 
-CREATE TABLE form_submission (
+CREATE TABLE IF NOT EXISTS form_submission (
     id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     uuid BINARY(16) NOT NULL,
     student_id BIGINT UNSIGNED NOT NULL,
     form_id BIGINT UNSIGNED NOT NULL,
-    status BIGINT UNSIGNED NOT NULL,
+    status ENUM('ANSWERED', 'CORRECTED', 'PENDING') NOT NULL,
     started_at DATETIME,
     submitted_at DATETIME,
     corrected_at DATETIME,
@@ -286,7 +286,7 @@ CREATE TABLE form_submission (
     FOREIGN KEY (form_id) REFERENCES form (id)
 )$$
 
-CREATE TABLE form_answer (
+CREATE TABLE IF NOT EXISTS form_answer (
     id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     uuid BINARY(16) NOT NULL,
     question_id BIGINT UNSIGNED NOT NULL,
@@ -295,7 +295,7 @@ CREATE TABLE form_answer (
     type_answer VARCHAR(50) NOT NULL,
     answer_text VARCHAR(500),
     corrected_at DATETIME,
-    teacher_feedback  VARCHAR(500),
+    teacher_feedback VARCHAR(500),
 
     CONSTRAINT fk_form_answers_question
     FOREIGN KEY (question_id) REFERENCES form_question (id),

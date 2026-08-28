@@ -4,19 +4,8 @@ import RegistrationPage from "@/components/page-templates/registration/Registrat
 import { StatusBadge } from "@/components/features/status-badge";
 import useFetch from "@/hooks/useFetch";
 import { formatDateLabel } from "@/shared/utils/date-formatter";
-import type { FormDTO, FormStatus } from "@/shared/dtos/form/FormDTO";
-
-const statusLabel: Record<FormStatus, string> = {
-    PENDING: "Pendente",
-    ANSWERED: "Respondido",
-    CORRECTED: "Corrigido",
-};
-
-const statusVariant: Record<FormStatus, "warning" | "info" | "success"> = {
-    PENDING: "warning",
-    ANSWERED: "info",
-    CORRECTED: "success",
-};
+import type { FormDTO } from "@/shared/dtos/form/FormDTO";
+import { statusLabel, statusVariant } from "@/shared/models/enums/form-status.ts";
 
 export default function TeacherForms() {
     const columns: DataTableColumn<FormDTO>[] = [
@@ -55,7 +44,7 @@ export default function TeacherForms() {
                 data={data ?? []}
                 columns={columns}
                 filters={filters}
-                title="Todos os relatórios"
+                title="Meus Formulários"
                 registrationRoute="/new-form"
             >
             </RegistrationPage>

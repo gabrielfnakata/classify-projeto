@@ -16,6 +16,7 @@ import NewStudent from "@/pages/students/NewStudent";
 import NewClassroom from "@/pages/classrooms/NewClassroom";
 import StudentForms from "@/pages/forms/StudentForms";
 import TeacherForms from "@/pages/forms/TeacherForms";
+import NewForm from "@/pages/forms/NewForm.tsx";
 
 export default function AppRoutes() {
     return (
@@ -85,7 +86,7 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<TeacherForms />} />
             }/>
             <Route path="/new-form" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute children={<NewForm />} />
             }/>
         </Routes>
     )
