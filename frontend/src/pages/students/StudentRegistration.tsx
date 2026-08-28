@@ -5,18 +5,14 @@ import useFetch from "@/hooks/useFetch";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Formik, Form } from "formik";
-import { FormikInput } from "@/components/formik-input/FormikInput";
-import CpfInput from "@/components/cpf-input/CpfInput";
-import PhoneInput from "@/components/phone-input/PhoneInput";
-import { FormGrid } from "@/components/features/form-grid";
-import { Button } from "@/components/ui/button";
 import { NewStudentValidationSchema } from "@/validation/StudentSchema";
 import { formatTelephone, parseTelephone } from "@/shared/utils/telephone-parser";
 import { formatCpf } from "@/shared/utils/cpf-formatter";
 import api from "@/services/api";
 import ConfirmDeleteDialog from "@/components/common/confirm-delete-dialog";
+import EditEntityDialog from "@/components/page-templates/edit-dialog/EditEntityDialog";
+import type { Field } from "@/components/page-templates/form/NewEntityPage";
+
 
 export default function StudentRegistration() {
     const columns: DataTableColumn<StudentDTO>[] = [
@@ -43,6 +39,17 @@ export default function StudentRegistration() {
         {name: 'cpf', inputType: 'cpf', placeholder: 'CPF', width: 25},
         {name: 'telephone', inputType: 'text', placeholder: 'Telefone', width: 25},
     ];
+
+    const editFields: Field[] = [
+        {key: 'name', name: 'name', label: 'Nome', type: 'text', required: true},
+        {key: 'birthDate', name: 'birthDate', label: 'Data de Nascimento', type: 'date', required: true},
+        {key: 'email', name: 'email', label: 'E-mail', type: 'text', required: true},
+        {key: 'cpf', name: 'cpf', label: 'CPF', type: 'cpf', required: true},
+        {key: 'registrationDate', name: 'registrationDate', label: 'Data de matrícula', type: 'date', required: true},
+        {key: 'telephone1', name: 'telephone1', label: 'Telefone 1', type: 'phone', required: true},
+        {key: 'telephone2', name: 'telephone2', label: 'Telefone 2', type: 'phone', required: false},
+    ];
+
     const {data, refetch} = useFetch<StudentDTO>('/student');
 
     const [studentToEdit, setStudentToEdit] = useState<StudentDTO | null>(null);
@@ -86,49 +93,24 @@ export default function StudentRegistration() {
             >
             </RegistrationPage>
 
-            <Dialog open={!!studentToEdit} onOpenChange={(open) => !open && setStudentToEdit(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Editar Aluno: {studentToEdit?.name}</DialogTitle>
-                    </DialogHeader>
-                    {studentToEdit && (
-                        <Formik
-                            key={studentToEdit.uuid}
-                            initialValues={{
-                                name: studentToEdit.name,
-                                birthDate: studentToEdit.birthDate,
-                                email: studentToEdit.email,
-                                cpf: studentToEdit.cpf,
-                                registrationDate: studentToEdit.registrationDate,
-                                telephone1: studentToEdit.telephones[0] ? formatTelephone(studentToEdit.telephones[0]) : '',
-                                telephone2: studentToEdit.telephones[1] ? formatTelephone(studentToEdit.telephones[1]) : '',
-                            }}
-                            validationSchema={NewStudentValidationSchema}
-                            onSubmit={handleUpdateStudent}
-                        >
-                            <Form className="flex flex-col gap-4 p-5">
-                                <FormGrid>
-                                    <FormikInput name="name" label="Nome" type="text" required />
-                                    <FormikInput name="birthDate" label="Data de Nascimento" type="date" required />
-                                    <FormikInput name="email" label="E-mail" type="text" required />
-                                    <CpfInput name="cpf" label="CPF" required />
-                                    <FormikInput name="registrationDate" label="Data de matrícula" type="date" required />
-                                    <PhoneInput name="telephone1" label="Telefone 1" required />
-                                    <PhoneInput name="telephone2" label="Telefone 2" />
-                                </FormGrid>
-                                <div className="flex flex-row justify-end gap-3">
-                                    <Button type="button" variant="ghost" onClick={() => setStudentToEdit(null)}>
-                                        Cancelar
-                                    </Button>
-                                    <Button type="submit">
-                                        Salvar
-                                    </Button>
-                                </div>
-                            </Form>
-                        </Formik>
-                    )}
-                </DialogContent>
-            </Dialog> 
+            <EditEntityDialog
+                open={!!studentToEdit}
+                onOpenChange={(open) => !open && setStudentToEdit(null)}
+                title={`Editar Aluno: ${studentToEdit?.name ?? ''}`}
+                fields={editFields}
+                formKey={studentToEdit?.uuid}
+                initialValues={{
+                    name: studentToEdit?.name ?? '',
+                    birthDate: studentToEdit?.birthDate ?? '',
+                    email: studentToEdit?.email ?? '',
+                    cpf: studentToEdit?.cpf ?? '',
+                    registrationDate: studentToEdit?.registrationDate ?? '',
+                    telephone1: studentToEdit?.telephones[0] ? formatTelephone(studentToEdit.telephones[0]) : '',
+                    telephone2: studentToEdit?.telephones[1] ? formatTelephone(studentToEdit.telephones[1]) : '',
+                }}
+                validationSchema={NewStudentValidationSchema}
+                onSubmit={handleUpdateStudent}
+            /> 
 
             <ConfirmDeleteDialog
                 open={!!studentToDelete}
