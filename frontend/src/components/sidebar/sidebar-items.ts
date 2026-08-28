@@ -31,7 +31,8 @@ export const mainNavigation: Group[] = [
     icon: File,
     items: [
       { title: 'Criar relatório', url: '/home' },
-      { title: 'Todos os relatórios', url: '/home' }
+      { title: 'Todos os relatórios', url: '/posted-forms' },
+      { title: 'Relatório alunos', url: '/pending-forms' },
     ]
   }
 ]

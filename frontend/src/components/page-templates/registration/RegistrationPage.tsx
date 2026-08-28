@@ -13,8 +13,8 @@ interface registrationPageProps<T> {
     data: T[];
     filters: FilterConfig[];
     columns: DataTableColumn<T>[];
-    registrationRoute: string;
-} 
+    registrationRoute?: string;
+}
 
 interface dataType {
     uuid: string;
@@ -41,12 +41,12 @@ export default function RegistrationPage<T extends dataType>({
                     <div className="flex flex-row w-9/10 items-center justify-between">
                     <PageHeader
                         title={`Registro de ${title}`}
-                        action={
+                        action={registrationRoute ? (
                             <Button className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
                                 <Plus></Plus>
                                 Criar novo registro
                             </Button>
-                        }
+                        ) : undefined}
                     />
                     </div> 
                     <ContentCard className="flex flex-col w-9/10 h-[70vh] p-8 gap-[4vh]">
