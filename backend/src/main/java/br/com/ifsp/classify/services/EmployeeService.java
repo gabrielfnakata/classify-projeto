@@ -33,6 +33,8 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         if (employee == null)
             return null;
 
+        User user = employee.getUser();
+
         return new EmployeeGetDTO(
                 UuidUtils.convertBytesToString(employee.getUuid()),
                 employee.getName(),
@@ -43,7 +45,11 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
                     .stream()
                     .map(telephone -> telephoneService.returnDTO(telephone))
                     .toList(),
-                UuidUtils.convertBytesToString(employee.getUuid())
+                UuidUtils.convertBytesToString(employee.getUuid()),
+                user != null ? user.getEmail() : null,
+                user != null && user.getRole() != null ? user.getRole().getId() : null,
+                user != null && user.getRole() != null ? user.getRole().getDescription() : null
+
         );
     }
 
@@ -105,12 +111,23 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
             employee.setHireDate(employeeDTO.hireDate());
 
         if (employeeDTO.user() != null) {
-            User userUpdated = userService.updateUser(employeeUuid, employeeDTO.user());
+            User userUpdated = userService.updateUser(UuidUtils.convertBytesToString(employee.getUser().getUuid()), employeeDTO.user());
 
             if (userUpdated == null)
                 throw new DtoException("Erro ao atualizar o usuário");    
             
             employee.setUser(userUpdated);
+        }
+
+        if (employeeDTO.telephones() != null) {
+            employee.getTelephones().clear();
+
+            for (TelephoneCreateDTO telephoneDTO : employeeDTO.telephones()) {
+                Telephone newTelephone = telephoneService.create(telephoneDTO);
+
+                if (newTelephone != null)
+                    employee.addTelephone(newTelephone);
+            }
         }
 
         repository.save(employee);

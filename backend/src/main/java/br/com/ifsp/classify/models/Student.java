@@ -62,7 +62,7 @@ public class Student implements Serializable {
     )
     private List<Class> classes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Telephone> telephones = new ArrayList<>();
 
     public Long getId() {

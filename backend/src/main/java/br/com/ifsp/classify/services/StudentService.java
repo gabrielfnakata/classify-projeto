@@ -9,6 +9,7 @@ import br.com.ifsp.classify.dtos.get.StudentGetDTO;
 import br.com.ifsp.classify.dtos.get.TelephoneGetDTO;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
+import br.com.ifsp.classify.dtos.update.TelephoneUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.models.Address;
 import br.com.ifsp.classify.models.Guardian;
@@ -147,6 +148,24 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         // if (Utils.hasElements(studentDTO.telephones())) {
             
         // }
+
+        //oiii eu fiz aqui a alteração do ngc do telefone, pra dar pra atualizar no meu modal, se nao funcionar avisa
+
+        if (studentDTO.telephones() != null) {
+            student.getTelephones().clear();
+
+            for (TelephoneUpdateDTO telephoneDTO : studentDTO.telephones()) {
+                TelephoneCreateDTO createDTO = new TelephoneCreateDTO(
+                    telephoneDTO.country(),
+                    telephoneDTO.ddd(),
+                    telephoneDTO.number()
+                );
+                Telephone newTelephone = telephoneService.create(createDTO);
+
+                if (newTelephone != null)
+                    student.addTelephone(newTelephone);
+            }
+        }
 
         repository.save(student);
 
