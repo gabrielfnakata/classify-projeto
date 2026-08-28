@@ -4,9 +4,11 @@ export interface EmployeeDTO {
     uuid: string;
     name: string;
     cpf: string;
-    birthDate: Date;
+    birthDate: string;
+    hireDate: string;
+    telephones: { country: string; ddd: string; number: string }[];
+    userUuid: string;
     email: string;
-    telephone: string;
-    address: string;
-    role: RoleDTO;
+    roleId: string;
+    roleDescription: string;
 }

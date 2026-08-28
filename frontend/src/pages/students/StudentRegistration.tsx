@@ -21,16 +21,16 @@ export default function StudentRegistration() {
         {key: 'cpf', header: 'CPF', cell: row => formatCpf(row.cpf)},
         {key: 'telephone', header: 'Telefone', cell: row => row.telephones.at(0) ? formatTelephone(row.telephones.at(0)!) : ''},
         {key: 'actions', header: 'Ações', cell: row => (
-        <div className="flex gap-2">
-            <Pencil 
-                className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground"
-                onClick={() => setStudentToEdit(row) }
-            />
-            <Trash2
-                className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-destructive"
-                onClick={() => setStudentToDelete(row)}
-            />
-        </div> )
+            <div className="flex gap-2">
+                <Pencil 
+                    className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground"
+                    onClick={() => setStudentToEdit(row) }
+                />
+                <Trash2
+                    className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-destructive"
+                    onClick={() => setStudentToDelete(row)}
+                />
+            </div> )
         },
     ];
     const filters: FilterConfig[] = [
