@@ -37,7 +37,7 @@ export default function TeacherForms() {
             ]
         },
     ];
-    const {data} = useFetch<FormDTO>('/form/posted');
+    const {data} = useFetch<FormDTO>('/form');
     return (
         <>
             <RegistrationPage

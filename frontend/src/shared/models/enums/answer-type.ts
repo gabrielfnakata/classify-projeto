@@ -1,5 +1,5 @@
 export enum AnswerType {
-    TEXT,
-    SELECT,
-    MULTI_SELECT
+    TEXT = "TEXT",
+    SELECT = "SELECT",
+    MULTI_SELECT = "MULTI_SELECT"
 }

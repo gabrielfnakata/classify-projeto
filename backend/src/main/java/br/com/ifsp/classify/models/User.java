@@ -3,17 +3,9 @@ package br.com.ifsp.classify.models;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "USER")
@@ -47,6 +39,10 @@ public class User implements Serializable {
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
+
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Employee employee;
 
     public Long getId() {
         return id;
@@ -103,4 +99,8 @@ public class User implements Serializable {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    public Employee getEmployee() { return employee; }
+
+    public void setEmployee(Employee employee) { this.employee = employee; }
 }

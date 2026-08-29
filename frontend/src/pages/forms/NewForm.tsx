@@ -21,7 +21,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { FormCreateDTO } from "@/shared/dtos/form/FormCreateDTO.ts";
 import { Formik, type FormikHelpers } from "formik";
 import { Checkbox } from "@/components/ui/checkbox.tsx";
-import {Label} from "@/components/ui/label.tsx";
+import { Label } from "@/components/ui/label.tsx";
+import { formatYMD } from "@/shared/utils/date-formatter.ts";
+import api from "@/services/api.ts";
 
 // TODO: Adicionar algumas validações
 
@@ -29,10 +31,15 @@ export default function NewForm() {
     const [questions, setQuestions] = useState<FormQuestionCreateDTO[]>([]);
     const navigate = useNavigate();
 
+    // DEBUG:
+    const today = new Date();
+    const limitDate = new Date(today)
+    limitDate.setMonth(today.getMonth() + 1);
+
     const initialValues = {
         title: '',
         description: '',
-        limitDate: '',
+        limitDate: formatYMD(limitDate),
         questions: []
     } as FormCreateDTO;
 
@@ -63,14 +70,16 @@ export default function NewForm() {
         );
     }
 
-    const handleSubmit = (values: FormCreateDTO, helpers: FormikHelpers<FormCreateDTO>) => {
+    const handleSubmit = async (values: FormCreateDTO, helpers: FormikHelpers<FormCreateDTO>) => {
         helpers.setSubmitting(true);
         const payload = {
             ...values,
             questions
         } as FormCreateDTO;
         console.log(payload);
-        // TODO: enviar pra API
+        await api.post('/form', payload);
+        alert('Formulário criado com sucesso');
+        navigate('/posted-forms');
         helpers.setSubmitting(false);
     }
 
