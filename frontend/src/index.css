@@ -22,6 +22,7 @@
   --color-table-header: var(--table-header);
 
   --color-button-background: var(--button-background);
+  --color-button-highlight: var(--button-highlight);
 
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -76,6 +77,7 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-check: var(--check);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -103,6 +105,7 @@
   --table-header: rgb(255, 255, 255);
 
   --button-background: rgb(42, 92, 132);
+  --button-highlight: rgb(104, 170, 223);
 
   --popover: oklch(0.99 0.002 230);
   --popover-foreground: oklch(0.28 0.04 240);
@@ -155,6 +158,8 @@
 
   --info: oklch(0.9 0.035 230);
   --info-foreground: oklch(0.36 0.065 230);
+
+  --check: oklch(0.8 0.2 149);
 }
 
 .dark {
@@ -174,6 +179,7 @@
   --table-header: rgba(39, 40, 42);
 
   --button-background: rgb(214, 214, 214);
+  --button-highlight: rgb(159, 159, 159);
 
   --popover: oklch(0.21 0.014 250);
   --popover-foreground: oklch(0.95 0.004 230);
@@ -224,6 +230,8 @@
 
   --info: oklch(0.34 0.045 230);
   --info-foreground: oklch(0.93 0.02 230);
+
+  --check: oklch(0.5 0.1 149);
 }
 
 
