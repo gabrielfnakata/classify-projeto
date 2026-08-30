@@ -11,7 +11,7 @@ const DEFAULT_EMPLOYEE_PASSWORD = "Mudar@123";
 
 export default function NewEmployee() {
     const navigate = useNavigate();
-    const { data: roles } = useFetch<RoleDTO>('/role');
+    const { data: roles } = useFetch<RoleDTO[]>('/role');
 
     const fields = [
         { key: 'name', name: 'name', label: 'Nome', type: 'text' as const, required: true },

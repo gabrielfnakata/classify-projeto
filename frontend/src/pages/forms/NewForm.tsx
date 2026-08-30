@@ -1,5 +1,5 @@
-import {PageHeader} from "@/components/layout/page-header.tsx";
-import {ArrowLeft, Check, CheckCheck, Delete, Eye, Ghost, Pencil, Plus, Send} from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header.tsx";
+import { ArrowLeft, Check, CheckCheck, Delete, Download, Eye, Ghost, Pencil, Plus } from "lucide-react";
 import {Button} from "@/components/ui/button.tsx";
 import {useLocation, useNavigate} from "react-router";
 import {
@@ -127,7 +127,6 @@ export default function NewForm() {
                                     disabled={isSubmitting}
                                     onClick={() => {
                                         navigate('/form-preview', { state: { form: { ...values, questions: questions } as FormCreateDTO  } });
-                                        // alert("Essa funcionalidade ainda está em desenvolvimento.");
                                     }}
                                 >
                                     <Eye />
@@ -142,8 +141,8 @@ export default function NewForm() {
                                         handleSubmit()
                                     }}
                                 >
-                                    <Send />
-                                    Enviar Formulário
+                                    <Download />
+                                    Salvar Formulário
                                 </Button>
                             </div>
                             }

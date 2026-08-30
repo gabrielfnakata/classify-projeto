@@ -2,6 +2,7 @@ package br.com.ifsp.classify.services.form;
 
 import br.com.ifsp.classify.dtos.create.FormCreateDTO;
 import br.com.ifsp.classify.dtos.get.FormGetDTO;
+import br.com.ifsp.classify.dtos.get.FormInfoGetDTO;
 import br.com.ifsp.classify.dtos.get.FormQuestionGetDTO;
 import br.com.ifsp.classify.dtos.get.FormQuestionOptionGetDTO;
 import br.com.ifsp.classify.models.Employee;
@@ -117,24 +118,28 @@ public class FormService {
         return formGetDTOs;
     }
 
-    public List<FormQuestionGetDTO> getFormQuestions(String uuid) {
+    public FormInfoGetDTO getFormInfo(String uuid) {
         Form form = formRepository.findByUuid(UUID.fromString(uuid)).orElseThrow();
-        return form.getFormQuestions()
-                .stream()
-                .map(question -> new FormQuestionGetDTO(
-                    question.getUuid().toString(),
-                    form.getUuid().toString(),
-                    question.getQuestion(),
-                    question.getTypeAnswer(),
-                    question.getTypeAnswer() != AnswerType.TEXT
-                        ? question.getFormQuestionOptions()
-                            .stream()
-                            .map(option -> new FormQuestionOptionGetDTO(
-                                option.getUuid().toString(),
-                                option.getOptionText(),
-                                option.getCorrect()
-                            )).toList()
-                        : new ArrayList<>()
-                )).toList();
+        return new FormInfoGetDTO(
+                form.getTitle(),
+                form.getDescription(),
+                form.getFormQuestions().stream().map(question -> {
+                    return new FormQuestionGetDTO(
+                            question.getUuid().toString(),
+                            form.getUuid().toString(),
+                            question.getQuestion(),
+                            question.getTypeAnswer(),
+                            question.getTypeAnswer() != AnswerType.TEXT
+                                ? question.getFormQuestionOptions()
+                                .stream()
+                                .map(option -> new FormQuestionOptionGetDTO(
+                                        option.getUuid().toString(),
+                                        option.getOptionText(),
+                                        option.getCorrect()
+                                )).toList()
+                                : new ArrayList<>()
+                    );
+                }).toList()
+        );
     }
 }

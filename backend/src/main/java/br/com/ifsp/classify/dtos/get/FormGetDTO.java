@@ -5,7 +5,7 @@ import br.com.ifsp.classify.models.form.FormStatus;
 import java.time.LocalDate;
 
 public record FormGetDTO(
-            String id,
+            String uuid,
             String title,
             String description,
             String teacherName,

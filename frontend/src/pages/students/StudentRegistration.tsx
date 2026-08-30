@@ -17,7 +17,7 @@ export default function StudentRegistration() {
         {name: 'cpf', inputType: 'cpf', placeholder: 'CPF', width: 25},
         {name: 'telephone', inputType: 'text', placeholder: 'Telefone', width: 25},
     ];
-    const {data} = useFetch<StudentDTO>('/student');
+    const {data} = useFetch<StudentDTO[]>('/student');
     return (
         <>
             <RegistrationPage

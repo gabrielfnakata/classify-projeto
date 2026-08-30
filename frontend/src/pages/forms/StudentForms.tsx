@@ -39,7 +39,7 @@ export default function StudentForms() {
             ]
         },
     ];
-    const {data} = useFetch<FormDTO>('/form/pending');
+    const {data} = useFetch<FormDTO[]>('/form/pending');
     return (
         <>
             <RegistrationPage

@@ -3,19 +3,26 @@ import {Button} from "@/components/ui/button.tsx";
 import {ArrowLeft, Ghost} from "lucide-react";
 import {ContentCard} from "@/components/layout/content-card.tsx";
 import {Label} from "@/components/ui/label.tsx";
-import {useLocation, useNavigate} from "react-router";
+import {useLocation, useNavigate, useParams} from "react-router";
 import {AnswerType} from "@/shared/models/enums/answer-type.ts";
 import {Textarea} from "@/components/ui/textarea.tsx";
 import {Checkbox} from "@/components/ui/checkbox.tsx";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
 import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
 import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
-
+import useFetch from "@/hooks/useFetch.tsx";
+import type {FormInfoDTO} from "@/shared/dtos/form/FormInfoDTO.ts";
+import type {FormQuestionOptionDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionDTO.ts";
 
 export default function PreviewForm() {
+    const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const form = location.state?.form as FormCreateDTO;
+    const { data: fetchedForm } = useFetch<FormInfoDTO>(id ? `/form/${id}` : null);
+
+    const formFromState = location.state?.form as FormCreateDTO | undefined;
+
+    const form = id ? fetchedForm : formFromState;
 
     return (
         <div className="flex flex-col background h-full w-full items-center justify-center">
@@ -30,7 +37,11 @@ export default function PreviewForm() {
                                     className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold
                                     hover:bg-button-highlight hover:cursor-pointer
                                     "
-                                    onClick={() => navigate('/new-form', { state: { form: form } })}
+                                    onClick={() =>
+                                        id
+                                        ? navigate('/posted-forms')
+                                        : navigate('/new-form', { state: { form: form } })
+                                    }
                                 >
                                     <ArrowLeft/>
                                     Voltar
@@ -46,7 +57,7 @@ export default function PreviewForm() {
                                     text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-button-background
                                     "
                         >
-                            {form.title}
+                            {form?.title}
                         </Label>
                     </div>
                     <div className="flex flex-row w-full items-center">
@@ -55,14 +66,14 @@ export default function PreviewForm() {
                                     text-muted-foreground placeholder:text-muted-foreground focus:outline-none
                                     "
                         >
-                            {form.description}
+                            {form?.description}
                         </Label>
                     </div>
                 </div>
                 <div className="flex flex-col gap-10 w-8/10">
                     {
-                        form.questions.length > 0
-                        ? form.questions.map((question, index) => {
+                        form?.questions && form?.questions.length > 0
+                        ? form?.questions.map((question, index) => {
                             return (
                                 <ContentCard key={index} className="flex flex-col w-full gap-8">
                                     <div className="flex w-full">
@@ -96,7 +107,7 @@ export default function PreviewForm() {
 
 interface QuestionAnswerProps {
     type: AnswerType;
-    options: FormQuestionOptionCreateDTO[];
+    options: FormQuestionOptionCreateDTO[] | FormQuestionOptionDTO[];
 }
 
 function QuestionAnswer({ type, options }: QuestionAnswerProps) {
@@ -108,7 +119,7 @@ function QuestionAnswer({ type, options }: QuestionAnswerProps) {
         );
     }
 
-    const renderIndicator = (_option: FormQuestionOptionCreateDTO, i: number) => {
+    const renderIndicator = (_option: FormQuestionOptionCreateDTO | FormQuestionOptionDTO, i: number) => {
         if (type === AnswerType.MULTI_SELECT) {
             return (
                 <Checkbox

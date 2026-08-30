@@ -20,7 +20,7 @@ export default function EmployeeRegistration() {
             ]
         }
     ];
-    const {data} = useFetch<EmployeeDTO>('/employee');
+    const {data} = useFetch<EmployeeDTO[]>('/employee');
     return (
         <>
             <RegistrationPage

@@ -15,7 +15,7 @@ export default function ClassroomRegistration() {
         {name: 'capacity', inputType: 'number', placeholder: 'Capacidade', width: 33},
         {name: 'isDisabled', inputType: 'select', options: [{value: "false", label: "Não"}, {value: "true", label: "Sim"}], placeholder: 'Desativada', width: 33},
     ];
-    const {data} = useFetch<ClassroomDTO>('/classroom');
+    const {data} = useFetch<ClassroomDTO[]>('/classroom');
     return (
         <>
             <RegistrationPage

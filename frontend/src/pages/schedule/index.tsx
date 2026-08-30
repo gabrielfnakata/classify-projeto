@@ -22,7 +22,7 @@ function sessionDate(dto: ClassSessionDTO): string {
 
 export default function SchedulePage() {
   const [refreshKey, setRefreshKey] = useState(0)
-  const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO>(`/classsession?r=${refreshKey}`)
+  const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO[]>(`/classsession?r=${refreshKey}`)
 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSession, setSelectedSession] = useState<ClassSessionDTO | null>(null)

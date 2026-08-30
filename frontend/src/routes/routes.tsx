@@ -91,6 +91,9 @@ export default function AppRoutes() {
             <Route path="/form-preview" element={
                 <ProtectedRoute children={<PreviewForm />} />
             }/>
+            <Route path="/form-preview/:id" element={
+                <ProtectedRoute children={<PreviewForm />} />
+            }/>
         </Routes>
     )
 }

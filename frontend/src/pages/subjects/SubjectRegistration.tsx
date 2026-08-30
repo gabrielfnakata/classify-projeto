@@ -11,7 +11,7 @@ export default function SubjectRegistration() {
     const filters: FilterConfig[] = [
         {name: 'description', inputType: 'text', placeholder: 'Descrição', width: 100},
     ];
-    const {data} = useFetch<SubjectDTO>('/subject');
+    const {data} = useFetch<SubjectDTO[]>('/subject');
     return (
         <>
             <RegistrationPage

@@ -2,6 +2,7 @@ package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.FormCreateDTO;
 import br.com.ifsp.classify.dtos.get.FormGetDTO;
+import br.com.ifsp.classify.dtos.get.FormInfoGetDTO;
 import br.com.ifsp.classify.dtos.get.FormQuestionGetDTO;
 import br.com.ifsp.classify.security.AuthenticatedUser;
 import br.com.ifsp.classify.services.form.FormService;
@@ -34,8 +35,8 @@ public class FormController {
     }
 
     @GetMapping("/{uuid}")
-    public List<FormQuestionGetDTO> getFormQuestions(@AuthenticationPrincipal AuthenticatedUser auth, @PathVariable String uuid) {
-        return this.formService.getFormQuestions(uuid);
+    public FormInfoGetDTO getFormInfo(@PathVariable String uuid) {
+        return this.formService.getFormInfo(uuid);
     }
 
     /* TODO:

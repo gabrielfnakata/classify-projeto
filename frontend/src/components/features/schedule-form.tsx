@@ -41,9 +41,9 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSession }: Sched
   const [error, setError] = useState<string | null>(null)
   const [studentSearch, setStudentSearch] = useState("")
 
-  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO>("/subjectteacher")
-  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO>("/classroom")
-  const { data: studentsData, loading: loadingStu } = useFetch<StudentDTO>("/student")
+  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO[]>("/subjectteacher")
+  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO[]>("/classroom")
+  const { data: studentsData, loading: loadingStu } = useFetch<StudentDTO[]>("/student")
 
   const subjectTeachers = subjectTeachersData ?? []
   const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled)

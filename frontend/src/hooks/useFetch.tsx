@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import api from "@/services/api";
 
-export default function useFetch<T>(url: string) {
-    const [data, setData] = useState<T[] | null>(null);
+export default function useFetch<T>(url: string | null) {
+    const [data, setData] = useState<T | null>(null);
     const [loading, setLoading] = useState<boolean | null>(null);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
+        if (!url) return;
+
         setLoading(true);
         api.get(url, {data: {}})
         .then((response) => {

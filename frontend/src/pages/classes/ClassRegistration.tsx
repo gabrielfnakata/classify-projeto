@@ -7,7 +7,7 @@ import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDT
 export default function ClassRegistration() {
     const columns: DataTableColumn<ClassSessionDTO>[] = [];
     const filters: FilterConfig[] = [];
-    const {data} = useFetch<ClassSessionDTO>('/classsession');
+    const {data} = useFetch<ClassSessionDTO[]>('/classsession');
     return (
         <>
             <RegistrationPage
