@@ -31,7 +31,7 @@ public class FormSubmission {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "submission")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "submission", cascade = CascadeType.ALL)
     private List<FormAnswer> formAnswer;
 
     @Enumerated(EnumType.STRING)

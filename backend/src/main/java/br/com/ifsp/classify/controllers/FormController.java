@@ -1,14 +1,14 @@
 package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.FormCreateDTO;
+import br.com.ifsp.classify.dtos.create.FormSubmissionCreateDTO;
 import br.com.ifsp.classify.dtos.get.FormGetDTO;
 import br.com.ifsp.classify.dtos.get.FormInfoGetDTO;
-import br.com.ifsp.classify.dtos.get.FormQuestionGetDTO;
 import br.com.ifsp.classify.security.AuthenticatedUser;
 import br.com.ifsp.classify.services.form.FormService;
+import br.com.ifsp.classify.services.form.FormSubmissionService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,9 +19,11 @@ import java.util.List;
 public class FormController {
 
     public FormService formService;
+    public FormSubmissionService formSubmissionService;
 
-    public FormController(FormService formService) {
+    public FormController(FormService formService, FormSubmissionService formSubmissionService) {
         this.formService = formService;
+        this.formSubmissionService = formSubmissionService;
     }
 
     @PostMapping
@@ -39,16 +41,19 @@ public class FormController {
         return this.formService.getFormInfo(uuid);
     }
 
+    @PutMapping("/submission-start/{uuid}")
+    public void markFormSubmissionStart(@PathVariable String uuid) {
+        this.formSubmissionService.markSubmissionStart(uuid);
+    }
+
+    @PutMapping("/submit-form/{uuid}")
+    public void markFormSubmission(@PathVariable String uuid, @RequestBody FormSubmissionCreateDTO dto) {
+        this.formSubmissionService.saveFormSubmission(uuid, dto);
+    }
+
     /* TODO:
-     - Endpoint pra criar formulário OK
-        - haverá suporte a rascunho?
      - Endpoint pra enviar formulário para alunos
-     - Endpoint pra listar formulários de um professor para ele mesmo (OK) ou de um professor para seus alunos
-        - Suporte à filtros e paginação
-     - Endpoint pra trazer as questões (junto de respostas, se já houverem, no caso de um aluno) de um formulário
-     - Endpoint pra demarcar o início de uma tentativa de formulário
-        - haverá suporte a rascunho?
-     - Endpoint pra enviar uma tentativa do formulário
+     - Suporte à filtros e paginação (aguardar merge)
      - Endpoint pra professor corrigir formulário
      */
 }

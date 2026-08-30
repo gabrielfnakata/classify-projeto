@@ -6,6 +6,7 @@ import br.com.ifsp.classify.dtos.get.FormInfoGetDTO;
 import br.com.ifsp.classify.dtos.get.FormQuestionGetDTO;
 import br.com.ifsp.classify.dtos.get.FormQuestionOptionGetDTO;
 import br.com.ifsp.classify.models.Employee;
+import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.models.form.*;
 import br.com.ifsp.classify.repositories.UserRepository;
@@ -96,7 +97,14 @@ public class FormService {
 
     public List<FormGetDTO> getForms(AuthenticatedUser auth) {
         User user = userRepository.findByEmail(auth.username()).orElseThrow();
-        Employee employee = user.getEmployee();
+        return switch (auth.role()) {
+            case "PROFE" -> getPostedForms(user.getEmployee());
+//            case "ALUNO" -> getAvailableForms(user.getStudent());
+            default -> throw new IllegalStateException("Role não suportada: " + auth.role());
+        };
+    }
+
+    public List<FormGetDTO> getPostedForms(Employee employee) {
         List<Form> forms = formRepository.getAllFromEmployee(employee);
         List<FormGetDTO> formGetDTOs = new ArrayList<>();
 
@@ -116,6 +124,25 @@ public class FormService {
             formGetDTOs.add(dto);
         });
         return formGetDTOs;
+    }
+
+    public List<FormGetDTO> getAvailableForms(Student student) {
+        List<FormSubmission> availableSubmissions = student.getFormSubmissions();
+        return availableSubmissions.stream().map(submission -> {
+            Form form = submission.getForm();
+            return new FormGetDTO(
+                    form.getUuid().toString(),
+                    form.getTitle(),
+                    form.getDescription(),
+                    form.getTeacher().getName(),
+                    form.getFormQuestions().size(),
+                    form.getCreatedAt().toLocalDate(),
+                    form.getLimitDate().toLocalDate(),
+                    form.getHasScore(),
+                    0.0f,
+                    submission.getStatus()
+            );
+        }).toList();
     }
 
     public FormInfoGetDTO getFormInfo(String uuid) {
