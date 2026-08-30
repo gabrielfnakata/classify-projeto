@@ -3,7 +3,6 @@ import OnDevelopment from "@/pages/on-development/OnDevelopment";
 import { Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
 import Components from "@/app/pages/Components";
-import ClassRegistration from "@/pages/classes/ClassRegistration";
 import StudentRegistration from "@/pages/students/StudentRegistration";
 import EmployeeRegistration from "@/pages/employees/EmployeeRegistration";
 import NewEmployee from "@/pages/employees/NewEmployee";
@@ -17,6 +16,7 @@ import NewClassroom from "@/pages/classrooms/NewClassroom";
 import StudentForms from "@/pages/forms/StudentForms";
 import TeacherForms from "@/pages/forms/TeacherForms";
 import NewForm from "@/pages/forms/NewForm.tsx";
+import PreviewForm from "@/pages/forms/PreviewForm.tsx";
 
 export default function AppRoutes() {
     return (
@@ -87,6 +87,9 @@ export default function AppRoutes() {
             }/>
             <Route path="/new-form" element={
                 <ProtectedRoute children={<NewForm />} />
+            }/>
+            <Route path="/form-preview" element={
+                <ProtectedRoute children={<PreviewForm />} />
             }/>
         </Routes>
     )

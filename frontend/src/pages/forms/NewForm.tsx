@@ -1,7 +1,7 @@
 import {PageHeader} from "@/components/layout/page-header.tsx";
 import {ArrowLeft, Check, CheckCheck, Delete, Eye, Ghost, Pencil, Plus, Send} from "lucide-react";
 import {Button} from "@/components/ui/button.tsx";
-import {useNavigate} from "react-router";
+import {useLocation, useNavigate} from "react-router";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,8 +28,10 @@ import api from "@/services/api.ts";
 // TODO: Adicionar algumas validações
 
 export default function NewForm() {
-    const [questions, setQuestions] = useState<FormQuestionCreateDTO[]>([]);
     const navigate = useNavigate();
+    const location = useLocation();
+    const form = location.state?.form as FormCreateDTO;
+    const [questions, setQuestions] = useState<FormQuestionCreateDTO[]>(form?.questions ?? []);
 
     // DEBUG:
     const today = new Date();
@@ -37,10 +39,10 @@ export default function NewForm() {
     limitDate.setMonth(today.getMonth() + 1);
 
     const initialValues = {
-        title: '',
-        description: '',
+        title: form?.title ?? '',
+        description: form?.description ?? '',
         limitDate: formatYMD(limitDate),
-        questions: []
+        questions: form?.questions ?? []
     } as FormCreateDTO;
 
     const handleAddQuestion = (answerType: AnswerType) => {
@@ -124,7 +126,8 @@ export default function NewForm() {
                                     "
                                     disabled={isSubmitting}
                                     onClick={() => {
-                                        alert("Essa funcionalidade ainda está em desenvolvimento.");
+                                        navigate('/form-preview', { state: { form: { ...values, questions: questions } as FormCreateDTO  } });
+                                        // alert("Essa funcionalidade ainda está em desenvolvimento.");
                                     }}
                                 >
                                     <Eye />
@@ -162,7 +165,7 @@ export default function NewForm() {
                                 <input
                                     placeholder="Descrição do formulário"
                                     className="w-full h-16 px-4 text-xl text-muted-foreground font-bold text-center
-                                    text-foreground placeholder:text-muted-foreground focus:outline-none
+                                    placeholder:text-muted-foreground focus:outline-none
                                     "
                                     name={"description"}
                                     value={values.description}
