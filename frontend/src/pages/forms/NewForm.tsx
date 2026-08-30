@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/layout/page-header.tsx";
-import { ArrowLeft, Check, CheckCheck, Delete, Download, Eye, Ghost, Pencil, Plus } from "lucide-react";
+import {ArrowLeft, Check, CheckCheck, Delete, Download, Eye, Ghost, Pencil, Plus} from "lucide-react";
 import {Button} from "@/components/ui/button.tsx";
 import {useLocation, useNavigate} from "react-router";
 import {
@@ -24,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { formatYMD } from "@/shared/utils/date-formatter.ts";
 import api from "@/services/api.ts";
+import LimitDateDialog from "@/components/dialogs/LimitDateDialog.tsx";
 
 // TODO: Adicionar algumas validações
 
@@ -33,15 +34,10 @@ export default function NewForm() {
     const form = location.state?.form as FormCreateDTO;
     const [questions, setQuestions] = useState<FormQuestionCreateDTO[]>(form?.questions ?? []);
 
-    // DEBUG:
-    const today = new Date();
-    const limitDate = new Date(today)
-    limitDate.setMonth(today.getMonth() + 1);
-
     const initialValues = {
         title: form?.title ?? '',
         description: form?.description ?? '',
-        limitDate: formatYMD(limitDate),
+        limitDate: formatYMD(new Date()),
         questions: form?.questions ?? []
     } as FormCreateDTO;
 
@@ -95,6 +91,7 @@ export default function NewForm() {
                 handleChange,
                 handleSubmit,
                 isSubmitting,
+                setFieldValue,
                 values
         }) => {
         return (
@@ -119,6 +116,10 @@ export default function NewForm() {
                                 <AddQuestion
                                     isSubmitting={isSubmitting}
                                     onAddQuestion={handleAddQuestion}
+                                />
+                                <LimitDateDialog
+                                    initialDate={new Date(values.limitDate)}
+                                    onDateChange={(date) => setFieldValue("limitDate", formatYMD(date))}
                                 />
                                 <Button
                                     className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold
