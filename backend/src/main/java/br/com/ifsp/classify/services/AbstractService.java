@@ -27,7 +27,7 @@ public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, Filte
     @Override
     public PageResponseGetDTO<GetDTO> findAll(Pageable pageable, FilterDTO filterDTO) {
         Page<GetDTO> pageResponse = repository
-            .findAll(createSpecificationFromFilter(filterDTO), pageable)
+            .findAll(createSpecificationFromFilter(filterDTO), (pageable != null) ? pageable : Pageable.unpaged())
             .map(this::returnDTO);
 
         return returnPageResponseDTO(pageResponse);
