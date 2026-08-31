@@ -13,11 +13,9 @@ import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 interface registrationPageProps<T> {
     title: string;
     url: string;
-    // data: T[];
     filters: FilterConfig[];
     columns: DataTableColumn<T>[];
     registrationRoute: string;
-    // totalPages: number;
 } 
 
 interface dataType {
@@ -39,14 +37,15 @@ function getUrlWithFilters(endpoint: string, page: number, filters: object): str
 export default function RegistrationPage<T extends dataType>({
     title, url, filters, columns, registrationRoute
 }: registrationPageProps<T>) {
-    const [filterValues, setFilterValues] = useState({});
-    const [page, setPage] = useState(0);
+    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [page, setPage] = useState<number>(0);
     const navigate = useNavigate();
 
     const handleFilterSubmit = (values: Record<string, string>) => {
+        setPage(0);
         setFilterValues(values);
     }
-
+    
     const { data } = useFetch<PaginationDTO<T>>(getUrlWithFilters(url, page, filterValues));
     
     return (
@@ -57,8 +56,11 @@ export default function RegistrationPage<T extends dataType>({
                     <PageHeader
                         title={`Registro de ${title}`}
                         action={
-                            <Button className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
-                                <Plus></Plus>
+                            <Button 
+                                className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold"
+                                onClick={() => navigate(registrationRoute)}
+                            >
+                                <Plus />
                                 Criar novo registro
                             </Button>
                         }
@@ -66,9 +68,9 @@ export default function RegistrationPage<T extends dataType>({
                     </div> 
                     <ContentCard className="flex flex-col w-9/10 h-[70vh] p-8 gap-[4vh]">
                             <FilterRow
-                            filters={filters}
-                            onSubmit={() => {}}
-                            onValuesChange={handleFilterSubmit}
+                                filters={filters}
+                                onSubmit={handleFilterSubmit}
+                                onValuesChange={handleFilterSubmit}
                             />
                             <DataTable
                                 data={data?.content ?? []}
