@@ -28,6 +28,20 @@ public class StudentSpecification {
 
     public static Specification<Student> getByEmail(String email) {
         return (root, query, cb) ->
-            cb.like(cb.upper(root.get(EMAIL)), "%" + email.trim().toUpperCase() + "%");
+            cb.like(cb.upper(root.get(Student_.email)), "%" + email.trim().toUpperCase() + "%");
+    }
+
+    public static Specification<Student> getByTelephone(String telephone) {
+        return (root, query, cb) -> {
+            Join<Student, Telephone> telephoneJoin = root.join(Student_.telephones);
+
+            return cb.like(
+                cb.concat(
+                    telephoneJoin.get(Telephone_.ddd),
+                    telephoneJoin.get(Telephone_.number)
+                ),
+                "%" + telephone.trim() + "%"
+            );
+        };
     }
 }

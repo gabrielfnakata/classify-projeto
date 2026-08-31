@@ -261,6 +261,10 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             conditions = conditions.and(StudentSpecification.getByEmail(filterDTO.email()));
         }
 
+        if (!Utils.isNullOrEmpty(filterDTO.telephone())) {
+            conditions = conditions.and(StudentSpecification.getByTelephone(Utils.removeAllNonDigits(filterDTO.telephone())));
+        }
+
         return conditions;
     }
 }
