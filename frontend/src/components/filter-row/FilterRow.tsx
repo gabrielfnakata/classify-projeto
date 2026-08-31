@@ -92,14 +92,9 @@ export default function FilterRow({
                         className="bg-button-background rounded-xl text-sm font-semibold"
                         type="button"
                         onClick={() => {
-                            const emptyValues = filters.reduce((acc, filter) => ({
-                                ...acc,
-                                [filter.name] : ""
-                            }), {});
-
-                            resetForm({ values: emptyValues });
-                            onSubmit(emptyValues);
-                            onValuesChange?.(emptyValues);
+                            resetForm({ values: initialValues });
+                            onSubmit(initialValues);
+                            onValuesChange?.(initialValues);
                         }}
                     >    
                         Limpar
