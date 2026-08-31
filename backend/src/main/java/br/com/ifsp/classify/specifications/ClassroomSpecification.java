@@ -18,7 +18,7 @@ public class ClassroomSpecification {
 
     public static Specification<Classroom> getByName(String name) {
         return (root, query, cb) ->
-            cb.like(cb.upper(root.get(NAME)), name.trim().toUpperCase());
+            cb.like(cb.upper(root.get(NAME)), "%" + name.trim().toUpperCase() + "%");
     }
 
     public static Specification<Classroom> getByCapacity(Integer capacity) {

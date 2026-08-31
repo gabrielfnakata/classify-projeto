@@ -16,6 +16,6 @@ public class SubjectSpecification {
 
     public static Specification<Subject> getByDescription(String description) {
         return (root, query, cb) ->
-            cb.like(cb.upper(root.get(DESCRIPTION)), description.trim().toUpperCase());
+            cb.like(cb.upper(root.get(DESCRIPTION)), "%" + description.trim().toUpperCase() + "%");
     }
 }

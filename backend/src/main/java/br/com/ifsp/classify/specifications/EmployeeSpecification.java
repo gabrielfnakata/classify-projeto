@@ -18,16 +18,16 @@ public class EmployeeSpecification {
 
     public static Specification<Employee> getByCpf(String cpf) {
         return (root, query, cb) ->
-            cb.equal(root.get(CPF), cpf.trim());
+            cb.like(root.get(CPF), "%" + cpf.trim() + "%");
     }
 
     public static Specification<Employee> getByName(String name) {
         return (root, query, cb) ->
-            cb.like(cb.upper(root.get(NAME)), name.trim().toUpperCase());
+            cb.like(cb.upper(root.get(NAME)), "%" + name.trim().toUpperCase() + "%");
     }
 
     public static Specification<Employee> getByEmail(String email) {
         return (root, query, cb) ->
-            cb.equal(cb.upper(root.get(EMAIL)), email.trim().toUpperCase());
+            cb.like(cb.upper(root.get(EMAIL)), "%" + email.trim().toUpperCase() + "%");
     }
 }
