@@ -11,8 +11,13 @@ import {
     DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
+import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
 
-export default function AddQuestion() {
+interface AddQuestionProps {
+    buttonVariant: "secondary" | "link" | "default" | "outline" | "ghost" | "destructive" | null | undefined
+}
+
+export default function AddQuestion({buttonVariant}: AddQuestionProps) {
     const { isSubmitting, setFieldValue, values } = useFormikContext<FormCreateDTO>();
 
     const items: { label: string, value: AnswerType, icon: ReactNode }[] = [
@@ -21,19 +26,26 @@ export default function AddQuestion() {
         { label: "Múltiplas opções", value: AnswerType.MULTI_SELECT, icon: <CheckCheck /> },
     ];
 
+    const predefinedOptions: FormQuestionOptionCreateDTO[] = [
+        { optionText: 'Opção 1', isCorrect: false },
+        { optionText: 'Opção 2', isCorrect: false },
+        { optionText: 'Opção 3', isCorrect: false },
+    ];
+
     const handleAddQuestion = (answerType: AnswerType) => {
         const newQuestion = {
-            question: '',
+            question: 'Questão',
             answerType,
-            options: answerType !== AnswerType.TEXT ? [] : undefined
+            options: answerType !== AnswerType.TEXT ? predefinedOptions : undefined
         } as FormQuestionCreateDTO;
         setFieldValue("questions", [...(values.questions ?? []), newQuestion]);
     };
 
     const appearance = (
         <Button
-            className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold
-            hover:bg-button-highlight hover:cursor-pointer"
+            variant={buttonVariant}
+            className="h-10 px-5 rounded-xl text-sm font-semibold
+            hover:cursor-pointer"
             disabled={isSubmitting}
             onClick={() => {}}
         >

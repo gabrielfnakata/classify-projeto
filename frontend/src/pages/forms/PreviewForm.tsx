@@ -50,7 +50,7 @@ export default function PreviewForm() {
                         }
                     />
                 </div>
-                <div className="flex flex-col w-9/10 gap-12 mb-8 items-start justify-center">
+                <div className="flex flex-col w-8/10 gap-12 mb-8 items-start justify-center">
                     <div className="flex flex-row w-full items-center">
                         <Label
                             className="w-full h-24 border-b-2 px-4 border-table-foreground text-4xl font-bold
@@ -60,9 +60,9 @@ export default function PreviewForm() {
                             {form?.title}
                         </Label>
                     </div>
-                    <div className="flex flex-row w-full items-center">
+                    <div className="flex flex-row w-full justify-start items-center">
                         <Label
-                            className="flex justify-center w-full h-16 px-4 text-xl text-muted-foreground font-bold
+                            className="flex justify-center w-full max-h-fit px-4 text-xl text-muted-foreground font-bold
                                     text-muted-foreground placeholder:text-muted-foreground focus:outline-none
                                     "
                         >

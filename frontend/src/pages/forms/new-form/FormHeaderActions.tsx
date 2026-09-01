@@ -7,17 +7,13 @@ import {ArrowLeft, Download, Eye} from "lucide-react";
 import LimitDateDialog from "@/components/dialogs/LimitDateDialog.tsx";
 import {formatYMD} from "@/shared/utils/date-formatter.ts";
 import AddQuestion from "@/pages/forms/new-form/AddQuestion.tsx";
-import {useEffect} from "react";
 
 export default function FormHeaderActions() {
-    const { values, errors, isSubmitting, isValid, setFieldValue, submitForm } = useFormikContext<FormCreateDTO>();
+    const { values, isSubmitting, isValid, setFieldValue, submitForm } = useFormikContext<FormCreateDTO>();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        console.log(errors);
-    }, [values]);
-
-    const buttonStyle = "h-10 px-5 bg-button-background rounded-xl text-sm font-semibold hover:bg-button-highlight hover:cursor-pointer";
+    const buttonStyle = "h-10 px-5 rounded-xl text-sm font-semibold hover:cursor-pointer";
+    const buttonVariant = "secondary";
 
     return (
         <div className="flex flex-row w-9/10 items-center justify-between">
@@ -26,25 +22,27 @@ export default function FormHeaderActions() {
                 action={
                     <div className="flex flex-row gap-4">
                         <Button
+                            variant={buttonVariant}
                             className={buttonStyle}
                             onClick={() => navigate('/posted-forms')} disabled={isSubmitting}
                         >
                             <ArrowLeft /> Voltar
                         </Button>
-                        <AddQuestion />
+                        <AddQuestion buttonVariant={buttonVariant}/>
                         <LimitDateDialog
                             initialDate={new Date(values.limitDate)}
                             onDateChange={(date) => { setFieldValue("limitDate", formatYMD(date)) }}
+                            buttonVariant={buttonVariant}
                         />
                         <Button
-                            className={buttonStyle}
-                            disabled={isSubmitting}
+                            className={buttonStyle + "hover:bg-button-highlight"}
+                            disabled={!isValid || isSubmitting}
                             onClick={() => navigate('/form-preview', { state: { form: values } })}
                         >
                             <Eye /> Ver Prévia
                         </Button>
                         <Button
-                            className={buttonStyle}
+                            className={buttonStyle + "hover:bg-button-highlight"}
                             disabled={!isValid || isSubmitting}
                             onClick={submitForm}
                         >
