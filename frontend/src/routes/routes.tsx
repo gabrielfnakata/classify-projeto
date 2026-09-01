@@ -17,6 +17,7 @@ import StudentForms from "@/pages/forms/StudentForms";
 import TeacherForms from "@/pages/forms/TeacherForms";
 import NewForm from "@/pages/forms/NewForm.tsx";
 import PreviewForm from "@/pages/forms/PreviewForm.tsx";
+import SubmissionForm from "@/pages/forms/AnswerForm.tsx";
 
 export default function AppRoutes() {
     return (
@@ -93,6 +94,9 @@ export default function AppRoutes() {
             }/>
             <Route path="/form-preview/:id" element={
                 <ProtectedRoute children={<PreviewForm />} />
+            }/>
+            <Route path="/submission-form/:uuid" element={
+                <ProtectedRoute children={<SubmissionForm />} />
             }/>
         </Routes>
     )
