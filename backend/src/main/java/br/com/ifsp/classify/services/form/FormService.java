@@ -98,8 +98,8 @@ public class FormService {
     public List<FormGetDTO> getForms(AuthenticatedUser auth) {
         User user = userRepository.findByEmail(auth.username()).orElseThrow();
         return switch (auth.role()) {
-            case "PROFE" -> getPostedForms(user.getEmployee());
-//            case "ALUNO" -> getAvailableForms(user.getStudent());
+            case "PROFE", "ADMIN" -> getPostedForms(user.getEmployee());
+            // case "ALUNO" -> getAvailableForms(user.getStudent());
             default -> throw new IllegalStateException("Role não suportada: " + auth.role());
         };
     }

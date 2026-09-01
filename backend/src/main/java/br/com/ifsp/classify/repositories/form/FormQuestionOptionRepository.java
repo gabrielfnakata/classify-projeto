@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface FormQuestionOptionRepository extends JpaRepository<FormQuestionOption, Long> {
-    Optional<FormQuestionOption> findByUuid(String s);
+    Optional<FormQuestionOption> findByUuid(UUID uuid);
 
     List<FormQuestionOption> findAllByUuidIn(Collection<UUID> uuids);
 }
