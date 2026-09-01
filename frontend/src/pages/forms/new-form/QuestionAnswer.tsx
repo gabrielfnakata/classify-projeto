@@ -70,6 +70,10 @@ export default function QuestionAnswer({ type, options, onOptionsChange }: Quest
 
     const optionsList = options.map((option, i) => {
         const changeIcon = option.isCorrect && type === AnswerType.MULTI_SELECT;
+        const colorClasses = changeIcon
+            ? 'text-destructive hover:bg-destructive'
+            : 'text-check hover:bg-check';
+
         return (
             <div key={i} className="flex justify-start items-center gap-2 pl-4">
                 <Tooltip>
@@ -85,11 +89,11 @@ export default function QuestionAnswer({ type, options, onOptionsChange }: Quest
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger
-                        className={`flex justify-end items-center p-1 rounded-sm 
-                    text-${changeIcon ? 'destructive' : 'check'} hover:bg-${changeIcon ? 'destructive' : 'check'} 
-                    hover:text-white hover:transition-colors hover:duration-80
-                    hover:cursor-pointer focus:outline-none focus:outline-2 focus:outline-solid focus:outline-current
-                    disabled:text-foreground disabled:opacity-50 disabled:pointer-events-none`}
+                        className={`flex justify-end items-center p-1 rounded-sm
+                            ${colorClasses} 
+                        hover:text-white hover:transition-colors hover:duration-80
+                        hover:cursor-pointer focus:outline-none focus:outline-2 focus:outline-solid focus:outline-current
+                        disabled:text-foreground disabled:opacity-50 disabled:pointer-events-none`}
                         onClick={() => onMarkCorrect(i)}
                         disabled={type === AnswerType.SELECT ? option.isCorrect : false}
                     >

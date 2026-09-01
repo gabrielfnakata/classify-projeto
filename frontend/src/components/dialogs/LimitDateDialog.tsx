@@ -1,4 +1,4 @@
-import {Dialog, DialogContent, DialogTrigger} from "@/components/ui/dialog.tsx";
+import {Dialog, DialogContent, DialogTitle, DialogTrigger} from "@/components/ui/dialog.tsx";
 import {useEffect, useState} from "react";
 import {Calendar as CalendarIcon} from "lucide-react";
 import {Calendar} from "@/components/ui/calendar.tsx";
@@ -8,9 +8,10 @@ import {ContentCard} from "@/components/layout/content-card.tsx";
 interface LimitDateDialogProps {
     initialDate: Date;
     onDateChange: (date: Date) => void;
+    buttonVariant: "secondary" | "link" | "default" | "outline" | "ghost" | "destructive" | null | undefined;
 }
 
-export default function LimitDateDialog( { initialDate, onDateChange }: LimitDateDialogProps ) {
+export default function LimitDateDialog( { initialDate, onDateChange, buttonVariant }: LimitDateDialogProps ) {
     const [ open, setOpen ] = useState<boolean>(false);
     const [ limitDate, setLimitDate ] = useState<Date | undefined>(initialDate);
     const minDate = new Date();
@@ -28,15 +29,21 @@ export default function LimitDateDialog( { initialDate, onDateChange }: LimitDat
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger>
                 <Button
-                    className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold
-                    hover:bg-button-highlight hover:cursor-pointer"
+                    variant={buttonVariant}
+                    className="h-10 px-5 rounded-xl text-sm font-semibold
+                    hover:cursor-pointer"
                 >
                     <CalendarIcon/> Alterar Data Limite
                 </Button>
             </DialogTrigger>
             <DialogContent>
+                <DialogTitle
+                    hidden={true}
+                >
+                    Selecionar Data Limite
+                </DialogTitle>
                 <ContentCard
-                    className="bg-background"
+                    className="bg-background border-none shadow-none"
                 >
                     <Calendar
                         className="w-full h-full"
