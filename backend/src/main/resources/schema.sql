@@ -294,7 +294,7 @@ CREATE TABLE IF NOT EXISTS form_answer (
     option_id BIGINT UNSIGNED,
     type_answer VARCHAR(50) NOT NULL,
     answer_text VARCHAR(500),
-    corrected_at DATETIME,
+    correct BIT,
     teacher_feedback VARCHAR(500),
 
     CONSTRAINT fk_form_answers_question

@@ -2,6 +2,8 @@ package br.com.ifsp.classify.services.form;
 
 import br.com.ifsp.classify.dtos.create.FormAnswerCreateDTO;
 import br.com.ifsp.classify.dtos.create.FormSubmissionCreateDTO;
+import br.com.ifsp.classify.dtos.update.FormAnswerCorrectionDTO;
+import br.com.ifsp.classify.dtos.update.FormCorrectionScoreUpdateDTO;
 import br.com.ifsp.classify.models.form.*;
 import br.com.ifsp.classify.repositories.form.FormAnswerRepository;
 import br.com.ifsp.classify.repositories.form.FormQuestionOptionRepository;
@@ -12,6 +14,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -82,6 +85,7 @@ public class FormSubmissionService {
                             throw new EntityNotFoundException("Opção não encontrada: " + answer.optionUuid());
                         }
                         formAnswer.setOption(option);
+                        formAnswer.setCorrect(option.getCorrect());
                     }
 
                     return formAnswer;
@@ -91,5 +95,20 @@ public class FormSubmissionService {
         formSubmission.setStatus(FormStatus.ANSWERED);
         formSubmission.setSubmittedAt(LocalDateTime.now());
         formSubmissionRepository.save(formSubmission);
+    }
+
+    public void correctFormAnswer(FormAnswerCorrectionDTO dto) {
+        FormAnswer answerToBeCorrected = formAnswerRepository.findByUuid(UUID.fromString(dto.uuid())).orElseThrow();
+        answerToBeCorrected.setCorrect(dto.correct());
+        answerToBeCorrected.setTeacherFeedback(dto.feedback());
+        formAnswerRepository.save(answerToBeCorrected);
+    }
+
+    public void finishCorrection(FormCorrectionScoreUpdateDTO dto) {
+        FormSubmission submission = formSubmissionRepository.getByUuid(UUID.fromString(dto.uuid())).orElseThrow();
+        submission.setCorrectedAt(LocalDateTime.now());
+        submission.setStatus(FormStatus.CORRECTED);
+        submission.setScore(BigDecimal.valueOf(dto.score()));
+        formSubmissionRepository.save(submission);
     }
 }

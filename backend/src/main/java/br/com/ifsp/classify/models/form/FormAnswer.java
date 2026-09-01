@@ -38,6 +38,9 @@ public class FormAnswer {
     @Column(name = "teacher_feedback", length = 500)
     private String teacherFeedback;
 
+    @JdbcTypeCode(SqlTypes.BIT)
+    private Boolean correct;
+
     public String getTeacherFeedback() {
         return teacherFeedback;
     }
@@ -84,6 +87,14 @@ public class FormAnswer {
 
     public void setSubmission(FormSubmission submission) {
         this.submission = submission;
+    }
+
+    public Boolean getCorrect() {
+        return correct;
+    }
+
+    public void setCorrect(Boolean correct) {
+        this.correct = correct;
     }
 
     @Override
