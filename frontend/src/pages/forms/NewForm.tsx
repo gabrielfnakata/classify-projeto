@@ -1,13 +1,12 @@
 import { useLocation, useNavigate } from "react-router";
 import type { FormCreateDTO } from "@/shared/dtos/form/FormCreateDTO.ts";
-import {Formik, type FormikHelpers } from "formik";
+import { Formik, type FormikHelpers } from "formik";
 import { formatYMD } from "@/shared/utils/date-formatter.ts";
 import FormHeaderActions from "@/pages/forms/new-form/FormHeaderActions.tsx";
 import FormHeaderFields from "./new-form/FormHeaderFields";
 import QuestionList from "./new-form/QuestionList";
 import api from "@/services/api.ts";
-
-// TODO: Adicionar algumas validações
+import { FormValidationSchema } from "@/validation/FormSchema.ts";
 
 export default function NewForm() {
     const navigate = useNavigate();
@@ -30,7 +29,7 @@ export default function NewForm() {
     }
 
     return (
-        <Formik initialValues={initialValues} onSubmit={handleSubmit}>
+        <Formik initialValues={initialValues} onSubmit={handleSubmit} validationSchema={FormValidationSchema}>
             <div className="flex flex-col background h-full w-full items-center justify-center">
                 <div className="flex flex-col w-full h-full py-23 gap-[2vh] justify-start items-center">
                     <FormHeaderActions />

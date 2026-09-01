@@ -7,10 +7,15 @@ import {ArrowLeft, Download, Eye} from "lucide-react";
 import LimitDateDialog from "@/components/dialogs/LimitDateDialog.tsx";
 import {formatYMD} from "@/shared/utils/date-formatter.ts";
 import AddQuestion from "@/pages/forms/new-form/AddQuestion.tsx";
+import {useEffect} from "react";
 
 export default function FormHeaderActions() {
-    const { values, isSubmitting, setFieldValue, submitForm } = useFormikContext<FormCreateDTO>();
+    const { values, errors, isSubmitting, isValid, setFieldValue, submitForm } = useFormikContext<FormCreateDTO>();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        console.log(errors);
+    }, [values]);
 
     const buttonStyle = "h-10 px-5 bg-button-background rounded-xl text-sm font-semibold hover:bg-button-highlight hover:cursor-pointer";
 
@@ -40,7 +45,7 @@ export default function FormHeaderActions() {
                         </Button>
                         <Button
                             className={buttonStyle}
-                            disabled={values.questions.length < 1 || isSubmitting}
+                            disabled={!isValid || isSubmitting}
                             onClick={submitForm}
                         >
                             <Download /> Salvar Formulário
