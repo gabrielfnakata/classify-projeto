@@ -13,47 +13,10 @@ import { cn } from "@/lib/utils"
 import useFetch from "@/hooks/useFetch"
 import { formatFullDateLabel, formatHHMM, formatYMD, toDate } from "@/shared/utils/date-formatter"
 import { sessionStatus } from "@/shared/utils/class-session"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
-import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
+import type { ClassSessionApiDTO } from "@/shared/dtos/class-session/ClassSessionApiDTO"
 
-// sem tabela de presença/pendências no banco ainda — mock por enquanto
 const MOCK_ATTENDANCE = { percent: 90, presences: 9, absences: 1 }
 const MOCK_PENDING = { total: 5, reports: 2, activities: 3 }
-
-type StudentSession = ClassSessionDTO & { content: string | null }
-
-// formato real de /classsession — difere do ClassSessionDTO compartilhado
-// (usado pela agenda do professor)
-interface ClassSessionApiDTO {
-  uuid: string
-  subjectTeacher: {
-    uuid: string
-    employee: { uuid: string; name: string }
-    subject: { uuid: string; description: string }
-  }
-  classroomUuid: string
-  startTime: string
-  endTime: string
-  report: { content: string } | null
-  student: { uuid: string; name: string } | null
-}
-
-function toStudentSession(session: ClassSessionApiDTO, roomName: string): StudentSession {
-  return {
-    uuid: session.uuid,
-    subjectTeacher: {
-      uuidEmployee: session.subjectTeacher.employee.uuid,
-      employee: session.subjectTeacher.employee.name,
-      uuidSubject: session.subjectTeacher.subject.uuid,
-      subject: session.subjectTeacher.subject.description,
-    },
-    classroom: { uuid: session.classroomUuid, name: roomName },
-    startTime: session.startTime as unknown as Date,
-    endTime: session.endTime as unknown as Date,
-    students: [],
-    content: session.report?.content ?? null,
-  }
-}
 
 function atToday(hour: number, minute = 0, dayOffset = 0): Date {
   const d = new Date()
@@ -63,32 +26,24 @@ function atToday(hour: number, minute = 0, dayOffset = 0): Date {
 }
 
 const TODAY = new Date()
-const MONDAY_OFFSET = 1 - TODAY.getDay() // deslocamento até a segunda-feira desta semana
+const MONDAY_OFFSET = 1 - TODAY.getDay()
 const WEEKDAY_LABELS_LONG = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
-const WEEK_VIEW_OFFSETS = [0, 1, 2, 3, 4, 5] // segunda a sábado, a partir de MONDAY_OFFSET
+const WEEK_VIEW_OFFSETS = [0, 1, 2, 3, 4, 5]
 
-function sessionDateKey(session: ClassSessionDTO): string {
+function sessionDateKey(session: ClassSessionApiDTO): string {
   return formatYMD(toDate(session.startTime))
 }
 
 export default function StudentHomePage() {
   const { data: rawSessions } = useFetch<ClassSessionApiDTO>("/classsession")
-  const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
 
   const [month, setMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(formatYMD(new Date()))
   const [activeSessionUuid, setActiveSessionUuid] = useState<string | null>(null)
 
-  const roomNameByUuid = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const room of classrooms ?? []) map.set(room.uuid, room.name)
-    return map
-  }, [classrooms])
-
   const sessionsByDate = useMemo(() => {
-    const map = new Map<string, StudentSession[]>()
-    for (const raw of rawSessions ?? []) {
-      const session = toStudentSession(raw, roomNameByUuid.get(raw.classroomUuid) ?? "Sala")
+    const map = new Map<string, ClassSessionApiDTO[]>()
+    for (const session of rawSessions ?? []) {
       const key = sessionDateKey(session)
       const list = map.get(key) ?? []
       list.push(session)
@@ -98,7 +53,7 @@ export default function StudentHomePage() {
       list.sort((a, b) => toDate(a.startTime).getTime() - toDate(b.startTime).getTime())
     }
     return map
-  }, [rawSessions, roomNameByUuid])
+  }, [rawSessions])
 
   const weekDays = useMemo(
     () => WEEK_VIEW_OFFSETS.map((offset) => atToday(0, 0, MONDAY_OFFSET + offset)),
@@ -147,8 +102,8 @@ export default function StudentHomePage() {
                   ) : (
                     daySessions.map((s) => (
                       <div key={s.uuid} className="truncate text-sm text-foreground">
-                        <span className="font-semibold">{formatHHMM(s.startTime)}</span> - {s.subjectTeacher.employee},{" "}
-                        {s.subjectTeacher.subject}
+                        <span className="font-semibold">{formatHHMM(s.startTime)}</span> -{" "}
+                        {s.subjectTeacher.employee.name}, {s.subjectTeacher.subject.description}
                       </div>
                     ))
                   )}
@@ -220,7 +175,9 @@ export default function StudentHomePage() {
                     <div className="rounded-xl bg-muted p-4">
                       <div className="flex items-center gap-2">
                         <BookOpen className="h-4 w-4 shrink-0 text-primary" />
-                        <span className="font-bold text-foreground">{activeSession.subjectTeacher.subject}</span>
+                        <span className="font-bold text-foreground">
+                          {activeSession.subjectTeacher.subject.description}
+                        </span>
                         <span className="text-sm text-muted-foreground">{formatHHMM(activeSession.startTime)}</span>
                         <StatusBadge variant={activeStatus === "success" ? "success" : "info"}>
                           {activeStatus === "success" ? "Concluída" : "Agendada"}
@@ -233,7 +190,7 @@ export default function StudentHomePage() {
                           Conteúdo
                         </div>
                         <p className="pl-5 text-sm text-foreground">
-                          {activeSession.content || "O professor ainda não registrou o conteúdo desta aula."}
+                          {activeSession.report?.content || "O professor ainda não registrou o conteúdo desta aula."}
                         </p>
                       </div>
 
@@ -242,7 +199,7 @@ export default function StudentHomePage() {
                           <User className="h-3.5 w-3.5" />
                           Professor(a)
                         </div>
-                        <p className="pl-5 text-sm text-foreground">{activeSession.subjectTeacher.employee}</p>
+                        <p className="pl-5 text-sm text-foreground">{activeSession.subjectTeacher.employee.name}</p>
                       </div>
                     </div>
                   )}

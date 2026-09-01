@@ -4,11 +4,10 @@ import { ContentCard } from "@/components/layout/content-card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatMonthYearLabel, formatYMD } from "@/shared/utils/date-formatter"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 
 const WEEKDAY_LABELS_SHORT = ["D", "S", "T", "Q", "Q", "S", "S"]
 
-interface MonthCalendarProps<T extends ClassSessionDTO> {
+interface MonthCalendarProps<T> {
   month: Date
   sessionsByDate: Map<string, T[]>
   selectedDate: string
@@ -16,7 +15,7 @@ interface MonthCalendarProps<T extends ClassSessionDTO> {
   onNavigate: (dir: -1 | 1) => void
 }
 
-export function MonthCalendar<T extends ClassSessionDTO>({
+export function MonthCalendar<T>({
   month,
   sessionsByDate,
   selectedDate,

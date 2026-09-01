@@ -10,7 +10,6 @@ export const formatMonthYearLabel = (d: Date): string =>
 export const formatFullDateLabel = (d: Date): string =>
   new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d)
 
-// API manda string ISO, mas o DTO tipa como Date — centraliza o parse aqui
 export const toDate = (value: unknown): Date => new Date(value as string)
 
 export const formatHHMM = (raw: unknown): string => {

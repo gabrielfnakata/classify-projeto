@@ -3,41 +3,42 @@ import { useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { formatHHMM, toDate } from "@/shared/utils/date-formatter"
 import { sessionStatus } from "@/shared/utils/class-session"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import type { ClassSessionApiDTO } from "@/shared/dtos/class-session/ClassSessionApiDTO"
 
 const START_HOUR = 6
 const END_HOUR = 23
 const HOURS = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i)
 const HOUR_HEIGHT = 64
-// rótulo = linha divisória, não uma hora inteira — evita sobra no fim
 const TIMELINE_HEIGHT = (HOURS.length - 1) * HOUR_HEIGHT
 const CONTAINER_HEIGHT = 280
-const EDGE_PADDING = 40 // respiro no topo/fim, pra nada ficar cortado
+const EDGE_PADDING = 40
 
 function minutesFromStart(date: Date) {
   return (date.getHours() - START_HOUR) * 60 + date.getMinutes()
 }
 
-function sessionLayout(session: ClassSessionDTO) {
+function sessionLayout(session: ClassSessionApiDTO) {
   const start = toDate(session.startTime)
   const end = toDate(session.endTime)
   const top = (minutesFromStart(start) / 60) * HOUR_HEIGHT + 2
-  // timestamp direto, não getHours() — funciona mesmo cruzando meia-noite
   const durationMinutes = (end.getTime() - start.getTime()) / 60000
   const height = Math.max((durationMinutes / 60) * HOUR_HEIGHT - 4, 44)
   return { start, end, top, height }
 }
 
-interface MiniDayAgendaProps<T extends ClassSessionDTO> {
+interface MiniDayAgendaProps<T extends ClassSessionApiDTO> {
   sessions: T[]
   activeUuid: string | null
   onSelect: (uuid: string) => void
 }
 
-export function MiniDayAgenda<T extends ClassSessionDTO>({ sessions, activeUuid, onSelect }: MiniDayAgendaProps<T>) {
+export function MiniDayAgenda<T extends ClassSessionApiDTO>({
+  sessions,
+  activeUuid,
+  onSelect,
+}: MiniDayAgendaProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // centraliza na primeira aula ao trocar de dia (mesmo padrão do schedule-calendar.tsx)
   useEffect(() => {
     if (!scrollRef.current) return
 
@@ -104,7 +105,7 @@ export function MiniDayAgenda<T extends ClassSessionDTO>({ sessions, activeUuid,
                   <div className="font-semibold text-foreground">
                     {formatHHMM(start)}–{formatHHMM(end)}
                   </div>
-                  <div className="truncate text-muted-foreground">{s.subjectTeacher.subject}</div>
+                  <div className="truncate text-muted-foreground">{s.subjectTeacher.subject.description}</div>
                 </button>
               )
             })}
