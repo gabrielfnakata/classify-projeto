@@ -20,7 +20,9 @@ interface DataTableProps<T> {
   className?: string
   totalPages?: number
   page?: number
-  onPageChange: (page: number) => void
+  size?: number
+  onPageChange: (page: number) => void,
+  onSizeChange: (size: number) => void
 }
 
 export function DataTable<T>({
@@ -33,7 +35,9 @@ export function DataTable<T>({
   className,
   totalPages = 1,
   page = 0,
-  onPageChange
+  size = 10,
+  onPageChange,
+  onSizeChange
 }: DataTableProps<T>) {
   // TODO: Remover bg-card, colocar bg-table
   return (
@@ -98,7 +102,9 @@ export function DataTable<T>({
             <DataTablePagination
               totalPages={totalPages}
               page={page}
+              size={size}
               onPageChange={onPageChange}
+              onSizeChange={onSizeChange}
             />
           </div>
         </>

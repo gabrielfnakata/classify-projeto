@@ -22,22 +22,18 @@ interface dataType {
     uuid: string;
 }
 
-function getUrlWithFilters(endpoint: string, page: number, filters: object): string {
-    const params = new URLSearchParams({
-        page: page.toString(),
-        ...Object.fromEntries(
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            Object.entries(filters).filter(([_, value]) => value !== undefined && value !== null)
-        ),
-    });
+function getPaginationSize(key: string): number {
+    const DEFAULT_VALUE_SIZE = 10;
+    const value = sessionStorage.getItem(key);
 
-    return `${endpoint}?${params.toString()}`;
+    return value ? Number(value) : DEFAULT_VALUE_SIZE;
 }
 
 export default function RegistrationPage<T extends dataType>({
     title, url, filters, columns, registrationRoute
 }: registrationPageProps<T>) {
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+    const [size, setSize] = useState<number>(getPaginationSize(url));
     const [page, setPage] = useState<number>(0);
     const navigate = useNavigate();
 
@@ -45,8 +41,14 @@ export default function RegistrationPage<T extends dataType>({
         setPage(0);
         setFilterValues(values);
     }
+
+    const handleSizeChange = (size: number): void => {
+        sessionStorage.setItem(url, size.toString());
+        setSize(size);
+        setPage(0);
+    };
     
-    const { data } = useFetch<PaginationDTO<T>>(getUrlWithFilters(url, page, filterValues));
+    const { data } = useFetch<PaginationDTO<T>>(url, page, size, filterValues);
     
     return (
         <>
@@ -77,8 +79,10 @@ export default function RegistrationPage<T extends dataType>({
                                 columns={columns}
                                 rowKey={(row) => row.uuid}
                                 totalPages={data?.totalPages ?? 1}
-                                page={page ?? 0}
+                                page={page}
+                                size={size}
                                 onPageChange={setPage}
+                                onSizeChange={handleSizeChange}
                             />
                     </ContentCard>
                 </div>
