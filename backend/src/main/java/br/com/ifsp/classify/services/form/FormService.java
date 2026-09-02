@@ -64,7 +64,9 @@ public class FormService {
                formQuestion.setRequired(question.isRequired());
                formQuestion.setForm(form);
 
-               if (question.options() != null) {
+               if ((question.answerType().equals(AnswerType.SELECT)
+                       || question.answerType().equals(AnswerType.MULTI_SELECT))
+                       && question.options() != null) {
                    question.options().forEach(option -> {
                        FormQuestionOption formQuestionOption = new FormQuestionOption();
                        formQuestionOption.setUuid(UUID.randomUUID());

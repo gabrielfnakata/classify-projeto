@@ -251,7 +251,7 @@ CREATE TABLE IF NOT EXISTS form_question (
     uuid BINARY(16) NOT NULL,
     form_id BIGINT UNSIGNED NOT NULL,
     question VARCHAR(255) NOT NULL,
-    type_answer VARCHAR(50) NOT NULL,
+    type_answer ENUM('TEXT', 'SELECT', 'MULTI_SELECT', 'FILE', 'IMAGE') NOT NULL,
     required BIT NOT NULL,
 
     CONSTRAINT fk_form_questions_form
@@ -293,8 +293,8 @@ CREATE TABLE IF NOT EXISTS form_answer (
     question_id BIGINT UNSIGNED NOT NULL,
     submission_id BIGINT UNSIGNED NOT NULL,
     option_id BIGINT UNSIGNED,
-    type_answer VARCHAR(50) NOT NULL,
     answer_text VARCHAR(500),
+    file_name VARCHAR(255),
     correct BIT,
     teacher_feedback VARCHAR(500),
 

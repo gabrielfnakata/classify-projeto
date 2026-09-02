@@ -1,6 +1,6 @@
 import {PageHeader} from "@/components/layout/page-header.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {ArrowLeft, Ghost} from "lucide-react";
+import {ArrowLeft, FolderOpen, Ghost} from "lucide-react";
 import {ContentCard} from "@/components/layout/content-card.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {useLocation, useNavigate, useParams} from "react-router";
@@ -13,6 +13,8 @@ import useFetch from "@/hooks/useFetch.tsx";
 import type {FormInfoDTO} from "@/shared/dtos/form/FormInfoDTO.ts";
 import type {FormQuestionOptionDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionDTO.ts";
 import TextareaAutosize from "react-textarea-autosize";
+import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty.tsx";
+import {useRef} from "react";
 
 export default function PreviewForm() {
     const { id } = useParams();
@@ -111,6 +113,7 @@ interface QuestionAnswerProps {
 }
 
 function QuestionAnswer({ type, options }: QuestionAnswerProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
     if (type === AnswerType.TEXT) {
         return (
             <TextareaAutosize
@@ -125,6 +128,46 @@ function QuestionAnswer({ type, options }: QuestionAnswerProps) {
                 "
                 minRows={1}
             />
+        );
+    }
+
+    if (type === AnswerType.IMAGE || type === AnswerType.FILE) {
+        const accept = type === AnswerType.IMAGE ? "image/*" : "";
+        const triggerFileSelect = () => fileInputRef.current?.click();
+        return (
+            <div>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept={accept}
+                    className="hidden"
+                />
+                <Empty className="border border-dashed bg-muted/30">
+                    <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                            <FolderOpen/>
+                        </EmptyMedia>
+                        <EmptyTitle>
+                            {type === AnswerType.IMAGE
+                                ? 'Nenhuma imagem foi enviada'
+                                : 'Nenhum arquivo foi enviado'
+                            }
+                        </EmptyTitle>
+                        <EmptyDescription>
+                            {type === AnswerType.IMAGE
+                                ? 'Envie uma imagem por aqui'
+                                : 'Envie um arquivo por aqui'
+                            }
+                        </EmptyDescription>
+                    </EmptyHeader>
+                    <EmptyContent>
+                        <Button onClick={triggerFileSelect}>
+                            Enviar {type === AnswerType.IMAGE ? 'Imagem' : 'Arquivo'}
+                        </Button>
+                    </EmptyContent>
+                </Empty>
+            </div>
         );
     }
 

@@ -3,8 +3,10 @@ import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-opti
 import {Checkbox} from "@/components/ui/checkbox.tsx";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip.tsx";
-import {Check, Delete, Plus, X} from "lucide-react";
+import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty.tsx";
+import {Check, Delete, FolderOpen, Plus, X} from "lucide-react";
 import TextareaAutosize from "react-textarea-autosize";
+import {Button} from "@/components/ui/button.tsx";
 
 interface QuestionAnswerProps {
     type: AnswerType;
@@ -28,6 +30,35 @@ export default function QuestionAnswer({ type, options, onOptionsChange }: Quest
                 "
                 disabled
             />
+        );
+    }
+
+    if (type === AnswerType.IMAGE || type === AnswerType.FILE) {
+        return (
+            <Empty className="border border-dashed bg-muted/30">
+                <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                        <FolderOpen/>
+                    </EmptyMedia>
+                    <EmptyTitle>
+                        {type === AnswerType.IMAGE
+                            ? 'Nenhuma imagem foi enviada'
+                            : 'Nenhum arquivo foi enviado'
+                        }
+                    </EmptyTitle>
+                    <EmptyDescription>
+                        {type === AnswerType.IMAGE
+                            ? 'As imagens serão enviadas aqui'
+                            : 'Os arquivos serão enviados aqui'
+                        }
+                    </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                    <Button disabled>
+                        Enviar Arquivos
+                    </Button>
+                </EmptyContent>
+            </Empty>
         );
     }
 

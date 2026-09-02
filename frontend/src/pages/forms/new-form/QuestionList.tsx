@@ -1,16 +1,18 @@
 import {useFormikContext} from "formik";
 import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
-import type {ChangeEvent} from "react";
+import {type ChangeEvent} from "react";
 import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
-import { Ghost } from "lucide-react";
-import { Label } from "@/components/ui/label.tsx";
-import { ContentCard } from "@/components/layout/content-card.tsx";
+import {Ghost} from "lucide-react";
+import {Label} from "@/components/ui/label.tsx";
+import {ContentCard} from "@/components/layout/content-card.tsx";
 import QuestionAnswer from "./QuestionAnswer";
 import TextareaAutosize from "react-textarea-autosize";
 import QuestionConfigurationOptions from "@/pages/forms/new-form/QuestionConfigurationOptions.tsx";
+import {AnswerType} from "@/shared/models/enums/answer-type.ts";
+import {predefinedOptions} from "@/shared/models/constants/answer-type-options.tsx";
 
 export default function QuestionList() {
-    const { errors, values, setFieldValue } = useFormikContext<FormCreateDTO>();
+    const { errors, values, setFieldValue, setValues } = useFormikContext<FormCreateDTO>();
     const questions = values.questions ?? [];
 
     const handleQuestionChange = (e: ChangeEvent<HTMLTextAreaElement>, index: number) =>
@@ -31,6 +33,15 @@ export default function QuestionList() {
     const handleRequiredChange = (index: number, required: boolean) =>
         setFieldValue(`questions[${index}].isRequired`, required);
 
+    const handleQuestionTypeChange = (index: number, type: AnswerType) => {
+        const isSelect = type === AnswerType.MULTI_SELECT || type === AnswerType.SELECT
+        const options = isSelect ? predefinedOptions : undefined;
+        setValues(prev => {
+            const questions = [...prev.questions];
+            questions[index] = {...questions[index], answerType: type, options};
+            return { ...prev, questions };
+        });
+    }
 
     if (questions.length === 0) {
         return (
@@ -63,10 +74,12 @@ export default function QuestionList() {
                         />
                         <div className="flex">
                             <QuestionConfigurationOptions
+                                currentType={question.answerType}
                                 required={question.isRequired}
                                 handleRequiredChange={(required) => handleRequiredChange(index, required)}
                                 handleDuplicateQuestion={() => handleDuplicateQuestion(index)}
                                 handleDeleteQuestion={() => handleDeleteQuestion(index)}
+                                handleChangeAnswerType={(type) => handleQuestionTypeChange(index, type)}
                             />
                         </div>
                     </div>

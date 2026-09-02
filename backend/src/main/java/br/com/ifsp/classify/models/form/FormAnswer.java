@@ -41,6 +41,10 @@ public class FormAnswer {
     @JdbcTypeCode(SqlTypes.BIT)
     private Boolean correct;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "file_name", length = 255)
+    private String fileName;
+
     public String getTeacherFeedback() {
         return teacherFeedback;
     }
@@ -87,6 +91,14 @@ public class FormAnswer {
 
     public void setSubmission(FormSubmission submission) {
         this.submission = submission;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public Boolean getCorrect() {

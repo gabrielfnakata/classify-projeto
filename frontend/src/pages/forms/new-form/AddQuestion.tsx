@@ -1,8 +1,7 @@
 import {useFormikContext} from "formik";
 import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
 import {AnswerType} from "@/shared/models/enums/answer-type.ts";
-import type {ReactNode} from "react";
-import {Check, CheckCheck, Pencil, Plus} from "lucide-react";
+import {Plus} from "lucide-react";
 import type {FormQuestionCreateDTO} from "@/shared/dtos/form-questions/FormQuestionCreateDTO.ts";
 import {Button} from "@/components/ui/button.tsx";
 import {
@@ -11,7 +10,9 @@ import {
     DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
-import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
+import {
+    answerTypeOptions, predefinedOptions
+} from "@/shared/models/constants/answer-type-options"
 
 interface AddQuestionProps {
     buttonVariant: "secondary" | "link" | "default" | "outline" | "ghost" | "destructive" | null | undefined
@@ -19,18 +20,6 @@ interface AddQuestionProps {
 
 export default function AddQuestion({buttonVariant}: AddQuestionProps) {
     const { isSubmitting, setFieldValue, values } = useFormikContext<FormCreateDTO>();
-
-    const items: { label: string, value: AnswerType, icon: ReactNode }[] = [
-        { label: "Texto", value: AnswerType.TEXT, icon: <Pencil /> },
-        { label: "Alternativas", value: AnswerType.SELECT, icon: <Check /> },
-        { label: "Múltiplas opções", value: AnswerType.MULTI_SELECT, icon: <CheckCheck /> },
-    ];
-
-    const predefinedOptions: FormQuestionOptionCreateDTO[] = [
-        { optionText: 'Opção 1', isCorrect: false },
-        { optionText: 'Opção 2', isCorrect: true },
-        { optionText: 'Opção 3', isCorrect: false },
-    ];
 
     const handleAddQuestion = (answerType: AnswerType) => {
         const newQuestion = {
@@ -62,7 +51,7 @@ export default function AddQuestion({buttonVariant}: AddQuestionProps) {
             <DropdownMenuContent>
                 <DropdownMenuGroup>
                     <DropdownMenuLabel className="px-4">Tipo de Questão</DropdownMenuLabel>
-                    { items.map((item) =>
+                    { answerTypeOptions.map((item) =>
                         <DropdownMenuItem className="flex flex-row px-4" onClick={() => handleAddQuestion(item.value)}>
                             {item.icon}
                             {item.label}

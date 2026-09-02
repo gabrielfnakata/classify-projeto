@@ -2,21 +2,25 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip.t
 import {Menu} from "lucide-react";
 import {
     DropdownMenu,
-    DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
-    DropdownMenuRadioGroup, DropdownMenuSeparator,
+    DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuPortal,
+    DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
 import {Switch} from "@/components/ui/switch.tsx";
+import type {AnswerType} from "@/shared/models/enums/answer-type.ts";
+import { answerTypeOptions } from "@/shared/models/constants/answer-type-options"
 
 interface QuestionConfigurationOptionsProps {
+    currentType: AnswerType;
     required: boolean;
     handleRequiredChange: (required: boolean) => void;
     handleDuplicateQuestion: () => void;
     handleDeleteQuestion: () => void;
+    handleChangeAnswerType: (answerType: AnswerType) => void;
 }
 
 export default function QuestionConfigurationOptions(
-    {required, handleRequiredChange, handleDuplicateQuestion, handleDeleteQuestion}: QuestionConfigurationOptionsProps
+    {currentType, required, handleRequiredChange, handleDuplicateQuestion, handleDeleteQuestion, handleChangeAnswerType: handleAnswerTypeChange}: QuestionConfigurationOptionsProps
 ) {
 
     const dropdownTrigger = (
@@ -42,7 +46,7 @@ export default function QuestionConfigurationOptions(
                 {dropdownTrigger}
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-40">
-                <DropdownMenuRadioGroup>
+                <DropdownMenuGroup>
                     <DropdownMenuItem
                         className="flex justify-between"
                         onClick={() => handleRequiredChange(!required)}
@@ -53,7 +57,27 @@ export default function QuestionConfigurationOptions(
                             className=""
                         />
                     </DropdownMenuItem>
-                </DropdownMenuRadioGroup>
+                    <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                            Mudar Tipo da Questão
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                                {answerTypeOptions.map((option) => (
+                                    <DropdownMenuItem
+                                        key={option.value}
+                                        className="flex flex-row gap-2 px-4"
+                                        disabled={option.value === currentType}
+                                        onClick={() => handleAnswerTypeChange(option.value)}
+                                    >
+                                        {option.icon}
+                                        {option.label}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator/>
                 <DropdownMenuGroup>
                     <DropdownMenuItem
