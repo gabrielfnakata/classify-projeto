@@ -25,8 +25,8 @@ export default function EditEntityDialog({
 }: EditEntityDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
+            <DialogContent className="min-h-[280px] sm:max-w-3xl flex flex-col">
+                <DialogHeader className="p-8 pb-0">
                     <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
                 {open && (
@@ -36,8 +36,8 @@ export default function EditEntityDialog({
                         validationSchema={validationSchema}
                         onSubmit={onSubmit}
                     >
-                        <Form className="flex flex-col gap-4 p-5">
-                            <FormGrid>
+                        <Form className="flex flex-col flex-1 gap-4 p-10">
+                            <FormGrid className="gap-5 md:gap-8">
                                 {fields.map(field => {
                                     switch (field.type) {
                                         case 'text':
@@ -54,7 +54,7 @@ export default function EditEntityDialog({
                                     }
                                 })}
                             </FormGrid>
-                            <div className="flex flex-row justify-end gap-3">
+                            <div className="flex flex-row justify-end gap-3 mt-auto">
                                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
                                     Cancelar
                                 </Button>
