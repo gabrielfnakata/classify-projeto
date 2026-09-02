@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import { FormikSelectField } from "../formik-input/FormikSelect";
 import CpfInput from "../cpf-input/CpfInput";
 import { Button } from "../ui/button";
+import { Search } from "lucide-react";
 
 export interface FilterConfig {
     name: string;
@@ -88,24 +89,25 @@ export default function FilterRow({
                         </div>
                     ))}
 
-                    <Button
-                        className="bg-button-background rounded-xl text-sm font-semibold"
-                        type="button"
-                        onClick={() => {
-                            resetForm({ values: initialValues });
-                            onSubmit(initialValues);
-                            onValuesChange?.(initialValues);
-                        }}
-                    >    
-                        Limpar
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button type="submit" className="h-9 w-24 px-4" >
+                            <Search className="mr-2 h-4 w-4" />
+                            Buscar
+                        </Button>
 
-                    <Button
-                        className="bg-button-background rounded-xl text-sm font-semibold"
-                        type="submit"
-                    >
-                        Buscar
-                    </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="h-9 w-24 px-4"
+                            onClick={() => {
+                                resetForm({ values: initialValues });
+                                onSubmit(initialValues);
+                                onValuesChange?.(initialValues);
+                            }}
+                        >
+                            Limpar
+                        </Button>
+                    </div>
                 </Form>
             )}
         </Formik>
