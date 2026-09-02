@@ -5,7 +5,6 @@ import {ContentCard} from "@/components/layout/content-card.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {useLocation, useNavigate, useParams} from "react-router";
 import {AnswerType} from "@/shared/models/enums/answer-type.ts";
-import {Textarea} from "@/components/ui/textarea.tsx";
 import {Checkbox} from "@/components/ui/checkbox.tsx";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
 import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
@@ -13,6 +12,7 @@ import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
 import useFetch from "@/hooks/useFetch.tsx";
 import type {FormInfoDTO} from "@/shared/dtos/form/FormInfoDTO.ts";
 import type {FormQuestionOptionDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionDTO.ts";
+import TextareaAutosize from "react-textarea-autosize";
 
 export default function PreviewForm() {
     const { id } = useParams();
@@ -27,7 +27,7 @@ export default function PreviewForm() {
     return (
         <div className="flex flex-col background h-full w-full items-center justify-center">
             <div className="flex flex-col w-full h-full py-23 gap-[2vh] justify-start items-center">
-                <div className="flex flex-row w-9/10 items-center justify-between">
+                <div className="flex flex-row w-9/10 pt-6 sticky top-0 z-10 items-center justify-between">
 
                     <PageHeader
                         title={"Prévia do Formulário"}
@@ -78,11 +78,11 @@ export default function PreviewForm() {
                                 <ContentCard key={index} className="flex flex-col w-full gap-8">
                                     <div className="flex w-full">
                                         <Label
-                                            className="w-full h-16 border-b-1 px-2 border-table-foreground text-xl font-bold
+                                            className="w-full h-16 px-2 text-2xl font-bold
                                                 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-button-background
                                                 "
                                         >
-                                            {question.question}
+                                            {question.question} {question.isRequired ? '*' : ''}
                                         </Label>
                                     </div>
                                     <QuestionAnswer
@@ -113,8 +113,17 @@ interface QuestionAnswerProps {
 function QuestionAnswer({ type, options }: QuestionAnswerProps) {
     if (type === AnswerType.TEXT) {
         return (
-            <Textarea
-                className="border-border h-8 p-4 placeholder:text-muted-foreground"
+            <TextareaAutosize
+                className="
+                flex field-sizing-content min-h-8 w-full rounded-lg border border-border bg-white p-4
+                text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring
+                focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50
+                disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20
+                md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50
+                dark:aria-invalid:ring-destructive/40 border-border h-8 p-4 placeholder:text-muted-foreground
+                resize-none
+                "
+                minRows={1}
             />
         );
     }

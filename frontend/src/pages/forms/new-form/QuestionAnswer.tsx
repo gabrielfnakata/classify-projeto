@@ -1,10 +1,10 @@
 import {AnswerType} from "@/shared/models/enums/answer-type.ts";
 import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
-import {Textarea} from "@/components/ui/textarea.tsx";
 import {Checkbox} from "@/components/ui/checkbox.tsx";
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {Check, Delete, Plus, X} from "lucide-react";
+import TextareaAutosize from "react-textarea-autosize";
 
 interface QuestionAnswerProps {
     type: AnswerType;
@@ -15,9 +15,17 @@ interface QuestionAnswerProps {
 export default function QuestionAnswer({ type, options, onOptionsChange }: QuestionAnswerProps) {
     if (type === AnswerType.TEXT) {
         return (
-            <Textarea
+            <TextareaAutosize
                 placeholder="Aqui vai a resposta..."
-                className="border-border h-8 p-4 placeholder:text-muted-foreground"
+                className="
+                flex field-sizing-content min-h-8 w-full rounded-lg border border-border bg-white p-4
+                text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring
+                focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50
+                disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20
+                md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50
+                dark:aria-invalid:ring-destructive/40 border-border h-8 p-4 placeholder:text-muted-foreground
+                resize-none
+                "
                 disabled
             />
         );

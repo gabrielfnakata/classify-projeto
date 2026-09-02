@@ -252,6 +252,7 @@ CREATE TABLE IF NOT EXISTS form_question (
     form_id BIGINT UNSIGNED NOT NULL,
     question VARCHAR(255) NOT NULL,
     type_answer VARCHAR(50) NOT NULL,
+    required BIT NOT NULL,
 
     CONSTRAINT fk_form_questions_form
     FOREIGN KEY (form_id) REFERENCES form (id)

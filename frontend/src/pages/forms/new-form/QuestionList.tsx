@@ -2,24 +2,35 @@ import {useFormikContext} from "formik";
 import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
 import type {ChangeEvent} from "react";
 import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
-import {Delete, Ghost} from "lucide-react";
-import {Label} from "@/components/ui/label.tsx";
-import {ContentCard} from "@/components/layout/content-card.tsx";
-import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip.tsx";
+import { Ghost } from "lucide-react";
+import { Label } from "@/components/ui/label.tsx";
+import { ContentCard } from "@/components/layout/content-card.tsx";
 import QuestionAnswer from "./QuestionAnswer";
+import TextareaAutosize from "react-textarea-autosize";
+import QuestionConfigurationOptions from "@/pages/forms/new-form/QuestionConfigurationOptions.tsx";
 
 export default function QuestionList() {
-    const { values, setFieldValue } = useFormikContext<FormCreateDTO>();
+    const { errors, values, setFieldValue } = useFormikContext<FormCreateDTO>();
     const questions = values.questions ?? [];
 
-    const handleQuestionChange = (e: ChangeEvent<HTMLInputElement>, index: number) =>
+    const handleQuestionChange = (e: ChangeEvent<HTMLTextAreaElement>, index: number) =>
         setFieldValue(`questions[${index}].question`, e.target.value);
+
+    const handleDuplicateQuestion = (index: number) => {
+        const updatedQuestions = [...questions];
+        updatedQuestions.splice(index + 1, 0, questions[index]);
+        setFieldValue(`questions`, updatedQuestions);
+    }
 
     const handleDeleteQuestion = (index: number) =>
         setFieldValue("questions", questions.filter((_, i) => i !== index));
 
     const handleAddOption = (index: number, updatedOptions: FormQuestionOptionCreateDTO[]) =>
         setFieldValue(`questions[${index}].options`, updatedOptions);
+
+    const handleRequiredChange = (index: number, required: boolean) =>
+        setFieldValue(`questions[${index}].isRequired`, required);
+
 
     if (questions.length === 0) {
         return (
@@ -34,33 +45,30 @@ export default function QuestionList() {
 
     return (
         <div className="flex flex-col gap-10 w-8/10">
-            {questions.map((question, index) => (
-                <ContentCard key={index} className="flex flex-col w-full gap-8">
-                    <div className="flex w-full">
-                        <input
+            {questions.map((question, index) => {
+                const hasError = errors.questions?.at(index);
+                const errorStyle =
+                    hasError ? 'outline-1 outline-solid outline-destructive' : 'outline-none';
+                return (
+                <ContentCard key={index} className={`flex flex-col w-full gap-8 ${errorStyle}`}>
+                    <div className="flex w-full justify-between items-center gap-4">
+                        <TextareaAutosize
                             placeholder="Insira a questão aqui"
-                            className="w-full h-16 border-b-1 px-2 border-table-foreground text-xl font-bold
-                            text-foreground placeholder:text-muted-foreground focus:outline-none
-                            focus:border-b-2 focus:border-button-background
+                            className="w-6/10 h-16 px-2 border-table-foreground text-2xl font-bold
+                            text-foreground placeholder:text-muted-foreground focus:outline-none resize-none
                             "
                             value={question.question}
+                            minRows={1}
                             onChange={(event) => handleQuestionChange(event, index)}
                         />
-                        <Tooltip>
-                            <TooltipTrigger
-                                className="flex justify-end items-center h-8 p-1 mt-4 ml-4 rounded-sm text-destructive
-                                hover:bg-destructive hover:text-white hover:transition-colors hover:duration-80
-                                hover:cursor-pointer focus:outline-none focus:outline-2 focus:outline-solid
-                                focus:outline-current
-                                "
-                                onClick={() => handleDeleteQuestion(index)}
-                            >
-                                <Delete/>
-                                <TooltipContent>
-                                    Remover Opção
-                                </TooltipContent>
-                            </TooltipTrigger>
-                        </Tooltip>
+                        <div className="flex">
+                            <QuestionConfigurationOptions
+                                required={question.isRequired}
+                                handleRequiredChange={(required) => handleRequiredChange(index, required)}
+                                handleDuplicateQuestion={() => handleDuplicateQuestion(index)}
+                                handleDeleteQuestion={() => handleDeleteQuestion(index)}
+                            />
+                        </div>
                     </div>
                     <QuestionAnswer
                         type={question.answerType}
@@ -68,7 +76,8 @@ export default function QuestionList() {
                         onOptionsChange={(updatedOptions) => handleAddOption(index, updatedOptions)}
                     />
                 </ContentCard>
-            ))}
+            )}
+        )}
         </div>
     );
 }

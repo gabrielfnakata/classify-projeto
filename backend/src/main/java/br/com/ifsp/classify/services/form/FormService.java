@@ -61,6 +61,7 @@ public class FormService {
                formQuestion.setUuid(UUID.randomUUID());
                formQuestion.setQuestion(question.question());
                formQuestion.setTypeAnswer(question.answerType());
+               formQuestion.setRequired(question.isRequired());
                formQuestion.setForm(form);
 
                if (question.options() != null) {
@@ -156,6 +157,7 @@ public class FormService {
                             form.getUuid().toString(),
                             question.getQuestion(),
                             question.getTypeAnswer(),
+                            question.getRequired(),
                             question.getTypeAnswer() != AnswerType.TEXT
                                 ? question.getFormQuestionOptions()
                                 .stream()

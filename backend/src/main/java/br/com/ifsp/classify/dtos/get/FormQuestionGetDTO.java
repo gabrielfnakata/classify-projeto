@@ -9,6 +9,7 @@ public record FormQuestionGetDTO(
         String formUuid,
         String question,
         AnswerType answerType,
+        Boolean isRequired,
         List<FormQuestionOptionGetDTO> options
 ) {
 }

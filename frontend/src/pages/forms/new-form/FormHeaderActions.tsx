@@ -16,7 +16,7 @@ export default function FormHeaderActions() {
     const buttonVariant = "secondary";
 
     return (
-        <div className="flex flex-row w-9/10 items-center justify-between">
+        <div className="flex flex-row w-9/10 pt-6 sticky top-0 z-10 items-center justify-between bg-background">
             <PageHeader
                 title="Novo Formulário"
                 action={
@@ -32,6 +32,7 @@ export default function FormHeaderActions() {
                         <LimitDateDialog
                             initialDate={new Date(values.limitDate)}
                             onDateChange={(date) => { setFieldValue("limitDate", formatYMD(date)) }}
+                            disabled={isSubmitting}
                             buttonVariant={buttonVariant}
                         />
                         <Button

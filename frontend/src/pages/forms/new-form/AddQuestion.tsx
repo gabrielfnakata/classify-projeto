@@ -28,7 +28,7 @@ export default function AddQuestion({buttonVariant}: AddQuestionProps) {
 
     const predefinedOptions: FormQuestionOptionCreateDTO[] = [
         { optionText: 'Opção 1', isCorrect: false },
-        { optionText: 'Opção 2', isCorrect: false },
+        { optionText: 'Opção 2', isCorrect: true },
         { optionText: 'Opção 3', isCorrect: false },
     ];
 
