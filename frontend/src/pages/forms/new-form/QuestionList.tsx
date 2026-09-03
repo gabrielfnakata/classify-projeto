@@ -11,7 +11,11 @@ import QuestionConfigurationOptions from "@/pages/forms/new-form/QuestionConfigu
 import {AnswerType} from "@/shared/models/enums/answer-type.ts";
 import {predefinedOptions} from "@/shared/models/constants/answer-type-options.tsx";
 
-export default function QuestionList() {
+interface QuestionListProps {
+    readOnly?: boolean;
+}
+
+export default function QuestionList({ readOnly = false }: QuestionListProps) {
     const { errors, values, setFieldValue, setValues } = useFormikContext<FormCreateDTO>();
     const questions = values.questions ?? [];
 
@@ -64,14 +68,16 @@ export default function QuestionList() {
                 <ContentCard key={index} className={`flex flex-col w-full gap-8 ${errorStyle}`}>
                     <div className="flex w-full justify-between items-center gap-4">
                         <TextareaAutosize
+                            readOnly={readOnly}
+                            value={question.question}
+                            minRows={1}
+                            onChange={(event) => handleQuestionChange(event, index)}
                             placeholder="Insira a questão aqui"
                             className="w-6/10 h-16 px-2 border-table-foreground text-2xl font-bold
                             text-foreground placeholder:text-muted-foreground focus:outline-none resize-none
                             "
-                            value={question.question}
-                            minRows={1}
-                            onChange={(event) => handleQuestionChange(event, index)}
                         />
+                        {!readOnly && (
                         <div className="flex">
                             <QuestionConfigurationOptions
                                 currentType={question.answerType}
@@ -82,11 +88,13 @@ export default function QuestionList() {
                                 handleChangeAnswerType={(type) => handleQuestionTypeChange(index, type)}
                             />
                         </div>
+                        )}
                     </div>
                     <QuestionAnswer
                         type={question.answerType}
                         options={question.options ?? []}
                         onOptionsChange={(updatedOptions) => handleAddOption(index, updatedOptions)}
+                        mode={readOnly ? "preview" : "configure"}
                     />
                 </ContentCard>
             )}

@@ -31,8 +31,8 @@ export default function NewForm() {
     return (
         <Formik initialValues={initialValues} onSubmit={handleSubmit} validationSchema={FormValidationSchema}>
             <div className="flex flex-col background h-full w-full items-center justify-center">
-                <div className="flex flex-col w-full h-full py-23 gap-[2vh] justify-start items-center">
-                    <FormHeaderActions />
+                <div className="flex flex-col w-full h-full py-17 gap-[2vh] justify-start items-center">
+                    <FormHeaderActions type="create"/>
                     <FormHeaderFields />
                     <QuestionList />
                 </div>

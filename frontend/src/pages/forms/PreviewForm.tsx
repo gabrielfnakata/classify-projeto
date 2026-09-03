@@ -1,289 +1,49 @@
-import {PageHeader} from "@/components/layout/page-header.tsx";
-import {Button} from "@/components/ui/button.tsx";
-import {ArrowLeft, File, FolderOpen, Ghost, Image, X} from "lucide-react";
-import {ContentCard} from "@/components/layout/content-card.tsx";
-import {Label} from "@/components/ui/label.tsx";
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
-import {useLocation, useNavigate, useParams} from "react-router";
-import {AnswerType} from "@/shared/models/enums/answer-type.ts";
-import {Checkbox} from "@/components/ui/checkbox.tsx";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
-import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
+import {useLocation, useParams} from "react-router";
 import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
 import useFetch from "@/hooks/useFetch.tsx";
 import type {FormInfoDTO} from "@/shared/dtos/form/FormInfoDTO.ts";
-import type {FormQuestionOptionDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionDTO.ts";
-import TextareaAutosize from "react-textarea-autosize";
-import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty.tsx";
-import {useEffect, useRef, useState} from "react";
-import { type AnswerFileCreateDTO } from "@/shared/dtos/form-answer/AnswerFileCreateDTO";
-import api from "@/services/api";
-import {fileSizeFormatter} from "@/shared/utils/file-size-formatter.ts";
+import FormHeaderActions from "@/pages/forms/new-form/FormHeaderActions.tsx";
+import FormHeaderFields from "@/pages/forms/new-form/FormHeaderFields.tsx";
+import QuestionList from "@/pages/forms/new-form/QuestionList.tsx";
+import {Formik} from "formik";
+import {formatYMD} from "@/shared/utils/date-formatter.ts";
 
 export default function PreviewForm() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const location = useLocation();
     const { data: fetchedForm } = useFetch<FormInfoDTO>(id ? `/form/${id}` : null);
 
     const formFromState = location.state?.form as FormCreateDTO | undefined;
 
-    const form = id ? fetchedForm : formFromState;
-
-    return (
-        <div className="flex flex-col background h-full w-full items-center justify-center">
-            <div className="flex flex-col w-full h-full py-23 gap-[2vh] justify-start items-center">
-                <div className="flex flex-row w-9/10 pt-6 sticky top-0 z-10 items-center justify-between">
-
-                    <PageHeader
-                        title={"Prévia do Formulário"}
-                        action={
-                            <div className="flex flex-row gap-4">
-                                <Button
-                                    className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold
-                                    hover:bg-button-highlight hover:cursor-pointer
-                                    "
-                                    onClick={() =>
-                                        id
-                                        ? navigate('/posted-forms')
-                                        : navigate('/new-form', { state: { form: form } })
-                                    }
-                                >
-                                    <ArrowLeft/>
-                                    Voltar
-                                </Button>
-                            </div>
-                        }
-                    />
-                </div>
-                <div className="flex flex-col w-8/10 gap-12 mb-8 items-start justify-center">
-                    <div className="flex flex-row w-full items-center">
-                        <Label
-                            className="w-full h-24 border-b-2 px-4 border-table-foreground text-4xl font-bold
-                                    text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-button-background
-                                    "
-                        >
-                            {form?.title}
-                        </Label>
-                    </div>
-                    <div className="flex flex-row w-full justify-start items-center">
-                        <Label
-                            className="flex justify-center w-full max-h-fit px-4 text-xl text-muted-foreground font-bold
-                                    text-muted-foreground placeholder:text-muted-foreground focus:outline-none
-                                    "
-                        >
-                            {form?.description}
-                        </Label>
-                    </div>
-                </div>
-                <div className="flex flex-col gap-10 w-8/10">
-                    {
-                        form?.questions && form?.questions.length > 0
-                        ? form?.questions.map((question, index) => {
-                            return (
-                                <ContentCard key={index} className="flex flex-col w-full gap-8">
-                                    <div className="flex w-full">
-                                        <Label
-                                            className="w-full h-16 px-2 text-2xl font-bold
-                                                text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-button-background
-                                                "
-                                        >
-                                            {question.question} {question.isRequired ? '*' : ''}
-                                        </Label>
-                                    </div>
-                                    <QuestionAnswer
-                                        type={question.answerType}
-                                        options={question.options ?? []}
-                                    />
-                                </ContentCard>
-                            );
-                        }) : (
-                            <div className="flex flex-col justify-center items-center w-full mt-24 gap-8">
-                                <Ghost className="scale-200 text-foreground opacity-50"/>
-                                <Label className="text-foreground text-center opacity-50">Ainda não há questões no seu
-                                    formulário</Label>
-                            </div>
-                        )
-                    }
-                </div>
-            </div>
-        </div>
-    );
-}
-
-interface QuestionAnswerProps {
-    type: AnswerType;
-    options: FormQuestionOptionCreateDTO[] | FormQuestionOptionDTO[];
-}
-
-function QuestionAnswer({ type, options }: QuestionAnswerProps) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [files, setFiles] = useState<AnswerFileCreateDTO[]>([]);
-
-    useEffect(() => {
-        files.forEach((file) => {
-            api.post<string>("/files/upload-url", {file})
-            .then((response) => { file.uploadUrl = response.data })
-            .catch((error) => console.error(error));
-        })
-    }, [files]);
-
-    if (type === AnswerType.TEXT) {
-        return (
-            <TextareaAutosize
-                className="
-                flex field-sizing-content min-h-8 w-full rounded-lg border border-border bg-white p-4
-                text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring
-                focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-input/50
-                disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20
-                md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50
-                dark:aria-invalid:ring-destructive/40 border-border h-8 p-4 placeholder:text-muted-foreground
-                resize-none
-                "
-                minRows={1}
-            />
-        );
+    const fromFormInfoDTO = (source: FormInfoDTO): FormCreateDTO => {
+        return {
+            title: source.title,
+            description: source.description,
+            limitDate: formatYMD(new Date()),
+            questions: source.questions.map((q) => ({
+                question: q.question,
+                answerType: q.answerType,
+                isRequired: q.isRequired,
+                options: q.options
+            })),
+        };
     }
 
-    const onFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
-        if (selectedFiles.length === 0) return;
-        setFiles((prev) => {
-            const fileModels = selectedFiles.map((selected) => {return {file: selected, uploadUrl: ''} as AnswerFileCreateDTO});
-            return [...prev, ...fileModels];
-        });
-        e.target.value = "";
-    };
+    const form = id
+        ? (fetchedForm ? fromFormInfoDTO(fetchedForm) : undefined)
+        : formFromState;
 
-
-    const onRemoveFile = (index: number) => {
-        setFiles((prev) => prev.filter((_, i) => i !== index));
-    };
-
-    if (type === AnswerType.IMAGE || type === AnswerType.FILE) {
-        const accept = type === AnswerType.IMAGE ? "image/*" : "application/pdf";
-        const triggerFileSelect = () => fileInputRef.current?.click();
-        return (
-            <div>
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept={accept}
-                    onChange={onFilesSelected}
-                    className="hidden"
-                />
-                { 
-                files.length === 0 
-                ? (
-                    <Empty className="border border-dashed bg-muted/30">
-                        <EmptyHeader>
-                            <EmptyMedia variant="icon">
-                                <FolderOpen/>
-                            </EmptyMedia>
-                            <EmptyTitle>
-                                {type === AnswerType.IMAGE
-                                    ? 'Nenhuma imagem foi enviada'
-                                    : 'Nenhum arquivo foi enviado'
-                                }
-                            </EmptyTitle>
-                            <EmptyDescription>
-                                {type === AnswerType.IMAGE
-                                    ? 'Envie uma imagem por aqui'
-                                    : 'Envie um arquivo por aqui'
-                                }
-                            </EmptyDescription>
-                        </EmptyHeader>
-                        <EmptyContent>
-                            <Button onClick={triggerFileSelect}>
-                                Enviar {type === AnswerType.IMAGE ? 'Imagem' : 'Arquivo'}
-                            </Button>
-                        </EmptyContent>
-                    </Empty>
-                ) 
-                : (
-                    <Empty className="border border-solid bg-muted/30">
-                        <EmptyHeader>
-                            <EmptyTitle className="text-xl">{ type === AnswerType.IMAGE ? "Imagens" : "Arquivos" }</EmptyTitle>
-                        </EmptyHeader>
-                        <EmptyContent>
-                            <div className="flex w-fit h-full gap-8">
-                                { files.map((file, index) => (
-                                    <div className="relative group">
-                                        <button
-                                            className="
-                                            absolute -top-3 -right-3 z-10 p-1 rounded-full bg-muted text-muted-foreground
-                                            opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive
-                                            hover:text-destructive-foreground transition-colors hover:cursor-pointer
-                                            duration-200"
-                                            aria-label="Close"
-                                            onClick={() =>onRemoveFile(index)}
-                                        >
-                                            <X className="h-6 w-6"/>
-                                        </button>
-
-                                        <Card className="
-                                        flex flex-col gap-4 justify-center items-center
-                                        w-54 h-48 p-4 transition-shadow hover:shadow-md
-                                        ">
-                                            <CardHeader className="flex flex-col justify-center items-center gap-2">
-                                                <div className="bg-muted rounded-full p-2">
-                                                    { type === AnswerType.IMAGE
-                                                    ? <Image className="h-8 w-8" />
-                                                    : <File className="h-8 w-8"/> }
-                                                </div>
-                                                <CardTitle className="w-48 break-all"> {file.file.name} </CardTitle>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <Label>{ fileSizeFormatter(file.file.size) }</Label>
-                                            </CardContent>
-                                        </Card>
-                                    </div>
-                                ))}
-                            </div>
-                        </EmptyContent>
-                    </Empty>
-                    )
-                }
-            </div>
-        );
-    }
-
-    const renderIndicator = (_option: FormQuestionOptionCreateDTO | FormQuestionOptionDTO, i: number) => {
-        if (type === AnswerType.MULTI_SELECT) {
-            return (
-                <Checkbox
-                    className="bg-white text-black"
-                />
-            );
-        }
-        return (
-            <RadioGroupItem
-                value={`random-question-${i}`}
-                className="bg-white text-black"
-            />
-        );
-    };
-
-    const optionsList = options.map((option, i) => (
-        <div key={i} className="flex justify-start items-center gap-2 pl-4">
-            {renderIndicator(option, i)}
-            <Label
-                className="w-1/2 h-6 pl-4 text-md text-foreground
-                placeholder:text-muted-foreground focus:outline-none"
-            >
-                {option.optionText}
-            </Label>
-        </div>
-    ));
+    if (!form) return (<></>);
 
     return (
-        <>
-            {
-                type === AnswerType.MULTI_SELECT
-                    ? <div className="flex flex-col gap-2">{optionsList}</div>
-                    : <RadioGroup defaultValue=''>{optionsList}</RadioGroup>
-            }
-        </>
+        <Formik initialValues={form} onSubmit={()=>{}}>
+            <div className="flex flex-col background h-full w-full items-center justify-center">
+                <div className="flex flex-col w-full h-full py-17 gap-[2vh] justify-start items-center">
+                    <FormHeaderActions type="preview"/>
+                    <FormHeaderFields readOnly/>
+                    <QuestionList readOnly/>
+                </div>
+            </div>
+        </Formik>
     );
 }

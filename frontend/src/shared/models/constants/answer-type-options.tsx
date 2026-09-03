@@ -18,7 +18,7 @@ export const answerTypeOptions: AnswerTypeOptions[] = [
 ];
 
 export const predefinedOptions: FormQuestionOptionCreateDTO[] = [
-    { optionText: 'Opção 1', isCorrect: false },
-    { optionText: 'Opção 2', isCorrect: true },
-    { optionText: 'Opção 3', isCorrect: false },
+    { optionText: 'Opção 1', correct: false },
+    { optionText: 'Opção 2', correct: true },
+    { optionText: 'Opção 3', correct: false },
 ];
