@@ -29,6 +29,10 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ALLOWED_ORIGINS=http://localhost:${FRONT_PORT}
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/classify?createDatabaseIfNotExist=true&characterEncoding=UTF-8&serverTimezone=America/Sao_Paulo&useSSL=false&allowPublicKeyRetrieval=true
+      - MINIO_API_URL=http://silo:9000
+      - MINIO_ACCESS_KEY=${MINIO_USERNAME}
+      - MINIO_SECRET_KEY=${MINIO_PASSWORD}
+      - MINIO_INITIALIZER_BUCKETS=form.answers
     ports:
       - "${BACK_PORT}:8080"
       - "5005:5005"
@@ -56,9 +60,28 @@ services:
     networks:
       - private_network
 
+  silo:
+    image: pgsty/silo:RELEASE.2026-08-06T00-00-00Z
+    container_name: silo
+    env_file: .env
+    restart: always
+    environment:
+      MINIO_UPDATE: "off"
+      MINIO_ROOT_USER: ${MINIO_USERNAME}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    ports:
+      - "${MINIO_API_PORT}:9000"
+      - "${MINIO_DASHBOARD_PORT}:9001"
+    volumes:
+      - silo_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - private_network
+
 volumes:
   db_data:
   maven-cache:
+  silo_data:
 
 networks:
   private_network:
