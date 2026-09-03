@@ -1,8 +1,9 @@
 import {PageHeader} from "@/components/layout/page-header.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {ArrowLeft, FolderOpen, Ghost} from "lucide-react";
+import {ArrowLeft, File, FolderOpen, Ghost, Image, X} from "lucide-react";
 import {ContentCard} from "@/components/layout/content-card.tsx";
 import {Label} from "@/components/ui/label.tsx";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {useLocation, useNavigate, useParams} from "react-router";
 import {AnswerType} from "@/shared/models/enums/answer-type.ts";
 import {Checkbox} from "@/components/ui/checkbox.tsx";
@@ -14,7 +15,10 @@ import type {FormInfoDTO} from "@/shared/dtos/form/FormInfoDTO.ts";
 import type {FormQuestionOptionDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionDTO.ts";
 import TextareaAutosize from "react-textarea-autosize";
 import {Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle} from "@/components/ui/empty.tsx";
-import {useRef} from "react";
+import {useEffect, useRef, useState} from "react";
+import { type AnswerFileCreateDTO } from "@/shared/dtos/form-answer/AnswerFileCreateDTO";
+import api from "@/services/api";
+import {fileSizeFormatter} from "@/shared/utils/file-size-formatter.ts";
 
 export default function PreviewForm() {
     const { id } = useParams();
@@ -114,6 +118,16 @@ interface QuestionAnswerProps {
 
 function QuestionAnswer({ type, options }: QuestionAnswerProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [files, setFiles] = useState<AnswerFileCreateDTO[]>([]);
+
+    useEffect(() => {
+        files.forEach((file) => {
+            api.post<string>("/files/upload-url", {file})
+            .then((response) => { file.uploadUrl = response.data })
+            .catch((error) => console.error(error));
+        })
+    }, [files]);
+
     if (type === AnswerType.TEXT) {
         return (
             <TextareaAutosize
@@ -131,8 +145,23 @@ function QuestionAnswer({ type, options }: QuestionAnswerProps) {
         );
     }
 
+    const onFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
+        if (selectedFiles.length === 0) return;
+        setFiles((prev) => {
+            const fileModels = selectedFiles.map((selected) => {return {file: selected, uploadUrl: ''} as AnswerFileCreateDTO});
+            return [...prev, ...fileModels];
+        });
+        e.target.value = "";
+    };
+
+
+    const onRemoveFile = (index: number) => {
+        setFiles((prev) => prev.filter((_, i) => i !== index));
+    };
+
     if (type === AnswerType.IMAGE || type === AnswerType.FILE) {
-        const accept = type === AnswerType.IMAGE ? "image/*" : "";
+        const accept = type === AnswerType.IMAGE ? "image/*" : "application/pdf";
         const triggerFileSelect = () => fileInputRef.current?.click();
         return (
             <div>
@@ -141,32 +170,81 @@ function QuestionAnswer({ type, options }: QuestionAnswerProps) {
                     type="file"
                     multiple
                     accept={accept}
+                    onChange={onFilesSelected}
                     className="hidden"
                 />
-                <Empty className="border border-dashed bg-muted/30">
-                    <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                            <FolderOpen/>
-                        </EmptyMedia>
-                        <EmptyTitle>
-                            {type === AnswerType.IMAGE
-                                ? 'Nenhuma imagem foi enviada'
-                                : 'Nenhum arquivo foi enviado'
-                            }
-                        </EmptyTitle>
-                        <EmptyDescription>
-                            {type === AnswerType.IMAGE
-                                ? 'Envie uma imagem por aqui'
-                                : 'Envie um arquivo por aqui'
-                            }
-                        </EmptyDescription>
-                    </EmptyHeader>
-                    <EmptyContent>
-                        <Button onClick={triggerFileSelect}>
-                            Enviar {type === AnswerType.IMAGE ? 'Imagem' : 'Arquivo'}
-                        </Button>
-                    </EmptyContent>
-                </Empty>
+                { 
+                files.length === 0 
+                ? (
+                    <Empty className="border border-dashed bg-muted/30">
+                        <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                                <FolderOpen/>
+                            </EmptyMedia>
+                            <EmptyTitle>
+                                {type === AnswerType.IMAGE
+                                    ? 'Nenhuma imagem foi enviada'
+                                    : 'Nenhum arquivo foi enviado'
+                                }
+                            </EmptyTitle>
+                            <EmptyDescription>
+                                {type === AnswerType.IMAGE
+                                    ? 'Envie uma imagem por aqui'
+                                    : 'Envie um arquivo por aqui'
+                                }
+                            </EmptyDescription>
+                        </EmptyHeader>
+                        <EmptyContent>
+                            <Button onClick={triggerFileSelect}>
+                                Enviar {type === AnswerType.IMAGE ? 'Imagem' : 'Arquivo'}
+                            </Button>
+                        </EmptyContent>
+                    </Empty>
+                ) 
+                : (
+                    <Empty className="border border-solid bg-muted/30">
+                        <EmptyHeader>
+                            <EmptyTitle className="text-xl">{ type === AnswerType.IMAGE ? "Imagens" : "Arquivos" }</EmptyTitle>
+                        </EmptyHeader>
+                        <EmptyContent>
+                            <div className="flex w-fit h-full gap-8">
+                                { files.map((file, index) => (
+                                    <div className="relative group">
+                                        <button
+                                            className="
+                                            absolute -top-3 -right-3 z-10 p-1 rounded-full bg-muted text-muted-foreground
+                                            opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive
+                                            hover:text-destructive-foreground transition-colors hover:cursor-pointer
+                                            duration-200"
+                                            aria-label="Close"
+                                            onClick={() =>onRemoveFile(index)}
+                                        >
+                                            <X className="h-6 w-6"/>
+                                        </button>
+
+                                        <Card className="
+                                        flex flex-col gap-4 justify-center items-center
+                                        w-54 h-48 p-4 transition-shadow hover:shadow-md
+                                        ">
+                                            <CardHeader className="flex flex-col justify-center items-center gap-2">
+                                                <div className="bg-muted rounded-full p-2">
+                                                    { type === AnswerType.IMAGE
+                                                    ? <Image className="h-8 w-8" />
+                                                    : <File className="h-8 w-8"/> }
+                                                </div>
+                                                <CardTitle className="w-48 break-all"> {file.file.name} </CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <Label>{ fileSizeFormatter(file.file.size) }</Label>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                ))}
+                            </div>
+                        </EmptyContent>
+                    </Empty>
+                    )
+                }
             </div>
         );
     }

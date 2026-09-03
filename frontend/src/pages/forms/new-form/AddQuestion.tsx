@@ -25,7 +25,8 @@ export default function AddQuestion({buttonVariant}: AddQuestionProps) {
         const newQuestion = {
             question: 'Questão',
             answerType,
-            options: answerType !== AnswerType.TEXT ? predefinedOptions : undefined
+            options: answerType !== AnswerType.TEXT ? predefinedOptions : undefined,
+            isRequired: false
         } as FormQuestionCreateDTO;
         setFieldValue("questions", [...(values.questions ?? []), newQuestion]);
     };
