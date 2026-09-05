@@ -3,22 +3,23 @@ import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
 import {useNavigate, useParams} from "react-router";
 import {PageHeader} from "@/components/layout/page-header.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {ArrowLeft, Download, Eye} from "lucide-react";
+import {ArrowLeft, Eye} from "lucide-react";
 import LimitDateDialog from "@/components/dialogs/LimitDateDialog.tsx";
 import {formatYMD} from "@/shared/utils/date-formatter.ts";
 import AddQuestion from "@/pages/forms/new-form/AddQuestion.tsx";
+import DefineFormTypeDialog from "@/components/dialogs/DefineFormTypeDialog.tsx";
 
 interface FormHeaderActionsProps {
     type: "preview" | "create";
 }
 
 export default function FormHeaderActions({ type }: FormHeaderActionsProps) {
-    const { values, isSubmitting, isValid, setFieldValue, submitForm } = useFormikContext<FormCreateDTO>();
+    const { values, isSubmitting, isValid, setFieldValue } = useFormikContext<FormCreateDTO>();
     const navigate = useNavigate();
     const { id } = useParams();
 
     const navigateBack = () => {
-        const backUrl = id ? '/posted-forms' : '/new-form'
+        const backUrl = id ? '/posted-forms' : type === "preview" ? '/new-form' : '/posted-forms';
         const state = id ? undefined : {form: values};
         navigate(backUrl, { state: state })
     }
@@ -55,13 +56,7 @@ export default function FormHeaderActions({ type }: FormHeaderActionsProps) {
                                 >
                                     <Eye /> Ver Prévia
                                 </Button>
-                                <Button
-                                    className={buttonStyle + "hover:bg-button-highlight"}
-                                    disabled={!isValid || isSubmitting}
-                                    onClick={submitForm}
-                                >
-                                    <Download /> Salvar Formulário
-                                </Button>
+                                <DefineFormTypeDialog />
                             </>
                         )}
                     </div>

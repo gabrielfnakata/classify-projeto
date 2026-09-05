@@ -13,6 +13,7 @@ import api from "@/services/api.ts";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {fileSizeFormatter} from "@/shared/utils/file-size-formatter.ts";
+import type {FormAnswerFileUploadDTO} from "@/shared/dtos/form-answer-file/FormAnswerFileUploadDTO.ts";
 
 interface QuestionAnswerProps {
     type: AnswerType;
@@ -26,9 +27,13 @@ export default function QuestionAnswer({ type, options, onOptionsChange, mode }:
     const [files, setFiles] = useState<AnswerFileCreateDTO[]>([]);
 
     useEffect(() => {
+        console.log(files);
         files.forEach((file) => {
-            api.post<string>("/files/upload-url", {file})
-                .then((response) => { file.uploadUrl = response.data })
+            api.post<FormAnswerFileUploadDTO>("/form/upload-url", {bucket: file.bucket, fileName: file.file.name})
+                .then((response) => {
+                    file.uuid = response.data.fileUuid;
+                    file.uploadUrl = response.data.uploadUrl;
+                })
                 .catch((error) => console.error(error));
         })
     }, [files]);
@@ -55,7 +60,7 @@ export default function QuestionAnswer({ type, options, onOptionsChange, mode }:
         const selectedFiles = e.target.files ? Array.from(e.target.files) : [];
         if (selectedFiles.length === 0) return;
         setFiles((prev) => {
-            const fileModels = selectedFiles.map((selected) => {return {file: selected, uploadUrl: ''} as AnswerFileCreateDTO});
+            const fileModels = selectedFiles.map((selected) => {return {bucket: 'form.answers', file: selected, uploadUrl: ''} as AnswerFileCreateDTO});
             return [...prev, ...fileModels];
         });
         e.target.value = "";
@@ -101,7 +106,7 @@ export default function QuestionAnswer({ type, options, onOptionsChange, mode }:
                                 </EmptyDescription>
                             </EmptyHeader>
                             <EmptyContent>
-                                <Button onClick={triggerFileSelect}>
+                                <Button onClick={triggerFileSelect} disabled={mode === 'configure'}>
                                     Enviar {type === AnswerType.IMAGE ? 'Imagem' : 'Arquivo'}
                                 </Button>
                             </EmptyContent>

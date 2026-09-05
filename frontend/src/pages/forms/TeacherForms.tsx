@@ -28,7 +28,7 @@ export default function TeacherForms() {
                     <TooltipTrigger
                         className="h-8 px-2 bg-button-background rounded-xl text-sm text-white font-semibold
                         hover:bg-button-highlight hover:cursor-pointer"
-                        onClick={() => navigate(`/form-preview/${row.uuid}`)}
+                        onClick={() => navigate(`/form-preview/${row.uuid}`, {state: {questions: row.questions}})}
                     >
                         <Eye/>
                     </TooltipTrigger>

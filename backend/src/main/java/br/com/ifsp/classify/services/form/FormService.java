@@ -1,19 +1,20 @@
 package br.com.ifsp.classify.services.form;
 
+import br.com.ifsp.classify.dtos.create.AssignFormToStudentsDTO;
 import br.com.ifsp.classify.dtos.create.FormCreateDTO;
-import br.com.ifsp.classify.dtos.get.FormGetDTO;
-import br.com.ifsp.classify.dtos.get.FormInfoGetDTO;
-import br.com.ifsp.classify.dtos.get.FormQuestionGetDTO;
-import br.com.ifsp.classify.dtos.get.FormQuestionOptionGetDTO;
+import br.com.ifsp.classify.dtos.get.*;
 import br.com.ifsp.classify.models.Employee;
 import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.models.form.*;
+import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.repositories.UserRepository;
 import br.com.ifsp.classify.repositories.form.FormQuestionOptionRepository;
 import br.com.ifsp.classify.repositories.form.FormQuestionRepository;
 import br.com.ifsp.classify.repositories.form.FormRepository;
+import br.com.ifsp.classify.repositories.form.FormSubmissionRepository;
 import br.com.ifsp.classify.security.AuthenticatedUser;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,20 +26,26 @@ import java.util.UUID;
 @Service
 public class FormService {
     public UserRepository userRepository;
+    public StudentRepository studentRepository;
     public FormRepository formRepository;
     public FormQuestionRepository formQuestionRepository;
     public FormQuestionOptionRepository formQuestionOptionRepository;
+    public FormSubmissionRepository formSubmissionRepository;
 
     public FormService(
             UserRepository userRepository,
+            StudentRepository studentRepository,
             FormRepository formRepository,
             FormQuestionRepository formQuestionRepository,
-            FormQuestionOptionRepository formQuestionOptionRepository
+            FormQuestionOptionRepository formQuestionOptionRepository,
+            FormSubmissionRepository formSubmissionRepository
     ) {
         this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
         this.formQuestionRepository = formQuestionRepository;
         this.formRepository = formRepository;
         this.formQuestionOptionRepository = formQuestionOptionRepository;
+        this.formSubmissionRepository = formSubmissionRepository;
     }
 
     public FormGetDTO create(FormCreateDTO dto, String teacherEmail) {
@@ -52,8 +59,7 @@ public class FormService {
         form.setCreatedAt(LocalDateTime.now());
         form.setTeacher(teacher.getEmployee());
         form.setLimitDate(LocalDateTime.of(dto.limitDate(), LocalTime.MIDNIGHT));
-        // TODO: Adicionar suporte à formulários sem nota
-        form.setHasScore(true);
+        form.setHasScore(dto.hasScore());
 
         dto.questions()
             .forEach(question -> {
@@ -71,7 +77,7 @@ public class FormService {
                        FormQuestionOption formQuestionOption = new FormQuestionOption();
                        formQuestionOption.setUuid(UUID.randomUUID());
                        formQuestionOption.setOptionText(option.optionText());
-                       formQuestionOption.setCorrect(option.isCorrect());
+                       formQuestionOption.setCorrect(option.correct());
                        formQuestionOption.setQuestion(formQuestion);
                        formQuestionOptions.add(formQuestionOption);
                    });
@@ -172,5 +178,27 @@ public class FormService {
                     );
                 }).toList()
         );
+    }
+
+    public void sendFormsToStudents(AssignFormToStudentsDTO dto) {
+        Form form = formRepository.findByUuid(UUID.fromString(dto.formUuid())).orElseThrow();
+        List<UUID> studentsUuids = dto.students()
+                .stream().map(student -> UUID.fromString(student.uuid())).toList();
+        List<Student> students = studentRepository.findByUuidIsIn(studentsUuids);
+
+        if (students.isEmpty()) {
+            throw new EntityNotFoundException();
+        }
+
+        List<FormSubmission> submissionsToCreate = new ArrayList<>();
+        students.forEach(student -> {
+            FormSubmission submission = new FormSubmission();
+            submission.setUuid(UUID.randomUUID());
+            submission.setForm(form);
+            submission.setStudent(student);
+            submission.setStatus(FormStatus.PENDING);
+            submissionsToCreate.add(submission);
+        });
+        formSubmissionRepository.saveAll(submissionsToCreate);
     }
 }
