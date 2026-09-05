@@ -21,6 +21,7 @@ export default function PreviewForm() {
             title: source.title,
             description: source.description,
             limitDate: formatYMD(new Date()),
+            hasScore: false,
             questions: source.questions.map((q) => ({
                 question: q.question,
                 answerType: q.answerType,
@@ -45,7 +46,6 @@ export default function PreviewForm() {
             </div>
         )
     }
-
 
 
     return (

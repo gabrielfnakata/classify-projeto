@@ -32,6 +32,7 @@ services:
       - MINIO_API_URL=http://silo:9000
       - MINIO_ACCESS_KEY=${MINIO_USERNAME}
       - MINIO_SECRET_KEY=${MINIO_PASSWORD}
+      - MINIO_WEBHOOK_TOKEN=${MINIO_WEBHOOK_TOKEN}
       - MINIO_INITIALIZER_BUCKETS=form.answers
     ports:
       - "${BACK_PORT}:8080"
@@ -67,6 +68,9 @@ services:
     restart: always
     environment:
       MINIO_UPDATE: "off"
+      MINIO_NOTIFY_WEBHOOK_ENABLE_form_answer_docs: "on"
+      MINIO_NOTIFY_WEBHOOK_ENDPOINT_form_answer_docs: "http://backend:8080/forms/finish-upload"
+      MINIO_NOTIFY_WEBHOOK_AUTH_TOKEN_form_answer_docs: ${MINIO_WEBHOOK_TOKEN}
       MINIO_ROOT_USER: ${MINIO_USERNAME}
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
     ports:

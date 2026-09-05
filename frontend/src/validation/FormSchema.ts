@@ -28,14 +28,14 @@ export const FormValidationSchema = yup.object({
                         .of(
                             yup.object({
                                 optionText: yup.string().required("O texto da opção é obrigatório"),
-                                isCorrect: yup.boolean().required("O valor de correto da opção é obrigatório")
+                                correct: yup.boolean().required("O valor de correto da opção é obrigatório")
                             })
                         ).test(
                             "correct-options-count",
                             "Quantidade de opções corretas inválida para o tipo de questão",
                             function (options) {
                                 if (!options) return false;
-                                const correctCount = options.filter((opt) => opt.isCorrect).length;
+                                const correctCount = options.filter((opt) => opt.correct).length;
                                 const answerType = this.parent.answerType;
 
                                 if (answerType === AnswerType.SELECT) return correctCount === 1;

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -41,9 +42,8 @@ public class FormAnswer {
     @JdbcTypeCode(SqlTypes.BIT)
     private Boolean correct;
 
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    @Column(name = "file_name", length = 255)
-    private String fileName;
+    @OneToMany(mappedBy = "formAnswer",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<AnswerFile> files;
 
     public String getTeacherFeedback() {
         return teacherFeedback;
@@ -93,20 +93,20 @@ public class FormAnswer {
         this.submission = submission;
     }
 
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
     public Boolean getCorrect() {
         return correct;
     }
 
     public void setCorrect(Boolean correct) {
         this.correct = correct;
+    }
+
+    public List<AnswerFile> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<AnswerFile> files) {
+        this.files = files;
     }
 
     @Override
@@ -121,4 +121,5 @@ public class FormAnswer {
     public int hashCode() {
         return getUuid().hashCode();
     }
+
 }

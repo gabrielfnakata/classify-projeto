@@ -308,3 +308,15 @@ CREATE TABLE IF NOT EXISTS form_answer (
     FOREIGN KEY (option_id) REFERENCES form_question_option (id)
 )$$
 
+CREATE TABLE IF NOT EXISTS form_answer_files (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    answer_id BIGINT UNSIGNED NOT NULL,
+    file_size INT UNSIGNED NOT NULL,
+    status ENUM('PENDING', 'FINISHED', 'FAILED') NOT NULL,
+
+    CONSTRAINT fk_answer_files_answer
+    FOREIGN KEY (answer_id) REFERENCES form_answer (id)
+)$$
+

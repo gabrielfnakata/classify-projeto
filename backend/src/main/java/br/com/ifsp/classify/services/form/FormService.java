@@ -14,6 +14,7 @@ import br.com.ifsp.classify.repositories.form.FormQuestionRepository;
 import br.com.ifsp.classify.repositories.form.FormRepository;
 import br.com.ifsp.classify.repositories.form.FormSubmissionRepository;
 import br.com.ifsp.classify.security.AuthenticatedUser;
+import br.com.ifsp.classify.utils.UuidUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -135,12 +136,13 @@ public class FormService {
         return formGetDTOs;
     }
 
-    public List<FormGetDTO> getAvailableForms(Student student) {
+    public List<FormGetDTO> getAvailableForms() {
+        Student student = studentRepository.findById(1L).orElseThrow();
         List<FormSubmission> availableSubmissions = student.getFormSubmissions();
         return availableSubmissions.stream().map(submission -> {
             Form form = submission.getForm();
             return new FormGetDTO(
-                    form.getUuid().toString(),
+                    submission.getUuid().toString(),
                     form.getTitle(),
                     form.getDescription(),
                     form.getTeacher().getName(),
@@ -182,8 +184,8 @@ public class FormService {
 
     public void sendFormsToStudents(AssignFormToStudentsDTO dto) {
         Form form = formRepository.findByUuid(UUID.fromString(dto.formUuid())).orElseThrow();
-        List<UUID> studentsUuids = dto.students()
-                .stream().map(student -> UUID.fromString(student.uuid())).toList();
+        List<byte[]> studentsUuids = dto.students()
+                .stream().map(student -> UuidUtils.convertUUIDToBytes(student.uuid())).toList();
         List<Student> students = studentRepository.findByUuidIsIn(studentsUuids);
 
         if (students.isEmpty()) {
