@@ -28,7 +28,6 @@ export function DataTable<T>({
   emptyAction,
   className,
 }: DataTableProps<T>) {
-  // TODO: Remover bg-card, colocar bg-table
   return (
     <div
       className={cn(
