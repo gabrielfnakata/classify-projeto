@@ -16,6 +16,7 @@ export const mainNavigation: Group[] = [
       { title: "Funcionários", url: "/employees" },
       { title: "Salas", url: "/classrooms" },
       { title: "Disciplinas", url: "/subjects" },
+      { title: "Turmas", url: "/class-groups" },
     ],
   },
   {
