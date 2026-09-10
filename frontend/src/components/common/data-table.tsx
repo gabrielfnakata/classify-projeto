@@ -28,7 +28,6 @@ export function DataTable<T>({
   emptyAction,
   className,
 }: DataTableProps<T>) {
-  // TODO: Remover bg-card, colocar bg-table
   return (
     <div
       className={cn(
@@ -37,9 +36,9 @@ export function DataTable<T>({
       )}
     >
       {data.length > 0 ? (
-        <div className="overflow-x-auto">
+        <div className="h-full overflow-auto scrollbar-slim">
           <table className="w-full border-collapse text-sm">
-            <thead className="bg-table-foreground">
+            <thead className="sticky top-0 z-10 bg-table-foreground">
               <tr>
                 {columns.map((column) => (
                   <th
@@ -86,7 +85,7 @@ export function DataTable<T>({
           </table>
         </div>
         ) : (
-          <EmptyState 
+          <EmptyState
             className="w-full h-full"
             title={emptyTitle}
             description={emptyDescription}

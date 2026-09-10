@@ -164,6 +164,7 @@ CREATE TABLE IF NOT EXISTS class_session (
 	report_id BIGINT UNSIGNED,
 	class_id BIGINT UNSIGNED,
 	student_id BIGINT UNSIGNED,
+	recurrence_group_id BINARY(16),
 
 	CONSTRAINT classSession_id_pk PRIMARY KEY (id),
 	CONSTRAINT classSession_uuid_uk UNIQUE (uuid),
@@ -185,6 +186,27 @@ CREATE TABLE IF NOT EXISTS assessment (
 
 	CONSTRAINT assessment_id_pk PRIMARY KEY (id),
 	CONSTRAINT assessment_classSessionId_fk FOREIGN KEY (class_session_id) REFERENCES class_session (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS attendance (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
+	class_session_id BIGINT UNSIGNED NOT NULL,
+	student_id BIGINT UNSIGNED NOT NULL,
+	status VARCHAR(8) NOT NULL,
+	justification_reason VARCHAR(17),
+	justification_note VARCHAR(255),
+
+	CONSTRAINT attendance_id_pk PRIMARY KEY (id),
+	CONSTRAINT attendance_uuid_uk UNIQUE (uuid),
+	CONSTRAINT attendance_classSessionId_studentId_uk UNIQUE (class_session_id, student_id),
+	CONSTRAINT attendance_classSessionId_fk FOREIGN KEY (class_session_id) REFERENCES class_session (id),
+	CONSTRAINT attendance_studentId_fk FOREIGN KEY (student_id) REFERENCES student (id),
+	CONSTRAINT attendance_status_ck CHECK (status IN ('PRESENTE', 'AUSENTE')),
+	CONSTRAINT attendance_justificationReason_ck CHECK (justification_reason IN ('ATESTADO_MEDICO', 'PROBLEMA_FAMILIAR', 'TRANSPORTE', 'OUTRO')),
+	CONSTRAINT attendance_justificationRequiresAbsence_ck CHECK (
+		(status = 'AUSENTE') OR (justification_reason IS NULL AND justification_note IS NULL)
+	)
 )$$
 
 CREATE TABLE IF NOT EXISTS telephone (
