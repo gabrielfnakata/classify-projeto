@@ -297,11 +297,30 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             sheet.setDefaultColumnStyle(col, textFormat);
         }
 
-        header.getCell(1).setCellComment(makeComment(workbook, sheet, "Formato: DD/MM/AAAA"));
-        header.getCell(4).setCellComment(makeComment(workbook, sheet, "Formato: DD/MM/AAAA"));
-        header.getCell(5).setCellComment(makeComment(workbook, sheet, "Formato: (99)99999-9999"));
-        header.getCell(6).setCellComment(makeComment(workbook, sheet, "Formato: (99)99999-9999 (opcional)"));
+        var drawing = sheet.createDrawingPatriarch();
+
+        header.getCell(0).setCellComment(makeComment(workbook, drawing, 0, 0, "CAMPO OBRIGATÓRIO"));
+        header.getCell(1).setCellComment(makeComment(workbook, drawing, 1, 0, "CAMPO OBRIGATÓRIO\nFormato: DD/MM/AAAA"));
+        header.getCell(2).setCellComment(makeComment(workbook, drawing, 2, 0, "CAMPO OBRIGATÓRIO"));
+        header.getCell(3).setCellComment(makeComment(workbook, drawing, 3, 0, "CAMPO OBRIGATÓRIO"));
+        header.getCell(4).setCellComment(makeComment(workbook, drawing, 4, 0, "CAMPO OBRIGATÓRIO\nFormato: DD/MM/AAAA"));
+        header.getCell(5).setCellComment(makeComment(workbook, drawing, 5, 0, "CAMPO OBRIGATÓRIO\nFormato: (99)99999-9999"));
     }
+
+    private org.apache.poi.ss.usermodel.Comment makeComment(Workbook workbook, org.apache.poi.ss.usermodel.Drawing<?> drawing, int col, int row, String text) {
+    var factory = workbook.getCreationHelper();
+    var anchor = factory.createClientAnchor();
+
+    anchor.setCol1(col);
+    anchor.setRow1(row);
+    anchor.setCol2(col + 2);
+    anchor.setRow2(row + 4);
+
+    var comment = drawing.createCellComment(anchor);
+    comment.setString(factory.createRichTextString(text));
+    comment.setAuthor("Sistema");
+    return comment;
+    }   
 
     public byte[] generateTemplate() {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
