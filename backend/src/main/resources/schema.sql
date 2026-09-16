@@ -165,8 +165,11 @@ CREATE TABLE IF NOT EXISTS class_session (
 	class_id BIGINT UNSIGNED,
 	student_id BIGINT UNSIGNED,
 	recurrence_group_id BINARY(16),
+	status VARCHAR(9) NOT NULL DEFAULT 'SCHEDULED',
+	cancellation_reason VARCHAR(255),
 
 	CONSTRAINT classSession_id_pk PRIMARY KEY (id),
+	CONSTRAINT classSession_status_ck CHECK (status IN ('SCHEDULED', 'CANCELED')),
 	CONSTRAINT classSession_uuid_uk UNIQUE (uuid),
 	CONSTRAINT classSession_idTeacherSubj_fk FOREIGN KEY (subject_teacher_id) REFERENCES subject_teacher(id),
 	CONSTRAINT classSession_idClassroom_fk FOREIGN KEY (classroom_id) REFERENCES classroom(id),
@@ -251,4 +254,19 @@ CREATE TABLE IF NOT EXISTS audit (
     CONSTRAINT audit_operation_ck CHECK (operation IN ('INSERT', 'DELETE', 'UPDATE')),
     CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES user (id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
+)$$
+
+CREATE TABLE IF NOT EXISTS teacher_availability (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
+	employee_id BIGINT UNSIGNED NOT NULL,
+	weekday VARCHAR(9) NOT NULL,
+	start_time TIME NOT NULL,
+	end_time TIME NOT NULL,
+
+	CONSTRAINT teacherAvailability_id_pk PRIMARY KEY (id),
+	CONSTRAINT teacherAvailability_uuid_uk UNIQUE (uuid),
+	CONSTRAINT teacherAvailability_employeeId_fk FOREIGN KEY (employee_id) REFERENCES employee (id),
+	CONSTRAINT teacherAvailability_weekday_ck CHECK (weekday IN ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY')),
+	CONSTRAINT teacherAvailability_range_ck CHECK (start_time < end_time)
 )$$

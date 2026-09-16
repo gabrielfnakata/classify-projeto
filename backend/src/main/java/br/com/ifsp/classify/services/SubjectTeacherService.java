@@ -10,12 +10,15 @@ import br.com.ifsp.classify.models.Employee;
 import br.com.ifsp.classify.models.Subject;
 import br.com.ifsp.classify.models.SubjectTeacher;
 import br.com.ifsp.classify.repositories.AbstractRepository;
+import br.com.ifsp.classify.repositories.ClassSessionRepository;
 import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.repositories.SubjectRepository;
+import br.com.ifsp.classify.specifications.ClassSessionSpecification;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.specifications.SubjectSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,11 +26,30 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
 
     private final EmployeeRepository employeeRepository;
     private final SubjectRepository subjectRepository;
+    private final ClassSessionRepository classSessionRepository;
 
-    public SubjectTeacherService(AbstractRepository<SubjectTeacher, Long> repository, EmployeeRepository employeeRepository, SubjectRepository subjectRepository) {
+    public SubjectTeacherService(AbstractRepository<SubjectTeacher, Long> repository, EmployeeRepository employeeRepository,
+            SubjectRepository subjectRepository, ClassSessionRepository classSessionRepository) {
         super(repository);
         this.employeeRepository = employeeRepository;
         this.subjectRepository = subjectRepository;
+        this.classSessionRepository = classSessionRepository;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        SubjectTeacher subjectTeacher = getEntityById(uuid);
+        if (subjectTeacher == null)
+            return ResponseEntity.badRequest().build();
+
+        long scheduledSessions = classSessionRepository
+                .count(ClassSessionSpecification.getBySubjectTeacherId(subjectTeacher.getId()));
+
+        if (scheduledSessions > 0)
+            throw new DtoException("Esse professor possui " + scheduledSessions
+                    + " aula(s) agendada(s) nessa disciplina. Exclua ou altere os agendamentos antes de desvincular.");
+
+        return super.delete(uuid);
     }
 
     @Override

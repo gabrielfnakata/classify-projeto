@@ -155,6 +155,9 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
         if (session == null)
             throw new DtoException("A aula informada não foi encontrada");
 
+        if (session.isCanceled())
+            throw new DtoException("Não é possível fazer a chamada de uma aula cancelada");
+
         Set<Long> rosterStudentIds = resolveRosterStudentIds(session);
 
         List<AttendanceGetDTO> result = new ArrayList<>();

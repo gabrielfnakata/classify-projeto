@@ -11,5 +11,7 @@ public record ClassSessionGetDTO(
         ReportGetDTO report,
         ClassGetDTO classDTO,
         StudentGetDTO student,
-        String recurrenceGroupUuid
+        String recurrenceGroupUuid,
+        String status,
+        String cancellationReason
 ) {}
