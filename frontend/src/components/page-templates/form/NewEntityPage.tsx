@@ -69,7 +69,7 @@ export default function NewEntityPage<T>({
                                             case 'select':
                                                 return <FormikSelectField
                                                     key={field.key} name={field.name} label={field.label} options={field.options ?? []}
-                                                />
+                                                />;
                                             case 'cpf':
                                                 return <CpfInput
                                                     key={field.key} name={field.name} label={field.label} required={field.required}
@@ -82,7 +82,7 @@ export default function NewEntityPage<T>({
                                     })}
                                 </FormGrid>
                                 <div className="flex flex-row justify-end gap-4">
-                                    <Button type="button" className="h-10 px-5 rounded-xl bg-red-400 text-sm font-semibold" onClick={() => {navigate(backRoute)}}>
+                                    <Button type="button" className="h-10 px-5 rounded-xl bg-red-400 text-sm font-semibold" onClick={() => {navigate(backRoute);}}>
                                         Voltar
                                     </Button>
                                     <Button type="submit" disabled={isSubmitting} className="h-10 px-5 rounded-xl text-sm font-semibold">

@@ -26,12 +26,12 @@ export default function NewStudent<StudentCreateDTO>() {
         telephone1: '',
         telephone2: ''
     };
-    
+
     function buildPayload(values: Record<string, unknown>): StudentCreateDTO {
         const telephones = [values.telephone1, values.telephone2]
             .filter((phone): phone is string => Boolean(phone))
             .map(parseTelephone);
-            
+
         return {
             name: values.name as string,
             cpf: values.cpf as string,
@@ -57,8 +57,8 @@ export default function NewStudent<StudentCreateDTO>() {
             validationSchema={NewStudentValidationSchema}
             buildPayload={buildPayload}
             onSubmit={handleSubmit}
-        
+
         />
-    )
+    );
 
 };

@@ -1,8 +1,8 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 interface InitialsAvatarProps {
-  name: string
-  className?: string
+  name: string;
+  className?: string;
 }
 
 const PALETTE = [
@@ -10,12 +10,12 @@ const PALETTE = [
   "bg-info/20 text-info-foreground",
   "bg-warning/20 text-warning-foreground",
   "bg-success/20 text-success-foreground",
-]
+];
 
 function paletteIndex(name: string): number {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0
-  return hash % PALETTE.length
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return hash % PALETTE.length;
 }
 
 export function InitialsAvatar({ name, className }: InitialsAvatarProps) {
@@ -24,7 +24,7 @@ export function InitialsAvatar({ name, className }: InitialsAvatarProps) {
     .filter(Boolean)
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase())
-    .join("")
+    .join("");
 
   return (
     <div
@@ -36,5 +36,5 @@ export function InitialsAvatar({ name, className }: InitialsAvatarProps) {
     >
       {initials}
     </div>
-  )
+  );
 }

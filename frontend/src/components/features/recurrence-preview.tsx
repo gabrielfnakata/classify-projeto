@@ -1,23 +1,23 @@
-import { CalendarCheck, TriangleAlert } from "lucide-react"
+import { CalendarCheck, TriangleAlert } from "lucide-react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import {
   MAX_RECURRING_DATES,
   describeDateList,
   describeWeekdays,
   generateRecurringDates,
-} from "@/shared/utils/recurrence"
+} from "@/shared/utils/recurrence";
 
 interface RecurrencePreviewProps {
-  date: string
-  until: string
-  weekdays: number[]
-  perDate?: number
-  className?: string
+  date: string;
+  until: string;
+  weekdays: number[];
+  perDate?: number;
+  className?: string;
 }
 
 export function RecurrencePreview({ date, until, weekdays, perDate = 1, className }: RecurrencePreviewProps) {
-  if (!date || !until || weekdays.length === 0) return null
+  if (!date || !until || weekdays.length === 0) return null;
 
   if (until < date) {
     return (
@@ -25,10 +25,10 @@ export function RecurrencePreview({ date, until, weekdays, perDate = 1, classNam
         <TriangleAlert className="h-4 w-4 shrink-0" />
         A data final é anterior à data inicial.
       </p>
-    )
+    );
   }
 
-  const dates = generateRecurringDates(date, until, weekdays)
+  const dates = generateRecurringDates(date, until, weekdays);
 
   if (dates.length === 0) {
     return (
@@ -36,12 +36,12 @@ export function RecurrencePreview({ date, until, weekdays, perDate = 1, classNam
         <TriangleAlert className="h-4 w-4 shrink-0" />
         Nenhuma data cai nos dias da semana escolhidos nesse período.
       </p>
-    )
+    );
   }
 
-  const total = dates.length * perDate
-  const hitCap = dates.length >= MAX_RECURRING_DATES
-  const many = dates.length > 20
+  const total = dates.length * perDate;
+  const hitCap = dates.length >= MAX_RECURRING_DATES;
+  const many = dates.length > 20;
 
   return (
     <div
@@ -71,5 +71,5 @@ export function RecurrencePreview({ date, until, weekdays, perDate = 1, classNam
         )}
       </div>
     </div>
-  )
+  );
 }

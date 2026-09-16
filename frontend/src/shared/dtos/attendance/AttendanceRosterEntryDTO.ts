@@ -1,5 +1,5 @@
-export type AttendanceStatus = "PRESENTE" | "AUSENTE"
-export type JustificationReason = "ATESTADO_MEDICO" | "PROBLEMA_FAMILIAR" | "TRANSPORTE" | "OUTRO"
+export type AttendanceStatus = "PRESENTE" | "AUSENTE";
+export type JustificationReason = "ATESTADO_MEDICO" | "PROBLEMA_FAMILIAR" | "TRANSPORTE" | "OUTRO";
 
 export interface AttendanceRosterEntryDTO {
     studentUuid: string,

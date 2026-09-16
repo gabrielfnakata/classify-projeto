@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 export type SegmentedTabOption = {
   label: string
@@ -6,10 +6,10 @@ export type SegmentedTabOption = {
 }
 
 interface SegmentedTabsProps {
-  options: SegmentedTabOption[]
-  value: string
-  onChange: (value: string) => void
-  className?: string
+  options: SegmentedTabOption[];
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
 }
 
 export function SegmentedTabs({
@@ -26,7 +26,7 @@ export function SegmentedTabs({
       )}
     >
       {options.map((option) => {
-        const isActive = option.value === value
+        const isActive = option.value === value;
 
         return (
           <button
@@ -42,8 +42,8 @@ export function SegmentedTabs({
           >
             {option.label}
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

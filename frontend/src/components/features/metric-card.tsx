@@ -1,40 +1,40 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from "react";
 import {
   ArrowDownRight,
   ArrowUpRight,
   CircleAlert,
   CircleCheck,
   CircleHelp,
-} from "lucide-react"
+} from "lucide-react";
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-type MetricCardTone = "success" | "warning" | "danger" | "info" | "neutral"
-type MetricCardVariant = "summary" | "detailed"
+type MetricCardTone = "success" | "warning" | "danger" | "info" | "neutral";
+type MetricCardVariant = "summary" | "detailed";
 
 interface MetricCardProps {
-  variant?: MetricCardVariant
+  variant?: MetricCardVariant;
 
-  title?: string
-  value: string
-  subtitle?: string
+  title?: string;
+  value: string;
+  subtitle?: string;
 
-  trendValue?: string
-  trendDirection?: "up" | "down" | "neutral"
+  trendValue?: string;
+  trendDirection?: "up" | "down" | "neutral";
 
-  statusLabel?: string
-  tone?: MetricCardTone
+  statusLabel?: string;
+  tone?: MetricCardTone;
 
-  tooltipText?: string
+  tooltipText?: string;
 
-  className?: string
-  footer?: ReactNode
+  className?: string;
+  footer?: ReactNode;
 }
 
 const toneCardClasses: Record<MetricCardTone, string> = {
@@ -47,7 +47,7 @@ const toneCardClasses: Record<MetricCardTone, string> = {
   info:
     "border-[color:color-mix(in_oklab,var(--info)_45%,var(--border))] bg-[color:color-mix(in_oklab,var(--info)_12%,var(--card))]",
   neutral: "border-border bg-card",
-}
+};
 
 const toneValueClasses: Record<MetricCardTone, string> = {
   success: "text-success-foreground",
@@ -55,7 +55,7 @@ const toneValueClasses: Record<MetricCardTone, string> = {
   danger: "text-destructive",
   info: "text-info-foreground",
   neutral: "text-foreground",
-}
+};
 
 const toneTrendClasses: Record<MetricCardTone, string> = {
   success: "text-success-foreground",
@@ -63,24 +63,24 @@ const toneTrendClasses: Record<MetricCardTone, string> = {
   danger: "text-destructive",
   info: "text-info-foreground",
   neutral: "text-muted-foreground",
-}
+};
 
 function TrendIcon({
   direction,
 }: {
   direction?: "up" | "down" | "neutral"
 }) {
-  if (direction === "up") return <ArrowUpRight className="h-4 w-4" />
-  if (direction === "down") return <ArrowDownRight className="h-4 w-4" />
-  return <CircleHelp className="h-4 w-4" />
+  if (direction === "up") return <ArrowUpRight className="h-4 w-4" />;
+  if (direction === "down") return <ArrowDownRight className="h-4 w-4" />;
+  return <CircleHelp className="h-4 w-4" />;
 }
 
 function StatusIcon({ tone }: { tone: MetricCardTone }) {
-  if (tone === "success") return <CircleCheck className="h-4 w-4" />
-  if (tone === "warning") return <CircleAlert className="h-4 w-4" />
-  if (tone === "danger") return <CircleAlert className="h-4 w-4" />
-  if (tone === "info") return <CircleHelp className="h-4 w-4" />
-  return <CircleHelp className="h-4 w-4" />
+  if (tone === "success") return <CircleCheck className="h-4 w-4" />;
+  if (tone === "warning") return <CircleAlert className="h-4 w-4" />;
+  if (tone === "danger") return <CircleAlert className="h-4 w-4" />;
+  if (tone === "info") return <CircleHelp className="h-4 w-4" />;
+  return <CircleHelp className="h-4 w-4" />;
 }
 
 export function MetricCard({
@@ -113,7 +113,7 @@ export function MetricCard({
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
         ) : null}
       </div>
-    )
+    );
   }
 
   return (
@@ -188,5 +188,5 @@ export function MetricCard({
         </div>
       ) : null}
     </div>
-  )
+  );
 }

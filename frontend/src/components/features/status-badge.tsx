@@ -1,5 +1,5 @@
-import type { ReactNode } from "react"
-import { cn } from "@/lib/utils"
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 type StatusBadgeVariant =
   | "default"
@@ -7,12 +7,12 @@ type StatusBadgeVariant =
   | "warning"
   | "danger"
   | "info"
-  | "muted"
+  | "muted";
 
 interface StatusBadgeProps {
-  children: ReactNode
-  variant?: StatusBadgeVariant
-  className?: string
+  children: ReactNode;
+  variant?: StatusBadgeVariant;
+  className?: string;
 }
 
 const variantClasses: Record<StatusBadgeVariant, string> = {
@@ -22,7 +22,7 @@ const variantClasses: Record<StatusBadgeVariant, string> = {
   danger: "bg-destructive/15 text-destructive",
   info: "bg-info text-info-foreground",
   muted: "bg-muted text-muted-foreground",
-}
+};
 
 export function StatusBadge({
   children,
@@ -39,5 +39,5 @@ export function StatusBadge({
     >
       {children}
     </span>
-  )
+  );
 }

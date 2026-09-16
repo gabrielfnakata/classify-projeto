@@ -1,54 +1,54 @@
-import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useParams } from "react-router"
-import { ArrowLeft, ClipboardCheck, Loader2, TriangleAlert } from "lucide-react"
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router";
+import { ArrowLeft, ClipboardCheck, Loader2, TriangleAlert } from "lucide-react";
 
-import api from "@/services/api"
-import { SectionTitle } from "@/components/features/section-title"
-import { InitialsAvatar } from "@/components/features/initials-avatar"
-import { AttendanceStatusCell } from "@/components/features/attendance-status-cell"
-import { EmptyState } from "@/components/common/empty-state"
-import { Button } from "@/components/ui/button"
-import { ContentCard } from "@/components/layout/content-card"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import api from "@/services/api";
+import { SectionTitle } from "@/components/features/section-title";
+import { InitialsAvatar } from "@/components/features/initials-avatar";
+import { AttendanceStatusCell } from "@/components/features/attendance-status-cell";
+import { EmptyState } from "@/components/common/empty-state";
+import { Button } from "@/components/ui/button";
+import { ContentCard } from "@/components/layout/content-card";
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type {
   AttendanceRosterEntryDTO,
   AttendanceStatus,
   JustificationReason,
-} from "@/shared/dtos/attendance/AttendanceRosterEntryDTO"
-import type { AttendanceRecordInputDTO } from "@/shared/dtos/attendance/AttendanceRecordInputDTO"
-import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence"
+} from "@/shared/dtos/attendance/AttendanceRosterEntryDTO";
+import type { AttendanceRecordInputDTO } from "@/shared/dtos/attendance/AttendanceRecordInputDTO";
+import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence";
 
 interface CellState {
-  status: AttendanceStatus | null
-  justificationReason: JustificationReason | null
-  justificationNote: string | null
+  status: AttendanceStatus | null;
+  justificationReason: JustificationReason | null;
+  justificationNote: string | null;
 }
 
-const pad = (n: number) => String(n).padStart(2, "0")
+const pad = (n: number) => String(n).padStart(2, "0");
 const toHHMM = (raw: unknown) => {
-  const d = new Date(raw as string)
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-const DAY_SHORT = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]
-const cellKey = (sessionUuid: string, studentUuid: string) => `${sessionUuid}|${studentUuid}`
+  const d = new Date(raw as string);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+const DAY_SHORT = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const cellKey = (sessionUuid: string, studentUuid: string) => `${sessionUuid}|${studentUuid}`;
 
 export default function AttendanceSeriesPage() {
-  const { recurrenceUuid } = useParams<{ recurrenceUuid: string }>()
-  const navigate = useNavigate()
+  const { recurrenceUuid } = useParams<{ recurrenceUuid: string }>();
+  const navigate = useNavigate();
 
-  const [sessions, setSessions] = useState<ClassSessionDTO[] | null>(null)
-  const [rosters, setRosters] = useState<Map<string, AttendanceRosterEntryDTO[]>>(new Map())
-  const [cells, setCells] = useState<Record<string, CellState>>({})
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [sessions, setSessions] = useState<ClassSessionDTO[] | null>(null);
+  const [rosters, setRosters] = useState<Map<string, AttendanceRosterEntryDTO[]>>(new Map());
+  const [cells, setCells] = useState<Record<string, CellState>>({});
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (!recurrenceUuid) return
-    let cancelled = false
-    setLoading(true)
+    if (!recurrenceUuid) return;
+    let cancelled = false;
+    setLoading(true);
 
     api
       .get<ClassSessionDTO[]>("/classsession", { data: {} })
@@ -59,7 +59,7 @@ export default function AttendanceSeriesPage() {
             (a, b) =>
               new Date(a.startTime as unknown as string).getTime() -
               new Date(b.startTime as unknown as string).getTime()
-          )
+          );
 
         const entries = await Promise.all(
           series.map((s) =>
@@ -68,46 +68,46 @@ export default function AttendanceSeriesPage() {
               .then((r) => [s.uuid, r.status === 204 ? [] : r.data] as const)
               .catch(() => [s.uuid, [] as AttendanceRosterEntryDTO[]] as const)
           )
-        )
-        if (cancelled) return
+        );
+        if (cancelled) return;
 
-        const map = new Map<string, AttendanceRosterEntryDTO[]>(entries)
-        const initial: Record<string, CellState> = {}
+        const map = new Map<string, AttendanceRosterEntryDTO[]>(entries);
+        const initial: Record<string, CellState> = {};
         entries.forEach(([sessionUuid, roster]) => {
           roster.forEach((entry) => {
             initial[cellKey(sessionUuid, entry.studentUuid)] = {
               status: entry.status,
               justificationReason: entry.justificationReason,
               justificationNote: entry.justificationNote,
-            }
-          })
-        })
+            };
+          });
+        });
 
-        setSessions(series)
-        setRosters(map)
-        setCells(initial)
+        setSessions(series);
+        setRosters(map);
+        setCells(initial);
       })
-      .finally(() => !cancelled && setLoading(false))
+      .finally(() => !cancelled && setLoading(false));
 
     return () => {
-      cancelled = true
-    }
-  }, [recurrenceUuid, refreshKey])
+      cancelled = true;
+    };
+  }, [recurrenceUuid, refreshKey]);
 
   const students = useMemo(() => {
-    const byUuid = new Map<string, string>()
-    rosters.forEach((roster) => roster.forEach((e) => byUuid.set(e.studentUuid, e.studentName)))
+    const byUuid = new Map<string, string>();
+    rosters.forEach((roster) => roster.forEach((e) => byUuid.set(e.studentUuid, e.studentName)));
     return [...byUuid.entries()]
       .map(([uuid, name]) => ({ uuid, name }))
-      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
-  }, [rosters])
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  }, [rosters]);
 
   const inSession = (sessionUuid: string, studentUuid: string) =>
-    (rosters.get(sessionUuid) ?? []).some((e) => e.studentUuid === studentUuid)
+    (rosters.get(sessionUuid) ?? []).some((e) => e.studentUuid === studentUuid);
 
   const setCellStatus = (sessionUuid: string, studentUuid: string, next: AttendanceStatus | null) => {
-    if (!inSession(sessionUuid, studentUuid)) return
-    const key = cellKey(sessionUuid, studentUuid)
+    if (!inSession(sessionUuid, studentUuid)) return;
+    const key = cellKey(sessionUuid, studentUuid);
     setCells((prev) => ({
       ...prev,
       [key]: {
@@ -115,114 +115,114 @@ export default function AttendanceSeriesPage() {
         justificationReason: next === "AUSENTE" ? (prev[key]?.justificationReason ?? null) : null,
         justificationNote: next === "AUSENTE" ? (prev[key]?.justificationNote ?? null) : null,
       },
-    }))
-  }
+    }));
+  };
 
   const markColumn = (sessionUuid: string, status: AttendanceStatus) => {
     setCells((prev) => {
       const next = { ...prev }
       ;(rosters.get(sessionUuid) ?? []).forEach((e) => {
-        const key = cellKey(sessionUuid, e.studentUuid)
+        const key = cellKey(sessionUuid, e.studentUuid);
         next[key] = {
           status,
           justificationReason: status === "AUSENTE" ? (prev[key]?.justificationReason ?? null) : null,
           justificationNote: status === "AUSENTE" ? (prev[key]?.justificationNote ?? null) : null,
-        }
-      })
-      return next
-    })
-  }
+        };
+      });
+      return next;
+    });
+  };
 
   const summary = useMemo(() => {
     let present = 0, absent = 0, unmarked = 0
     ;(sessions ?? []).forEach((s) =>
       (rosters.get(s.uuid) ?? []).forEach((e) => {
-        const st = cells[cellKey(s.uuid, e.studentUuid)]?.status ?? null
-        if (st === "PRESENTE") present += 1
-        else if (st === "AUSENTE") absent += 1
-        else unmarked += 1
+        const st = cells[cellKey(s.uuid, e.studentUuid)]?.status ?? null;
+        if (st === "PRESENTE") present += 1;
+        else if (st === "AUSENTE") absent += 1;
+        else unmarked += 1;
       })
-    )
-    return { present, absent, unmarked }
-  }, [sessions, rosters, cells])
+    );
+    return { present, absent, unmarked };
+  }, [sessions, rosters, cells]);
 
   const handleSave = async () => {
-    if (!sessions || sessions.length === 0) return
-    setSubmitting(true)
-    setError(null)
-    setSuccessMessage(null)
+    if (!sessions || sessions.length === 0) return;
+    setSubmitting(true);
+    setError(null);
+    setSuccessMessage(null);
 
-    const toClear: string[] = []
+    const toClear: string[] = [];
 
     const perSession = sessions
       .map((s) => {
         const records: AttendanceRecordInputDTO[] = []
         ;(rosters.get(s.uuid) ?? []).forEach((entry) => {
-          const cell = cells[cellKey(s.uuid, entry.studentUuid)]
+          const cell = cells[cellKey(s.uuid, entry.studentUuid)];
           if (cell?.status) {
             records.push({
               studentUuid: entry.studentUuid,
               status: cell.status,
               justificationReason: cell.justificationReason,
               justificationNote: cell.justificationNote,
-            })
+            });
           } else if (entry.attendanceUuid) {
-            toClear.push(entry.attendanceUuid)
+            toClear.push(entry.attendanceUuid);
           }
-        })
-        return { uuid: s.uuid, records }
+        });
+        return { uuid: s.uuid, records };
       })
-      .filter((s) => s.records.length > 0)
+      .filter((s) => s.records.length > 0);
 
     if (perSession.length === 0 && toClear.length === 0) {
-      setError("Marque ao menos uma presença ou falta antes de salvar.")
-      setSubmitting(false)
-      return
+      setError("Marque ao menos uma presença ou falta antes de salvar.");
+      setSubmitting(false);
+      return;
     }
 
     try {
       const results = await Promise.allSettled([
         ...perSession.map((s) => api.put(`/attendance/session/${s.uuid}`, { records: s.records })),
         ...toClear.map((attendanceUuid) => api.delete(`/attendance/${attendanceUuid}`, { data: {} })),
-      ])
-      const failed = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[]
+      ]);
+      const failed = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
       if (failed.length > 0) {
-        const reason = failed[0].reason as { response?: { data?: { mensagem?: string } } }
-        const message = reason?.response?.data?.mensagem ?? "Erro ao salvar a chamada."
-        setError(`${results.length - failed.length} de ${results.length} alterações salvas. Uma falhou: ${message}`)
+        const reason = failed[0].reason as { response?: { data?: { mensagem?: string } } };
+        const message = reason?.response?.data?.mensagem ?? "Erro ao salvar a chamada.";
+        setError(`${results.length - failed.length} de ${results.length} alterações salvas. Uma falhou: ${message}`);
       } else {
         setSuccessMessage(
           perSession.length > 0
             ? `Chamada salva para ${perSession.length} data(s).`
             : "Marcações removidas."
-        )
+        );
       }
-      setRefreshKey((k) => k + 1)
+      setRefreshKey((k) => k + 1);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
-  const targetOf = (s: ClassSessionDTO) => s.classDTO?.name ?? s.student?.name ?? "—"
+  const targetOf = (s: ClassSessionDTO) => s.classDTO?.name ?? s.student?.name ?? "—";
 
   const mixedTargets = useMemo(() => {
     const counts = new Map<string, number>()
     ;(sessions ?? []).forEach((s) => {
-      const name = targetOf(s)
-      counts.set(name, (counts.get(name) ?? 0) + 1)
-    })
-    if (counts.size < 2) return null
+      const name = targetOf(s);
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    });
+    if (counts.size < 2) return null;
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .map(([name, n]) => `${name} (${n} aula${n > 1 ? "s" : ""})`)
-  }, [sessions])
+      .map(([name, n]) => `${name} (${n} aula${n > 1 ? "s" : ""})`);
+  }, [sessions]);
 
-  const primary = sessions?.[0] ?? null
+  const primary = sessions?.[0] ?? null;
   const pattern = useMemo(() => {
-    if (!sessions || sessions.length === 0) return ""
-    const days = weekdaysOfDates(sessions.map((s) => new Date(s.startTime as unknown as string)))
-    return describeWeekdays(days)
-  }, [sessions])
+    if (!sessions || sessions.length === 0) return "";
+    const days = weekdaysOfDates(sessions.map((s) => new Date(s.startTime as unknown as string)));
+    return describeWeekdays(days);
+  }, [sessions]);
 
   return (
     <div className="animate-in fade-in space-y-6 p-6 duration-500 md:p-8">
@@ -291,7 +291,7 @@ export default function AttendanceSeriesPage() {
                     Aluno
                   </th>
                   {sessions.map((s) => {
-                    const d = new Date(s.startTime as unknown as string)
+                    const d = new Date(s.startTime as unknown as string);
                     return (
                       <th key={s.uuid} className="border-b border-border bg-card p-1 align-bottom">
                         <button
@@ -312,7 +312,7 @@ export default function AttendanceSeriesPage() {
                           </span>
                         </button>
                       </th>
-                    )
+                    );
                   })}
                 </tr>
               </thead>
@@ -326,8 +326,8 @@ export default function AttendanceSeriesPage() {
                       </div>
                     </td>
                     {sessions.map((s) => {
-                      const belongs = inSession(s.uuid, student.uuid)
-                      const status = cells[cellKey(s.uuid, student.uuid)]?.status ?? null
+                      const belongs = inSession(s.uuid, student.uuid);
+                      const status = cells[cellKey(s.uuid, student.uuid)]?.status ?? null;
                       return (
                         <td key={s.uuid} className="border-b border-border p-1 text-center">
                           <AttendanceStatusCell
@@ -342,7 +342,7 @@ export default function AttendanceSeriesPage() {
                             className="mx-auto"
                           />
                         </td>
-                      )
+                      );
                     })}
                   </tr>
                 ))}
@@ -371,5 +371,5 @@ export default function AttendanceSeriesPage() {
         </div>
       </ContentCard>
     </div>
-  )
+  );
 }

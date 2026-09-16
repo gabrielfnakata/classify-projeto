@@ -1,76 +1,76 @@
-import { useEffect, useMemo, useState } from "react"
-import { useNavigate, useParams, useSearchParams } from "react-router"
-import { ArrowLeft, ClipboardCheck, Loader2 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router";
+import { ArrowLeft, ClipboardCheck, Loader2 } from "lucide-react";
 
-import api from "@/services/api"
-import { SectionTitle } from "@/components/features/section-title"
-import { AttendanceStatusToggle } from "@/components/features/attendance-status-toggle"
-import { InitialsAvatar } from "@/components/features/initials-avatar"
-import { EmptyState } from "@/components/common/empty-state"
-import { SelectField } from "@/components/common/select-field"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ContentCard } from "@/components/layout/content-card"
-import { JUSTIFICATION_REASON_OPTIONS } from "@/lib/justification-reason-options"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import api from "@/services/api";
+import { SectionTitle } from "@/components/features/section-title";
+import { AttendanceStatusToggle } from "@/components/features/attendance-status-toggle";
+import { InitialsAvatar } from "@/components/features/initials-avatar";
+import { EmptyState } from "@/components/common/empty-state";
+import { SelectField } from "@/components/common/select-field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ContentCard } from "@/components/layout/content-card";
+import { JUSTIFICATION_REASON_OPTIONS } from "@/lib/justification-reason-options";
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type {
   AttendanceRosterEntryDTO,
   AttendanceStatus,
   JustificationReason,
-} from "@/shared/dtos/attendance/AttendanceRosterEntryDTO"
-import type { AttendanceRecordInputDTO } from "@/shared/dtos/attendance/AttendanceRecordInputDTO"
+} from "@/shared/dtos/attendance/AttendanceRosterEntryDTO";
+import type { AttendanceRecordInputDTO } from "@/shared/dtos/attendance/AttendanceRecordInputDTO";
 
 interface RowEditState {
-  status: AttendanceStatus | null
-  justificationReason: JustificationReason | null
-  justificationNote: string | null
+  status: AttendanceStatus | null;
+  justificationReason: JustificationReason | null;
+  justificationNote: string | null;
 }
 
 interface RosterEntry extends AttendanceRosterEntryDTO {
-  sessionUuid: string
+  sessionUuid: string;
 }
 
-const pad = (n: number) => String(n).padStart(2, "0")
+const pad = (n: number) => String(n).padStart(2, "0");
 function toHHMM(raw: unknown): string {
-  const d = new Date(raw as string)
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const d = new Date(raw as string);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatDisplayDate(raw: unknown): string {
   return new Intl.DateTimeFormat("pt-BR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
-  }).format(new Date(raw as string))
+  }).format(new Date(raw as string));
 }
 
 export default function AttendancePage() {
-  const { sessionUuid } = useParams<{ sessionUuid: string }>()
-  const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
+  const { sessionUuid } = useParams<{ sessionUuid: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const groupParam = searchParams.get("group") ?? ""
+  const groupParam = searchParams.get("group") ?? "";
   const groupUuids = useMemo(
     () => (groupParam ? groupParam.split(",").filter(Boolean) : []),
     [groupParam]
-  )
+  );
   const allSessionUuids = useMemo(
     () => (sessionUuid ? [sessionUuid, ...groupUuids] : []),
     [sessionUuid, groupUuids]
-  )
+  );
 
-  const [session, setSession] = useState<ClassSessionDTO | null>(null)
+  const [session, setSession] = useState<ClassSessionDTO | null>(null);
   useEffect(() => {
-    if (!sessionUuid) return
-    api.get<ClassSessionDTO>(`/classsession/${sessionUuid}`, { data: {} }).then((res) => setSession(res.data))
-  }, [sessionUuid])
+    if (!sessionUuid) return;
+    api.get<ClassSessionDTO>(`/classsession/${sessionUuid}`, { data: {} }).then((res) => setSession(res.data));
+  }, [sessionUuid]);
 
-  const [refreshKey, setRefreshKey] = useState(0)
-  const [roster, setRoster] = useState<RosterEntry[] | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [roster, setRoster] = useState<RosterEntry[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!sessionUuid) return
-    const uuids = [sessionUuid, ...groupUuids]
-    setLoading(true)
+    if (!sessionUuid) return;
+    const uuids = [sessionUuid, ...groupUuids];
+    setLoading(true);
     Promise.all(
       uuids.map((uuid) =>
         api
@@ -79,37 +79,37 @@ export default function AttendancePage() {
       )
     )
       .then((results) => setRoster(results.flat()))
-      .finally(() => setLoading(false))
+      .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionUuid, groupParam, refreshKey])
+  }, [sessionUuid, groupParam, refreshKey]);
 
   const sessionByStudent = useMemo(() => {
     const map = new Map<string, string>()
-    ;(roster ?? []).forEach((entry) => map.set(entry.studentUuid, entry.sessionUuid))
-    return map
-  }, [roster])
+    ;(roster ?? []).forEach((entry) => map.set(entry.studentUuid, entry.sessionUuid));
+    return map;
+  }, [roster]);
 
-  const [edits, setEdits] = useState<Record<string, RowEditState>>({})
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [edits, setEdits] = useState<Record<string, RowEditState>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!roster) return
+    if (!roster) return;
     setEdits((prev) => {
-      const next = { ...prev }
+      const next = { ...prev };
       roster.forEach((entry) => {
         if (!next[entry.studentUuid]) {
           next[entry.studentUuid] = {
             status: entry.status,
             justificationReason: entry.justificationReason,
             justificationNote: entry.justificationNote,
-          }
+          };
         }
-      })
-      return next
-    })
-  }, [roster])
+      });
+      return next;
+    });
+  }, [roster]);
 
   const setRowStatus = (studentUuid: string, status: AttendanceStatus | null) => {
     setEdits((prev) => ({
@@ -119,8 +119,8 @@ export default function AttendancePage() {
         justificationReason: status === "AUSENTE" ? (prev[studentUuid]?.justificationReason ?? null) : null,
         justificationNote: status === "AUSENTE" ? (prev[studentUuid]?.justificationNote ?? null) : null,
       },
-    }))
-  }
+    }));
+  };
 
   const setRowJustificationReason = (studentUuid: string, justificationReason: string) => {
     setEdits((prev) => ({
@@ -130,8 +130,8 @@ export default function AttendancePage() {
         status: prev[studentUuid]?.status ?? null,
         justificationReason: (justificationReason || null) as JustificationReason | null,
       },
-    }))
-  }
+    }));
+  };
 
   const setRowJustificationNote = (studentUuid: string, justificationNote: string) => {
     setEdits((prev) => ({
@@ -141,53 +141,53 @@ export default function AttendancePage() {
         status: prev[studentUuid]?.status ?? null,
         justificationNote: justificationNote || null,
       },
-    }))
-  }
+    }));
+  };
 
   const summary = (roster ?? []).reduce(
     (acc, entry) => {
-      const status = entry.studentUuid in edits ? edits[entry.studentUuid].status : entry.status
-      if (status === "PRESENTE") acc.present += 1
-      else if (status === "AUSENTE") acc.absent += 1
-      else acc.unmarked += 1
-      return acc
+      const status = entry.studentUuid in edits ? edits[entry.studentUuid].status : entry.status;
+      if (status === "PRESENTE") acc.present += 1;
+      else if (status === "AUSENTE") acc.absent += 1;
+      else acc.unmarked += 1;
+      return acc;
     },
     { present: 0, absent: 0, unmarked: 0 }
-  )
+  );
 
   const handleSave = async () => {
-    if (allSessionUuids.length === 0) return
-    setSubmitting(true)
-    setError(null)
-    setSuccessMessage(null)
+    if (allSessionUuids.length === 0) return;
+    setSubmitting(true);
+    setError(null);
+    setSuccessMessage(null);
 
-    const recordsBySession = new Map<string, AttendanceRecordInputDTO[]>()
-    const toClear: string[] = []
+    const recordsBySession = new Map<string, AttendanceRecordInputDTO[]>();
+    const toClear: string[] = [];
 
     Object.entries(edits).forEach(([studentUuid, edit]) => {
-      const originSession = sessionByStudent.get(studentUuid)
-      if (!originSession) return
+      const originSession = sessionByStudent.get(studentUuid);
+      if (!originSession) return;
 
       if (edit.status === null) {
-        const saved = (roster ?? []).find((e) => e.studentUuid === studentUuid)?.attendanceUuid
-        if (saved) toClear.push(saved)
-        return
+        const saved = (roster ?? []).find((e) => e.studentUuid === studentUuid)?.attendanceUuid;
+        if (saved) toClear.push(saved);
+        return;
       }
 
-      const list = recordsBySession.get(originSession) ?? []
+      const list = recordsBySession.get(originSession) ?? [];
       list.push({
         studentUuid,
         status: edit.status,
         justificationReason: edit.justificationReason,
         justificationNote: edit.justificationNote,
-      })
-      recordsBySession.set(originSession, list)
-    })
+      });
+      recordsBySession.set(originSession, list);
+    });
 
     if (recordsBySession.size === 0 && toClear.length === 0) {
-      setError("Marque presença ou falta de ao menos um aluno antes de salvar.")
-      setSubmitting(false)
-      return
+      setError("Marque presença ou falta de ao menos um aluno antes de salvar.");
+      setSubmitting(false);
+      return;
     }
 
     try {
@@ -198,25 +198,25 @@ export default function AttendancePage() {
         ...toClear.map((attendanceUuid) =>
           api.delete(`/attendance/${attendanceUuid}`, { data: {} })
         ),
-      ])
-      const failed = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[]
+      ]);
+      const failed = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
 
       if (failed.length > 0) {
-        const reason = failed[0].reason as { response?: { data?: { mensagem?: string } } }
-        const message = reason?.response?.data?.mensagem ?? "Erro ao salvar a chamada."
+        const reason = failed[0].reason as { response?: { data?: { mensagem?: string } } };
+        const message = reason?.response?.data?.mensagem ?? "Erro ao salvar a chamada.";
         setError(
           results.length > 1
             ? `${results.length - failed.length} de ${results.length} alterações salvas. Uma falhou: ${message}`
             : message
-        )
+        );
       } else {
-        setSuccessMessage("Chamada salva com sucesso.")
+        setSuccessMessage("Chamada salva com sucesso.");
       }
-      setRefreshKey((k) => k + 1)
+      setRefreshKey((k) => k + 1);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="animate-in fade-in space-y-6 p-6 duration-500 md:p-8">
@@ -263,8 +263,8 @@ export default function AttendancePage() {
         ) : (
           <div className="space-y-2">
             {roster!.map((entry) => {
-              const edit = edits[entry.studentUuid]
-              const isAbsent = edit?.status === "AUSENTE"
+              const edit = edits[entry.studentUuid];
+              const isAbsent = edit?.status === "AUSENTE";
 
               return (
                 <div
@@ -301,7 +301,7 @@ export default function AttendancePage() {
                     </>
                   )}
                 </div>
-              )
+              );
             })}
           </div>
         )}
@@ -327,5 +327,5 @@ export default function AttendancePage() {
         </div>
       </ContentCard>
     </div>
-  )
+  );
 }
