@@ -20,6 +20,7 @@ import AttendanceSeriesPage from "@/pages/attendance/AttendanceSeries";
 import ClassGroupRegistration from "@/pages/class-groups/ClassGroupRegistration";
 import NewClassGroup from "@/pages/class-groups/NewClassGroup";
 import ClassGroupDetail from "@/pages/class-groups/ClassGroupDetail";
+import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
 
 export default function AppRoutes() {
     return (
@@ -99,6 +100,9 @@ export default function AppRoutes() {
             }/>
             <Route path="/class-groups/:uuid" element={
                 <ProtectedRoute children={<ClassGroupDetail />} />
+            }/>
+            <Route path="/student-home-page" element={
+                <ProtectedRoute children={<StudentHomePage />} />
             }/>
         </Routes>
     )

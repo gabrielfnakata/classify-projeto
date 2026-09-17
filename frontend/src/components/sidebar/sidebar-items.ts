@@ -5,7 +5,10 @@ export const mainNavigation: Group[] = [
   {
     title: "Início",
     icon: Home,
-    items: [],
+    items: [
+      { title: "Visão do Professor", url: "/home" },
+      { title: "Visão do Aluno", url: "/student-home-page" },
+    ],
     url: '/home'
   },
   {
