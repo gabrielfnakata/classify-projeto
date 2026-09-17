@@ -302,6 +302,9 @@ CREATE TABLE IF NOT EXISTS form_submission (
     corrected_at DATETIME,
     score DECIMAL(5,2),
 
+    CONSTRAINT unique_submission_per_student
+    UNIQUE (student_id, form_id),
+
     CONSTRAINT fk_form_submission_student
     FOREIGN KEY (student_id) REFERENCES student (id),
 

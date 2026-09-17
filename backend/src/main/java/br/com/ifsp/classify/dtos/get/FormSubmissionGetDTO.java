@@ -7,9 +7,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record FormSubmissionGetDTO(
-        Long id,
-        Long formId,
-        Long studentId,
+        String uuid,
+        String formUuid,
+        String formTitle,
+        String studentUuid,
+        String studentName,
         List<FormAnswerGetDTO> answers,
         FormStatus status,
         LocalDateTime startedAt,

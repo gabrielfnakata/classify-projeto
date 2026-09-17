@@ -1,12 +1,15 @@
 package br.com.ifsp.classify.services.form;
 
+import br.com.ifsp.classify.dtos.create.AssignFormToClassDTO;
 import br.com.ifsp.classify.dtos.create.AssignFormToStudentsDTO;
 import br.com.ifsp.classify.dtos.create.FormCreateDTO;
 import br.com.ifsp.classify.dtos.get.*;
+import br.com.ifsp.classify.models.Class;
 import br.com.ifsp.classify.models.Employee;
 import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.models.form.*;
+import br.com.ifsp.classify.repositories.ClassRepository;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.repositories.UserRepository;
 import br.com.ifsp.classify.repositories.form.FormQuestionOptionRepository;
@@ -32,6 +35,7 @@ public class FormService {
     public FormQuestionRepository formQuestionRepository;
     public FormQuestionOptionRepository formQuestionOptionRepository;
     public FormSubmissionRepository formSubmissionRepository;
+    public ClassRepository classRepository;
 
     public FormService(
             UserRepository userRepository,
@@ -39,7 +43,8 @@ public class FormService {
             FormRepository formRepository,
             FormQuestionRepository formQuestionRepository,
             FormQuestionOptionRepository formQuestionOptionRepository,
-            FormSubmissionRepository formSubmissionRepository
+            FormSubmissionRepository formSubmissionRepository,
+            ClassRepository classRepository
     ) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
@@ -47,6 +52,7 @@ public class FormService {
         this.formRepository = formRepository;
         this.formQuestionOptionRepository = formQuestionOptionRepository;
         this.formSubmissionRepository = formSubmissionRepository;
+        this.classRepository = classRepository;
     }
 
     public FormGetDTO create(FormCreateDTO dto, String teacherEmail) {
@@ -182,25 +188,68 @@ public class FormService {
         );
     }
 
+    public List<FormSubmissionGetDTO> getFormSubmissions(String formUuid) {
+        Form form = formRepository.findByUuid(UUID.fromString(formUuid)).orElseThrow();
+        return form.getFormSubmissions().stream().map(submission -> new FormSubmissionGetDTO(
+                submission.getUuid().toString(),
+                form.getUuid().toString(),
+                form.getTitle(),
+                UuidUtils.convertBytesToString(submission.getStudent().getUuid()),
+                submission.getStudent().getName(),
+                submission.getFormAnswer().stream().map(answer -> new FormAnswerGetDTO(
+                        answer.getUuid().toString(),
+                        answer.getQuestion().getUuid().toString(),
+                        answer.getOption().getUuid().toString(),
+                        answer.getAnswerText(),
+                        answer.getTeacherFeedback()
+                )).toList(),
+                submission.getStatus(),
+                submission.getStartedAt(),
+                submission.getSubmittedAt(),
+                submission.getCorrectedAt(),
+                submission.getScore()
+                )).toList();
+    }
+
     public void sendFormsToStudents(AssignFormToStudentsDTO dto) {
         Form form = formRepository.findByUuid(UUID.fromString(dto.formUuid())).orElseThrow();
         List<byte[]> studentsUuids = dto.students()
                 .stream().map(student -> UuidUtils.convertUUIDToBytes(student.uuid())).toList();
         List<Student> students = studentRepository.findByUuidIsIn(studentsUuids);
 
+        createSubmissionsForStudents(form, students);
+    }
+
+    public void sendFormToClass(AssignFormToClassDTO dto) {
+        Form form = formRepository.findByUuid(UUID.fromString(dto.formUuid())).orElseThrow();
+        Class clazz = classRepository.findByUuid(UuidUtils.convertUUIDToBytes(dto.classUuid())).orElseThrow();
+
+        createSubmissionsForStudents(form, clazz.getStudents());
+    }
+
+    private void createSubmissionsForStudents(Form form, List<Student> students) {
         if (students.isEmpty()) {
             throw new EntityNotFoundException();
         }
 
-        List<FormSubmission> submissionsToCreate = new ArrayList<>();
-        students.forEach(student -> {
-            FormSubmission submission = new FormSubmission();
-            submission.setUuid(UUID.randomUUID());
-            submission.setForm(form);
-            submission.setStudent(student);
-            submission.setStatus(FormStatus.PENDING);
-            submissionsToCreate.add(submission);
-        });
-        formSubmissionRepository.saveAll(submissionsToCreate);
+        List<Long> studentIds = students.stream().map(Student::getId).toList();
+        List<Long> alreadyAssignedIds = formSubmissionRepository
+                .findExistingStudentIdsByFormAndStudents(form.getId(), studentIds);
+
+        List<FormSubmission> submissionsToCreate = students.stream()
+                .filter(student -> !alreadyAssignedIds.contains(student.getId()))
+                .map(student -> {
+                    FormSubmission submission = new FormSubmission();
+                    submission.setUuid(UUID.randomUUID());
+                    submission.setForm(form);
+                    submission.setStudent(student);
+                    submission.setStatus(FormStatus.PENDING);
+                    return submission;
+                })
+                .toList();
+
+        if (!submissionsToCreate.isEmpty()) {
+            formSubmissionRepository.saveAll(submissionsToCreate);
+        }
     }
 }

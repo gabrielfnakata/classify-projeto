@@ -1,9 +1,9 @@
 package br.com.ifsp.classify.dtos.get;
 
 public record FormAnswerGetDTO(
-        Long id,
-        Long questionId,
-        Long optionId,
+        String uuid,
+        String questionUuid,
+        String optionUuid,
         String answerText,
         String teacherFeedback
 ) {

@@ -23,6 +23,7 @@ import AttendanceSeriesPage from "@/pages/attendance/AttendanceSeries";
 import ClassGroupRegistration from "@/pages/class-groups/ClassGroupRegistration";
 import NewClassGroup from "@/pages/class-groups/NewClassGroup";
 import ClassGroupDetail from "@/pages/class-groups/ClassGroupDetail";
+import FormAnswers from "@/pages/forms/FormAnswers.tsx";
 
 export default function AppRoutes() {
     return (
@@ -117,6 +118,9 @@ export default function AppRoutes() {
             }/>
             <Route path="/form-preview/:id" element={
                 <ProtectedRoute children={<PreviewForm />} />
+            }/>
+            <Route path="/form-answers/:id" element={
+                <ProtectedRoute children={<FormAnswers />} />
             }/>
         </Routes>
     )

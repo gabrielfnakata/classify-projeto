@@ -4,6 +4,7 @@ import br.com.ifsp.classify.dtos.create.*;
 import br.com.ifsp.classify.dtos.get.AnswerFileUploadDTO;
 import br.com.ifsp.classify.dtos.get.FormGetDTO;
 import br.com.ifsp.classify.dtos.get.FormInfoGetDTO;
+import br.com.ifsp.classify.dtos.get.FormSubmissionGetDTO;
 import br.com.ifsp.classify.dtos.update.FormAnswerCorrectionDTO;
 import br.com.ifsp.classify.dtos.update.FormCorrectionScoreUpdateDTO;
 import br.com.ifsp.classify.security.AuthenticatedUser;
@@ -87,10 +88,21 @@ public class FormController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PostMapping("/send-forms")
+    @PostMapping("/send/students")
     public ResponseEntity<?> sendForms(@Valid @RequestBody AssignFormToStudentsDTO dto) {
         this.formService.sendFormsToStudents(dto);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/send/class")
+    public ResponseEntity<?> sendForms(@Valid @RequestBody AssignFormToClassDTO dto) {
+        this.formService.sendFormToClass(dto);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/{formId}/submissions")
+    public ResponseEntity<List<FormSubmissionGetDTO>> getFormSubmissions(@PathVariable String formId) {
+        return new ResponseEntity<>(this.formService.getFormSubmissions(formId), HttpStatus.OK);
     }
 
     /* TODO:
