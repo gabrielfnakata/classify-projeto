@@ -38,7 +38,7 @@ public class AuthController {
         if (user == null || !passwordEncoder.matches(body.password(), user.getPassword()))
             return ResponseEntity.status(401).build();
 
-        String role = user.getRole().getDescription();
+        String role = user.getRole().getId();
         String accessToken = jwtService.generateAccessToken(user.getEmail(), role);
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
@@ -58,7 +58,7 @@ public class AuthController {
         if (user == null)
             return ResponseEntity.status(401).build();
 
-        String role = user.getRole().getDescription();
+        String role = user.getRole().getId();
         String accessToken = jwtService.generateAccessToken(email, role);
 
         return ResponseEntity.ok(new LoginResponseDTO(accessToken, body.refreshToken()));

@@ -12,9 +12,10 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import useFetch from "@/hooks/useFetch"
 import { formatFullDateLabel, formatHHMM, formatYMD, toDate } from "@/shared/utils/date-formatter"
-import { sessionStatus } from "@/shared/utils/class-session"
-import type { ClassSessionApiDTO } from "@/shared/dtos/class-session/ClassSessionApiDTO"
+import type {ClassSessionDTO} from "@/shared/dtos/class-session/ClassSessionDTO.ts";
 
+// TODO: remover os dados mockados
+//  Ambos dependem da CLA-119
 const MOCK_ATTENDANCE = { percent: 90, presences: 9, absences: 1 }
 const MOCK_PENDING = { total: 5, reports: 2, activities: 3 }
 
@@ -30,19 +31,19 @@ const MONDAY_OFFSET = 1 - TODAY.getDay()
 const WEEKDAY_LABELS_LONG = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"]
 const WEEK_VIEW_OFFSETS = [0, 1, 2, 3, 4, 5]
 
-function sessionDateKey(session: ClassSessionApiDTO): string {
+function sessionDateKey(session: ClassSessionDTO): string {
   return formatYMD(toDate(session.startTime))
 }
 
 export default function StudentHomePage() {
-  const { data: rawSessions } = useFetch<ClassSessionApiDTO>("/classsession")
+  const { data: rawSessions } = useFetch<ClassSessionDTO>("/classsession")
 
   const [month, setMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(formatYMD(new Date()))
   const [activeSessionUuid, setActiveSessionUuid] = useState<string | null>(null)
 
   const sessionsByDate = useMemo(() => {
-    const map = new Map<string, ClassSessionApiDTO[]>()
+    const map = new Map<string, ClassSessionDTO[]>()
     for (const session of rawSessions ?? []) {
       const key = sessionDateKey(session)
       const list = map.get(key) ?? []
@@ -63,7 +64,9 @@ export default function StudentHomePage() {
   const selectedDaySessions = sessionsByDate.get(selectedDate) ?? []
   const activeSession =
     selectedDaySessions.find((s) => s.uuid === activeSessionUuid) ?? selectedDaySessions[0] ?? null
-  const activeStatus = activeSession ? sessionStatus(activeSession) : null
+  const activeStatus = activeSession
+      ? toDate(activeSession.endTime) < new Date() ? "success" : "info"
+      : null
 
   const handleSelectDate = (dateStr: string) => {
     setSelectedDate(dateStr)

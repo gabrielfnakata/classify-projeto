@@ -2,8 +2,7 @@ import { useEffect, useRef } from "react"
 
 import { cn } from "@/lib/utils"
 import { formatHHMM, toDate } from "@/shared/utils/date-formatter"
-import { sessionStatus } from "@/shared/utils/class-session"
-import type { ClassSessionApiDTO } from "@/shared/dtos/class-session/ClassSessionApiDTO"
+import type {ClassSessionDTO} from "@/shared/dtos/class-session/ClassSessionDTO.ts";
 
 const START_HOUR = 6
 const END_HOUR = 23
@@ -17,7 +16,7 @@ function minutesFromStart(date: Date) {
   return (date.getHours() - START_HOUR) * 60 + date.getMinutes()
 }
 
-function sessionLayout(session: ClassSessionApiDTO) {
+function sessionLayout(session: ClassSessionDTO) {
   const start = toDate(session.startTime)
   const end = toDate(session.endTime)
   const top = (minutesFromStart(start) / 60) * HOUR_HEIGHT + 2
@@ -26,13 +25,13 @@ function sessionLayout(session: ClassSessionApiDTO) {
   return { start, end, top, height }
 }
 
-interface MiniDayAgendaProps<T extends ClassSessionApiDTO> {
+interface MiniDayAgendaProps<T extends ClassSessionDTO> {
   sessions: T[]
   activeUuid: string | null
   onSelect: (uuid: string) => void
 }
 
-export function MiniDayAgenda<T extends ClassSessionApiDTO>({
+export function MiniDayAgenda<T extends ClassSessionDTO>({
   sessions,
   activeUuid,
   onSelect,
@@ -81,7 +80,7 @@ export function MiniDayAgenda<T extends ClassSessionApiDTO>({
 
             {sessions.map((s) => {
               const { start, end, top, height } = sessionLayout(s)
-              const status = sessionStatus(s)
+              const status = toDate(s.endTime) < new Date() ? "success" : "info"
               const isActive = activeUuid === s.uuid
 
               return (

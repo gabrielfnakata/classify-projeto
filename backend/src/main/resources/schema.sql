@@ -164,6 +164,7 @@ CREATE TABLE IF NOT EXISTS class_session (
 	report_id BIGINT UNSIGNED,
 	class_id BIGINT UNSIGNED,
 	student_id BIGINT UNSIGNED,
+	recurrence_group_id BINARY(16),
 
 	CONSTRAINT classSession_id_pk PRIMARY KEY (id),
 	CONSTRAINT classSession_uuid_uk UNIQUE (uuid),
@@ -185,6 +186,27 @@ CREATE TABLE IF NOT EXISTS assessment (
 
 	CONSTRAINT assessment_id_pk PRIMARY KEY (id),
 	CONSTRAINT assessment_classSessionId_fk FOREIGN KEY (class_session_id) REFERENCES class_session (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS attendance (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
+	class_session_id BIGINT UNSIGNED NOT NULL,
+	student_id BIGINT UNSIGNED NOT NULL,
+	status VARCHAR(8) NOT NULL,
+	justification_reason VARCHAR(17),
+	justification_note VARCHAR(255),
+
+	CONSTRAINT attendance_id_pk PRIMARY KEY (id),
+	CONSTRAINT attendance_uuid_uk UNIQUE (uuid),
+	CONSTRAINT attendance_classSessionId_studentId_uk UNIQUE (class_session_id, student_id),
+	CONSTRAINT attendance_classSessionId_fk FOREIGN KEY (class_session_id) REFERENCES class_session (id),
+	CONSTRAINT attendance_studentId_fk FOREIGN KEY (student_id) REFERENCES student (id),
+	CONSTRAINT attendance_status_ck CHECK (status IN ('PRESENTE', 'AUSENTE')),
+	CONSTRAINT attendance_justificationReason_ck CHECK (justification_reason IN ('ATESTADO_MEDICO', 'PROBLEMA_FAMILIAR', 'TRANSPORTE', 'OUTRO')),
+	CONSTRAINT attendance_justificationRequiresAbsence_ck CHECK (
+		(status = 'AUSENTE') OR (justification_reason IS NULL AND justification_note IS NULL)
+	)
 )$$
 
 CREATE TABLE IF NOT EXISTS telephone (
@@ -230,27 +252,3 @@ CREATE TABLE IF NOT EXISTS audit (
     CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES user (id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
 )$$
-
-CREATE TABLE IF NOT EXISTS navigation_item (
-    id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    node_father TINYINT UNSIGNED,
-    title VARCHAR(50) NOT NULL,
-    url VARCHAR(100),
-
-    CONSTRAINT navigationItem_id_pk PRIMARY KEY (id),
-    CONSTRAINT navigationItem_nodeFather_fk FOREIGN KEY (node_father) REFERENCES navigation_item(id),
-    CONSTRAINT navigationItem_nodeFather_title_uk UNIQUE (node_father, title)
-)$$
-
-INSERT IGNORE INTO navigation_item (id, node_father, title, url) VALUES
-(1, NULL, 'Dashboard', NULL),
-(2, NULL, 'Registros', NULL),
-(3, NULL, 'Agenda',    NULL)$$
-
-INSERT IGNORE INTO navigation_item (id, node_father, title, url) VALUES
-(4, 1, 'Visão geral',   '/classes'),
-(5, 2, 'Alunos',        '/students'),
-(6, 2, 'Funcionários',  '/employees'),
-(7, 2, 'Salas',         '/classrooms'),
-(8, 2, 'Disciplinas',   '/subjects'),
-(9, 3, 'Agendamentos',  '/schedule')$$

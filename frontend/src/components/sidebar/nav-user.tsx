@@ -1,17 +1,19 @@
-import { 
-  BadgeCheck, 
-  Bell, 
-  LogOut, 
-  Sparkles,
-  ChevronsUpDown
+import {
+  BadgeCheck,
+  Settings,
+  LogOut,
+  ChevronsUpDown,
+  Moon,
 } from "lucide-react"
 
 import { Avatar } from "@/components/common/avatar"
+import { useAuth } from "@/hooks/useAuth"
+import { useNavigate } from "react-router"
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 import {
@@ -23,19 +25,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useTheme } from "../theme-provider"
 
-interface NavUserProps {
-  isCollapsed: boolean
-}
+export function NavUser() {
+  const { isMobile, state } = useSidebar()
+  const isCollapsed = state === "collapsed"
+  const { userData, logout } = useAuth()
+  const navigate = useNavigate()
+  const { theme, setTheme } = useTheme();
 
-export function NavUser({ isCollapsed }: NavUserProps) {
-  const { isMobile } = useSidebar()
-  
   const user = {
-    name: "Nome da pessoa",
-    cargo: "Cargo",
-    avatar: "usuario-logado"
-  }
+    name: userData?.email ?? "Placeholder",
+    cargo: userData?.role ?? "Placeholder",
+    avatar: "usuario-logado",
+  };
 
   return (
     <SidebarMenu>
@@ -46,11 +49,7 @@ export function NavUser({ isCollapsed }: NavUserProps) {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:p-0 justify-center"
             >
-              <Avatar 
-                name={user.name} 
-                seed={user.avatar} 
-                size="sm" 
-              />
+              <Avatar name={user.name} seed={user.avatar} size="sm" />
               {!isCollapsed && (
                 <>
                   <div className="grid flex-1 text-left text-sm leading-tight ml-2">
@@ -78,17 +77,21 @@ export function NavUser({ isCollapsed }: NavUserProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/account")}>
                 <BadgeCheck className="mr-2 size-4" />
                 Conta
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell className="mr-2 size-4" />
-                Notificações
+              <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                <Moon className="mr-2 size-4" />
+                Tema
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
+                <Settings className="mr-2 size-4" />
+                Configurações
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+            <DropdownMenuItem onClick={logout} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
               <LogOut className="mr-2 size-4" />
               Sair
             </DropdownMenuItem>

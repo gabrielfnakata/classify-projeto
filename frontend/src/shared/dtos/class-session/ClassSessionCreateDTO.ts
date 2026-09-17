@@ -6,6 +6,7 @@ export interface ClassSessionCreateDTO {
     startTime: string;
     endTime: string;
     report: ReportCreateDTO;
-    classUuid: string;
-    studentUuid: string;
+    classUuid?: string;
+    studentUuid?: string;
+    recurrenceGroupUuid?: string;
 }

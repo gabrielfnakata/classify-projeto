@@ -1,6 +1,5 @@
 export interface ClassSessionSubjectTeacherDTO {
-    uuidEmployee: string,
-    employee: string,
-    uuidSubject: string,
-    subject: string   
+    uuid: string,
+    employee: { uuid: string; name: string },
+    subject: { uuid: string; description: string }
 };
