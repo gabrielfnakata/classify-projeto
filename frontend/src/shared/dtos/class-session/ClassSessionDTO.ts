@@ -5,11 +5,14 @@ export interface ClassSessionClassDTO {
     uuid: string,
     name: string,
     description: string | null,
+    students: ClassSessionStudentDTO[],
 };
 
 export interface ClassSessionReportDTO {
     content: string,
 };
+
+export type ClassSessionStatus = "SCHEDULED" | "CANCELED";
 
 export interface ClassSessionDTO {
     uuid: string,
@@ -21,4 +24,6 @@ export interface ClassSessionDTO {
     classDTO: ClassSessionClassDTO | null,
     student: ClassSessionStudentDTO | null,
     recurrenceGroupUuid: string | null,
+    status: ClassSessionStatus,
+    cancellationReason: string | null,
 };

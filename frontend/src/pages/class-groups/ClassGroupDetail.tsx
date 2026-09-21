@@ -1,19 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { useLocation, useNavigate, useParams } from "react-router"
-import {
-  ArrowLeft, CalendarSync, Check, ClipboardCheck, Clock, Loader2, Pencil, Search,
-  Trash2, TriangleAlert, UserPlus, X,
-} from "lucide-react"
+import { useCallback, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router";
+import { ArrowLeft, Check, Loader2, Pencil, Trash2, TriangleAlert, X } from "lucide-react";
 
-import useFetch from "@/hooks/useFetch"
-import api from "@/services/api"
-import { SectionTitle } from "@/components/features/section-title"
-import { EntityCard } from "@/components/features/entity-card"
-import { StatusBadge } from "@/components/features/status-badge"
-import { ScheduleSeriesForm } from "@/components/features/schedule-series-form"
-import { EmptyState } from "@/components/common/empty-state"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import useFetchList from "@/hooks/useFetchList";
+import useFetchOne from "@/hooks/useFetchOne";
+import useApiAction from "@/hooks/useApiAction";
+import api from "@/services/api";
+import { LinkedEntitiesSection, type LinkedEntity } from "@/components/features/linked-entities-section";
+import type { PickerOption } from "@/components/features/linked-entity-picker";
+import { ScheduledSessionsList } from "@/components/features/scheduled-sessions-list";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -21,202 +18,136 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { ContentCard } from "@/components/layout/content-card"
-import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence"
-import { sortedByName } from "@/shared/utils/sort-by-name"
-import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
-import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
-import type { AddStudentsToClassGroupDTO } from "@/shared/dtos/class-group/AddStudentsToClassGroupDTO"
-import type { ClassGroupUpdateDTO } from "@/shared/dtos/class-group/ClassGroupUpdateDTO"
+} from "@/components/ui/dialog";
+import { sortedByName } from "@/shared/utils/sort-by-name";
+import { apiErrorMessage } from "@/shared/utils/api-error";
+import { scheduleWindowQuery } from "@/shared/utils/schedule-window";
+import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
+import type { AddStudentsToClassGroupDTO } from "@/shared/dtos/class-group/AddStudentsToClassGroupDTO";
+import type { ClassGroupUpdateDTO } from "@/shared/dtos/class-group/ClassGroupUpdateDTO";
+import type { ScheduleFormState } from "@/shared/models/forms/ScheduleFormState";
 
-const pad = (n: number) => String(n).padStart(2, "0")
-const startOf = (s: ClassSessionDTO) => new Date(s.startTime as unknown as string)
-const fmtDate = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
-const fmtTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`
-
-interface ScheduleBlock {
-  key: string
-  recurrenceUuid: string | null
-  sessions: ClassSessionDTO[]
-}
+const EMPTY_STUDENTS: StudentDTO[] = [];
+const EMPTY_SESSIONS: ClassSessionDTO[] = [];
 
 export default function ClassGroupDetail() {
-  const { uuid } = useParams<{ uuid: string }>()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const { uuid = "" } = useParams<{ uuid: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [classGroup, setClassGroup] = useState<ClassGroupDTO | null>(null)
-  const [refreshKey, setRefreshKey] = useState(0)
-  useEffect(() => {
-    if (!uuid) return
-    api.get<ClassGroupDTO>(`/class/${uuid}`, { data: {} }).then((res) => setClassGroup(res.data))
-  }, [uuid, refreshKey])
+  const { data: classGroup, refetch: refetchClassGroup } = useFetchOne<ClassGroupDTO>(`/class/${uuid}`);
+  const { data: studentsData } = useFetchList<StudentDTO>("/student");
+  const { data: sessionsData, refetch: refetchSessions } = useFetchList<ClassSessionDTO>(
+    `/classsession/filter?classUuid=${uuid}&${scheduleWindowQuery()}`
+  );
+  const students = studentsData ?? EMPTY_STUDENTS;
+  const sessions = sessionsData ?? EMPTY_SESSIONS;
 
   const [warning, setWarning] = useState<string | null>(
     (location.state as { warning?: string } | null)?.warning ?? null
-  )
+  );
 
-  const { data: students } = useFetch<StudentDTO>("/student")
-  const [search, setSearch] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
+  const { error: linkError, run, clearError } = useApiAction(refetchClassGroup);
 
-  const [draftName, setDraftName] = useState("")
-  const [draftDescription, setDraftDescription] = useState("")
-  const [savingInfo, setSavingInfo] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [draftDescription, setDraftDescription] = useState("");
+  const [savingInfo, setSavingInfo] = useState(false);
+  const [infoError, setInfoError] = useState<string | null>(null);
 
   const startEditing = () => {
-    setDraftName(classGroup?.name ?? "")
-    setDraftDescription(classGroup?.description ?? "")
-    setSearch("")
-    setError(null)
-    setIsEditing(true)
-  }
+    setDraftName(classGroup?.name ?? "");
+    setDraftDescription(classGroup?.description ?? "");
+    setInfoError(null);
+    clearError();
+    setIsEditing(true);
+  };
 
   const cancelEditing = () => {
-    setSearch("")
-    setError(null)
-    setIsEditing(false)
-  }
+    setInfoError(null);
+    clearError();
+    setIsEditing(false);
+  };
 
   const saveInfo = async () => {
-    if (!uuid) return
     if (!draftName.trim()) {
-      setError("O nome da turma não pode ficar vazio.")
-      return
+      setInfoError("O nome da turma não pode ficar vazio.");
+      return;
     }
 
-    setSavingInfo(true)
-    setError(null)
+    setSavingInfo(true);
+    setInfoError(null);
     try {
       const payload: ClassGroupUpdateDTO = {
         name: draftName.trim(),
         description: draftDescription.trim(),
-      }
-      await api.put(`/class/${uuid}`, payload)
-      setRefreshKey((k) => k + 1)
-      setIsEditing(false)
+      };
+      await api.put(`/class/${uuid}`, payload);
+      refetchClassGroup();
+      setIsEditing(false);
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { mensagem?: string } } }
-      setError(e?.response?.data?.mensagem ?? "Não foi possível salvar os dados da turma.")
+      setInfoError(apiErrorMessage(err, "Não foi possível salvar os dados da turma."));
     } finally {
-      setSavingInfo(false)
+      setSavingInfo(false);
     }
-  }
+  };
 
-  const [sessions, setSessions] = useState<ClassSessionDTO[]>([])
-  const [seriesFormOpen, setSeriesFormOpen] = useState(false)
-  const [editingSeries, setEditingSeries] = useState<ClassSessionDTO[] | null>(null)
-
-  const loadSessions = useCallback(() => {
-    if (!uuid) return
-    api
-      .get<ClassSessionDTO[]>("/classsession", { data: {} })
-      .then((res) => setSessions((res.data ?? []).filter((s) => s.classDTO?.uuid === uuid)))
-      .catch(() => setSessions([]))
-  }, [uuid])
-
-  useEffect(() => { loadSessions() }, [loadSessions, refreshKey])
-
-  const scheduleBlocks = useMemo<ScheduleBlock[]>(() => {
-    const series = new Map<string, ClassSessionDTO[]>()
-    const loose: ClassSessionDTO[] = []
-    sessions.forEach((s) => {
-      if (s.recurrenceGroupUuid) {
-        const list = series.get(s.recurrenceGroupUuid) ?? []
-        list.push(s)
-        series.set(s.recurrenceGroupUuid, list)
-      } else loose.push(s)
-    })
-
-    const sortByDate = (list: ClassSessionDTO[]) =>
-      [...list].sort((a, b) => startOf(a).getTime() - startOf(b).getTime())
-
-    return [
-      ...[...series.entries()].map(([id, list]) => ({
-        key: `s:${id}`, recurrenceUuid: id, sessions: sortByDate(list),
-      })),
-      ...loose.map((s) => ({ key: `u:${s.uuid}`, recurrenceUuid: null, sessions: [s] })),
-    ].sort((a, b) => startOf(a.sessions[0]).getTime() - startOf(b.sessions[0]).getTime())
-  }, [sessions])
-
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDeleteClassGroup = async () => {
-    if (!uuid) return
-    setDeleting(true)
-    setDeleteError(null)
+    setDeleting(true);
+    setDeleteError(null);
     try {
-      await api.delete(`/class/${uuid}`, { data: {} })
-      navigate("/class-groups")
+      await api.delete(`/class/${uuid}`, { data: {} });
+      navigate("/class-groups");
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { mensagem?: string } } }
-      setDeleteError(e?.response?.data?.mensagem ?? "Não foi possível excluir a turma.")
+      setDeleteError(apiErrorMessage(err, "Não foi possível excluir a turma."));
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
-  const deleteBlock = async (block: ScheduleBlock) => {
-    setError(null)
-    const failures: string[] = []
-    for (const s of block.sessions) {
-      try {
-        await api.delete(`/classsession/${s.uuid}`, { data: {} })
-      } catch (err: unknown) {
-        const e = err as { response?: { data?: { mensagem?: string } } }
-        failures.push(`${fmtDate(startOf(s))}: ${e?.response?.data?.mensagem ?? "falhou"}`)
-      }
-    }
-    if (failures.length > 0) {
-      setError(`Algumas aulas não puderam ser excluídas — ${failures.slice(0, 3).join(" | ")}`)
-    }
-    setRefreshKey((k) => k + 1)
-  }
+  const studentByUuid = useMemo(
+    () => new Map(students.map((student) => [student.uuid, student])),
+    [students]
+  );
 
-  const studentByUuid = useMemo(() => {
-    const map = new Map<string, StudentDTO>()
-    ;(students ?? []).forEach((s) => map.set(s.uuid, s))
-    return map
-  }, [students])
+  const enrolledStudents = useMemo<LinkedEntity[]>(() =>
+    sortedByName(classGroup?.students ?? []).map((student) => ({
+      uuid: student.uuid,
+      name: student.name,
+      subtitle: studentByUuid.get(student.uuid)?.email,
+    })),
+  [classGroup, studentByUuid]);
 
-  const enrolledUuids = new Set((classGroup?.students ?? []).map((s) => s.uuid))
-  const enrolledStudents = sortedByName(classGroup?.students ?? [])
-  const selectableStudents = sortedByName(
-    (students ?? [])
-      .filter((s) => !enrolledUuids.has(s.uuid))
-      .filter((s) => s.name.toLowerCase().includes(search.toLowerCase()))
-  )
+  const studentOptions = useMemo<PickerOption[]>(() => {
+    const enrolled = new Set((classGroup?.students ?? []).map((student) => student.uuid));
+    return sortedByName(students.filter((student) => !enrolled.has(student.uuid)))
+      .map((student) => ({ uuid: student.uuid, label: student.name, hint: student.email }));
+  }, [students, classGroup]);
 
-  const handleAdd = async (studentUuid: string) => {
-    if (!uuid) return
-    setError(null)
-    try {
-      const payload: AddStudentsToClassGroupDTO = { studentUuids: [studentUuid] }
-      await api.post(`/class/${uuid}/students`, payload)
-      setSearch("")
-      setRefreshKey((k) => k + 1)
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { mensagem?: string } } }
-      setError(e?.response?.data?.mensagem ?? "Erro ao matricular aluno.")
-    }
-  }
+  const handleAdd = useCallback((studentUuid: string) => {
+    const payload: AddStudentsToClassGroupDTO = { studentUuids: [studentUuid] };
+    return run(() => api.post(`/class/${uuid}/students`, payload), "Erro ao matricular aluno.");
+  }, [run, uuid]);
 
-  const handleRemove = async (studentUuid: string) => {
-    if (!uuid) return
-    setError(null)
-    try {
-      await api.delete(`/class/${uuid}/students/${studentUuid}`, { data: {} })
-      setRefreshKey((k) => k + 1)
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { mensagem?: string } } }
-      setError(e?.response?.data?.mensagem ?? "Erro ao remover aluno.")
-    }
-  }
+  const handleRemove = useCallback((studentUuid: string) =>
+    run(() => api.delete(`/class/${uuid}/students/${studentUuid}`, { data: {} }), "Erro ao remover aluno."),
+  [run, uuid]);
+
+  const schedulePreset = useMemo<Partial<ScheduleFormState>>(
+    () => ({ targetType: "class", classGroupId: uuid }),
+    [uuid]
+  );
+
+  const secondaryInfo = useCallback(
+    (session: ClassSessionDTO) => `Prof. ${session.subjectTeacher.employee.name}`,
+    []
+  );
 
   return (
     <div className="animate-in fade-in space-y-6 p-6 duration-500 md:p-8">
@@ -261,6 +192,9 @@ export default function ClassGroupDetail() {
               ) : null}
             </>
           )}
+          {infoError && (
+            <p className="mt-2 text-sm text-destructive">{infoError}</p>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
@@ -271,7 +205,7 @@ export default function ClassGroupDetail() {
                 title="Excluir turma"
                 className="mr-2 text-destructive hover:text-destructive"
                 disabled={savingInfo}
-                onClick={() => { setDeleteError(null); setConfirmDeleteOpen(true) }}
+                onClick={() => { setDeleteError(null); setConfirmDeleteOpen(true); }}
               >
                 <Trash2 className="h-4 w-4" />
                 Excluir turma
@@ -299,173 +233,26 @@ export default function ClassGroupDetail() {
         </div>
       </div>
 
-      <ContentCard className="space-y-4">
-        <SectionTitle
-          title="Alunos Matriculados"
-          description={isEditing ? "Adicione ou remova alunos da turma." : undefined}
-          className="mb-5 md:items-center"
-        />
+      <LinkedEntitiesSection
+        title="Alunos Matriculados"
+        description="Adicione ou remova alunos da turma."
+        items={enrolledStudents}
+        editing={isEditing}
+        options={studentOptions}
+        pickerPlaceholder="Buscar aluno para adicionar..."
+        onAdd={handleAdd}
+        onRemove={handleRemove}
+        error={linkError}
+        emptyTitle="Nenhum aluno matriculado"
+        emptyDescription='Clique em "Editar" para matricular alunos.'
+        emptyEditingDescription="Use a busca acima para adicionar alunos a essa turma."
+      />
 
-        {isEditing && (
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar aluno para adicionar..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8"
-            />
-            {search && (
-              <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-md">
-                {selectableStudents.length === 0 ? (
-                  <p className="px-3 py-3 text-center text-sm text-muted-foreground">
-                    Nenhum aluno encontrado
-                  </p>
-                ) : (
-                  selectableStudents.map((st) => (
-                    <button
-                      key={st.uuid}
-                      type="button"
-                      onClick={() => handleAdd(st.uuid)}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-muted/50"
-                    >
-                      <UserPlus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      {st.name}
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {error && (
-          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {error}
-          </p>
-        )}
-
-        {!classGroup || classGroup.students.length === 0 ? (
-          <EmptyState
-            title="Nenhum aluno matriculado"
-            description={
-              isEditing
-                ? "Use a busca acima para adicionar alunos a essa turma."
-                : 'Clique em "Editar" para matricular alunos.'
-            }
-          />
-        ) : (
-          <div className="grid max-h-[17rem] grid-cols-1 gap-3 overflow-y-auto pr-1 scrollbar-slim sm:grid-cols-2 xl:grid-cols-3">
-            {enrolledStudents.map((student) => (
-              <EntityCard
-                key={student.uuid}
-                name={student.name}
-                subtitle={studentByUuid.get(student.uuid)?.email}
-                onRemove={isEditing ? () => handleRemove(student.uuid) : undefined}
-              />
-            ))}
-          </div>
-        )}
-      </ContentCard>
-
-      <ContentCard className="space-y-4">
-        <SectionTitle
-          title="Aulas Agendadas"
-          className="mb-5"
-        />
-
-        {scheduleBlocks.length === 0 ? (
-          <EmptyState
-            title="Nenhuma aula agendada"
-            description="Crie um agendamento para esta turma em Agenda → Agendamentos."
-          />
-        ) : (
-          <div className="space-y-2">
-            {scheduleBlocks.map((block) => {
-              const first = block.sessions[0]
-              const last = block.sessions[block.sessions.length - 1]
-              const isSeries = Boolean(block.recurrenceUuid)
-              const pattern = isSeries
-                ? describeWeekdays(weekdaysOfDates(block.sessions.map(startOf)))
-                : ""
-
-              return (
-                <div
-                  key={block.key}
-                  className="flex flex-col gap-3 rounded-xl border border-border bg-panel-soft p-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      {isSeries
-                        ? <CalendarSync className="h-4.5 w-4.5 text-primary" />
-                        : <Clock className="h-4.5 w-4.5 text-primary" />}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-foreground">
-                          {first.subjectTeacher.subject.description}
-                        </p>
-                        {isSeries && (
-                          <StatusBadge variant="info">{block.sessions.length} aulas</StatusBadge>
-                        )}
-                      </div>
-                      <p className="truncate text-sm text-muted-foreground">
-                        {isSeries
-                          ? `${pattern} · ${fmtTime(startOf(first))}–${fmtTime(new Date(first.endTime as unknown as string))} · ${fmtDate(startOf(first))} a ${fmtDate(startOf(last))}`
-                          : `${fmtDate(startOf(first))} · ${fmtTime(startOf(first))}–${fmtTime(new Date(first.endTime as unknown as string))}`}
-                        {` · Prof. ${first.subjectTeacher.employee.name}`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      title={isSeries ? "Fazer chamada de todas as datas" : "Fazer chamada desta aula"}
-                      onClick={() =>
-                        navigate(
-                          isSeries
-                            ? `/attendance/series/${block.recurrenceUuid}`
-                            : `/attendance/${first.uuid}`
-                        )
-                      }
-                    >
-                      <ClipboardCheck className="h-4 w-4" />
-                      Chamada
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      title={isSeries ? "Editar recorrência" : "Editar aula"}
-                      onClick={() => { setEditingSeries(block.sessions); setSeriesFormOpen(true) }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      Editar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      title={isSeries ? "Excluir recorrência inteira" : "Excluir aula"}
-                      onClick={() => deleteBlock(block)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Excluir
-                    </Button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </ContentCard>
-
-      <ScheduleSeriesForm
-        open={seriesFormOpen}
-        onClose={() => setSeriesFormOpen(false)}
-        onSuccess={() => setRefreshKey((k) => k + 1)}
-        sessions={editingSeries}
+      <ScheduledSessionsList
+        sessions={sessions}
+        onChanged={refetchSessions}
+        schedulePreset={schedulePreset}
+        secondaryInfo={secondaryInfo}
       />
 
       <Dialog open={confirmDeleteOpen} onOpenChange={(o) => !o && setConfirmDeleteOpen(false)}>
@@ -524,5 +311,5 @@ export default function ClassGroupDetail() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

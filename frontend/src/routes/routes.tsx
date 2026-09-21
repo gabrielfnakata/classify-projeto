@@ -3,7 +3,6 @@ import OnDevelopment from "@/pages/on-development/OnDevelopment";
 import { Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
 import Components from "@/app/pages/Components";
-import ClassRegistration from "@/pages/classes/ClassRegistration";
 import StudentRegistration from "@/pages/students/StudentRegistration";
 import EmployeeRegistration from "@/pages/employees/EmployeeRegistration";
 import NewEmployee from "@/pages/employees/NewEmployee";
@@ -20,6 +19,10 @@ import AttendanceSeriesPage from "@/pages/attendance/AttendanceSeries";
 import ClassGroupRegistration from "@/pages/class-groups/ClassGroupRegistration";
 import NewClassGroup from "@/pages/class-groups/NewClassGroup";
 import ClassGroupDetail from "@/pages/class-groups/ClassGroupDetail";
+import StudentDetail from "@/pages/students/StudentDetail";
+import EmployeeDetail from "@/pages/employees/EmployeeDetail";
+import SubjectDetail from "@/pages/subjects/SubjectDetail";
+import ClassroomDetail from "@/pages/classrooms/ClassroomDetail";
 
 export default function AppRoutes() {
     return (
@@ -46,9 +49,6 @@ export default function AppRoutes() {
             <Route path="/components-demo" element={
                 <ProtectedRoute children={<Components />} />
             }/>
-            {/* <Route path="/schedule" element={
-                <ProtectedRoute children={<ClassRegistration />} />
-            }/> */}
             <Route path="/home" element={
                 <ProtectedRoute children={<OnDevelopment />} />
             }/>
@@ -61,11 +61,17 @@ export default function AppRoutes() {
             <Route path="/new-student" element={
                 <ProtectedRoute children={<NewStudent />} />
             }/>
+            <Route path="/students/:uuid" element={
+                <ProtectedRoute children={<StudentDetail />} />
+            }/>
             <Route path="/employees" element={
                 <ProtectedRoute children={<EmployeeRegistration />} />
             }/>
             <Route path="/new-employee" element={
                 <ProtectedRoute children={<NewEmployee />} />
+            }/>
+            <Route path="/employees/:uuid" element={
+                <ProtectedRoute children={<EmployeeDetail />} />
             }/>
             <Route path="/subjects" element={
                 <ProtectedRoute children={<SubjectRegistration />} />
@@ -73,11 +79,17 @@ export default function AppRoutes() {
             <Route path="/new-subject" element={
                 <ProtectedRoute children={<NewSubject />} />
             }/>
+            <Route path="/subjects/:uuid" element={
+                <ProtectedRoute children={<SubjectDetail />} />
+            }/>
             <Route path="/classrooms" element={
                 <ProtectedRoute children={<ClassroomRegistration />} />
             }/>
             <Route path="/new-classroom" element={
                 <ProtectedRoute children={<NewClassroom />} />
+            }/>
+            <Route path="/classrooms/:uuid" element={
+                <ProtectedRoute children={<ClassroomDetail />} />
             }/>
             <Route path="/schedule" element={
                 <ProtectedRoute children={<SchedulePage />} />
@@ -101,5 +113,5 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<ClassGroupDetail />} />
             }/>
         </Routes>
-    )
+    );
 }

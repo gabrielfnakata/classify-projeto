@@ -1,75 +1,82 @@
-import { useEffect, useMemo, useState } from "react"
-import { CalendarPlus, Loader2, Pencil, X } from "lucide-react"
-import { Formik, Form } from "formik"
-import type { FormikHelpers } from "formik"
+import { useEffect, useMemo, useState } from "react";
+import { CalendarPlus, Loader2, Pencil, X } from "lucide-react";
+import { Formik, Form } from "formik";
+import type { FormikHelpers } from "formik";
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { WeekdayPicker } from "@/components/features/weekday-picker"
-import { RecurrencePreview } from "@/components/features/recurrence-preview"
-import api from "@/services/api"
-import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
-import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
-import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
-import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSessionCreateDTO"
-import type { ClassSessionUpdateDTO } from "@/shared/dtos/class-session/ClassSessionUpdateDTO"
-import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
-import useFetch from "@/hooks/useFetch"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TimeSelect } from "@/components/common/time-select";
+import { WeekdayPicker } from "@/components/features/weekday-picker";
+import { RecurrencePreview } from "@/components/features/recurrence-preview";
+import { TeacherAvailabilityHint } from "@/components/features/teacher-availability-hint";
+import api from "@/services/api";
+import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
+import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
+import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSessionCreateDTO";
+import type { ClassSessionUpdateDTO } from "@/shared/dtos/class-session/ClassSessionUpdateDTO";
+import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO";
+import type { TeacherAvailabilityDTO } from "@/shared/dtos/employees/TeacherAvailabilityDTO";
+import { availableJsDays } from "@/shared/utils/weekdays";
+import useFetch from "@/hooks/useFetch";
+import useFetchList from "@/hooks/useFetchList";
 import {
   type ScheduleFormState,
   type ScheduleTargetType,
   EMPTY_SCHEDULE_FORM,
-} from "@/shared/models/forms/ScheduleFormState"
-import { DEFAULT_REPORT_CONTENT, generateRecurringDates } from "@/shared/utils/recurrence"
-import { formatYMD } from "@/shared/utils/date-formatter"
-import { sortedByName } from "@/shared/utils/sort-by-name"
-import { ScheduleFormSchema } from "@/validation/ScheduleSchema"
+} from "@/shared/models/forms/ScheduleFormState";
+import { DEFAULT_REPORT_CONTENT, generateRecurringDates } from "@/shared/utils/recurrence";
+import { formatYMD } from "@/shared/utils/date-formatter";
+import { sortedByName } from "@/shared/utils/sort-by-name";
+import { ScheduleFormSchema } from "@/validation/ScheduleSchema";
 
-const pad = (n: number) => String(n).padStart(2, "0")
+const pad = (n: number) => String(n).padStart(2, "0");
 function toHHMM(raw: unknown): string {
-  const d = new Date(raw as string)
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const d = new Date(raw as string);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 interface ScheduleFormProps {
-  open: boolean
-  onClose: () => void
-  onSuccess: (date: string) => void
-  editingSessions?: ClassSessionDTO[] | null
+  open: boolean;
+  onClose: () => void;
+  onSuccess: (date: string) => void;
+  editingSessions?: ClassSessionDTO[] | null;
+  // Valores iniciais para um agendamento novo (ex.: professor/sala já escolhidos na tela de detalhe).
+  preset?: Partial<ScheduleFormState>;
 }
 
-export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: ScheduleFormProps) {
-  const [error, setError] = useState<string | null>(null)
+export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset }: ScheduleFormProps) {
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO>("/subjectteacher")
-  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO>("/classroom")
-  const { data: studentsData, loading: loadingStu } = useFetch<StudentDTO>("/student")
-  const { data: classGroupsData, loading: loadingCG } = useFetch<ClassGroupDTO>("/class")
+  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO>("/subjectteacher");
+  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO>("/classroom");
+  const { data: studentsData, loading: loadingStu } = useFetch<StudentDTO>("/student");
+  const { data: classGroupsData, loading: loadingCG } = useFetch<ClassGroupDTO>("/class");
 
-  const subjectTeachers = subjectTeachersData ?? []
-  const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled)
-  const students = studentsData ?? []
-  const classGroups = classGroupsData ?? []
-  const loading = loadingST !== false || loadingCR !== false || loadingStu !== false || loadingCG !== false
-  const isEditing = Boolean(editingSessions?.length)
-  const editingPrimary = editingSessions?.[0] ?? null
-  const originalTargetType: ScheduleTargetType = editingPrimary?.student ? "student" : "class"
+  const subjectTeachers = subjectTeachersData ?? [];
+  const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled);
+  const students = studentsData ?? [];
+  const classGroups = classGroupsData ?? [];
+  const loading = loadingST !== false || loadingCR !== false || loadingStu !== false || loadingCG !== false;
+  const isEditing = Boolean(editingSessions?.length);
+  const editingPrimary = editingSessions?.[0] ?? null;
+  const originalTargetType: ScheduleTargetType = editingPrimary?.student ? "student" : "class";
 
   useEffect(() => {
-    if (!open) return
-    setError(null)
-  }, [open])
+    if (!open) return;
+    setError(null);
+  }, [open]);
 
   const initialValues: ScheduleFormState = useMemo(
     () =>
@@ -90,22 +97,41 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
             recurringWeekdays: [],
             recurringUntil: "",
           }
-        : EMPTY_SCHEDULE_FORM,
-    [editingSessions, editingPrimary, open]
-  )
+        : { ...EMPTY_SCHEDULE_FORM, ...preset },
+    [editingSessions, editingPrimary, open, preset]
+  );
+
+  // Professor selecionado, espelhado fora do Formik para buscar a disponibilidade dele.
+  // Reinicia quando o formulário reabre (padrão "ajustar estado durante a renderização").
+  const [teacherOverride, setTeacherOverride] = useState<string | null>(null);
+  const [seenInitialValues, setSeenInitialValues] = useState(initialValues);
+  if (seenInitialValues !== initialValues) {
+    setSeenInitialValues(initialValues);
+    setTeacherOverride(null);
+  }
+  const selectedTeacherId = teacherOverride ?? initialValues.teacherId;
+  const { data: availabilityData } = useFetchList<TeacherAvailabilityDTO>(
+    selectedTeacherId ? `/employee/${selectedTeacherId}/availability` : null
+  );
+  const availability = useMemo(() => availabilityData ?? [], [availabilityData]);
+  const unavailableDays = useMemo(() => {
+    if (availability.length === 0) return [];
+    const available = availableJsDays(availability);
+    return [0, 1, 2, 3, 4, 5, 6].filter((day) => !available.has(day));
+  }, [availability]);
 
   const handleSubmit = async (values: ScheduleFormState, helpers: FormikHelpers<ScheduleFormState>) => {
-    setError(null)
+    setError(null);
     try {
       const subjectTeacherId =
         subjectTeachers.find(
           (st) => st.employee.uuid === values.teacherId && st.subject.uuid === values.subjectId
-        )?.uuid ?? ""
+        )?.uuid ?? "";
 
       if (!subjectTeacherId) {
-        setError("Esse professor não leciona a disciplina selecionada. Escolha outra combinação.")
-        helpers.setSubmitting(false)
-        return
+        setError("Esse professor não leciona a disciplina selecionada. Escolha outra combinação.");
+        helpers.setSubmitting(false);
+        return;
       }
 
       if (isEditing && editingSessions && editingSessions.length > 0) {
@@ -114,19 +140,19 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
           endTime: `${values.date}T${values.endTime}:00`,
           subjectTeacherId,
           classroomUuid: values.classroomId,
-        }
+        };
 
         if (values.targetType !== originalTargetType) {
-          const [head, ...tail] = editingSessions
+          const [head, ...tail] = editingSessions;
 
           if (values.targetType === "class") {
             for (const s of tail) {
-              await api.delete(`/classsession/${s.uuid}`, { data: {} })
+              await api.delete(`/classsession/${s.uuid}`, { data: {} });
             }
-            await api.put(`/classsession/${head.uuid}`, { ...sharedPayload, classUuid: values.classGroupId })
+            await api.put(`/classsession/${head.uuid}`, { ...sharedPayload, classUuid: values.classGroupId });
           } else {
-            const [firstStudent, ...others] = values.studentIds
-            await api.put(`/classsession/${head.uuid}`, { ...sharedPayload, studentUuid: firstStudent })
+            const [firstStudent, ...others] = values.studentIds;
+            await api.put(`/classsession/${head.uuid}`, { ...sharedPayload, studentUuid: firstStudent });
             for (const studentUuid of others) {
               const payload: ClassSessionCreateDTO = {
                 subjectTeacherUuid: subjectTeacherId,
@@ -136,32 +162,32 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                 report: { content: DEFAULT_REPORT_CONTENT },
                 studentUuid,
                 recurrenceGroupUuid: head.recurrenceGroupUuid ?? undefined,
-              }
-              await api.post("/classsession", payload)
+              };
+              await api.post("/classsession", payload);
             }
           }
         } else if (values.targetType === "class") {
           await api.put(`/classsession/${editingSessions[0].uuid}`, {
             ...sharedPayload,
             classUuid: values.classGroupId,
-          })
+          });
         } else {
           const originalByStudent = new Map(
             editingSessions.filter((s) => s.student).map((s) => [s.student!.uuid, s])
-          )
-          const toRemove = [...originalByStudent.keys()].filter((uuid) => !values.studentIds.includes(uuid))
-          const toKeep = values.studentIds.filter((uuid) => originalByStudent.has(uuid))
-          const toAdd = values.studentIds.filter((uuid) => !originalByStudent.has(uuid))
-          const totalOps = toKeep.length + toAdd.length + toRemove.length
+          );
+          const toRemove = [...originalByStudent.keys()].filter((uuid) => !values.studentIds.includes(uuid));
+          const toKeep = values.studentIds.filter((uuid) => originalByStudent.has(uuid));
+          const toAdd = values.studentIds.filter((uuid) => !originalByStudent.has(uuid));
+          const totalOps = toKeep.length + toAdd.length + toRemove.length;
 
-          let done = 0
+          let done = 0;
           try {
             for (const uuid of toKeep) {
               await api.put(`/classsession/${originalByStudent.get(uuid)!.uuid}`, {
                 ...sharedPayload,
                 studentUuid: uuid,
-              })
-              done += 1
+              });
+              done += 1;
             }
             for (const uuid of toAdd) {
               const payload: ClassSessionCreateDTO = {
@@ -172,42 +198,42 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                 report: { content: DEFAULT_REPORT_CONTENT },
                 studentUuid: uuid,
                 recurrenceGroupUuid: editingPrimary?.recurrenceGroupUuid ?? undefined,
-              }
-              await api.post("/classsession", payload)
-              done += 1
+              };
+              await api.post("/classsession", payload);
+              done += 1;
             }
             for (const uuid of toRemove) {
-              await api.delete(`/classsession/${originalByStudent.get(uuid)!.uuid}`, { data: {} })
-              done += 1
+              await api.delete(`/classsession/${originalByStudent.get(uuid)!.uuid}`, { data: {} });
+              done += 1;
             }
           } catch (err: unknown) {
-            const e = err as { response?: { data?: { mensagem?: string } } }
-            const message = e?.response?.data?.mensagem ?? "Erro ao atualizar o agendamento."
+            const e = err as { response?: { data?: { mensagem?: string } } };
+            const message = e?.response?.data?.mensagem ?? "Erro ao atualizar o agendamento.";
             throw new Error(
               totalOps > 1
                 ? `${done} de ${totalOps} alterações aplicadas. Uma falhou: ${message}`
                 : message
-            )
+            );
           }
         }
       } else {
         const dates = values.isRecurring
           ? generateRecurringDates(values.date, values.recurringUntil, values.recurringWeekdays)
-          : [values.date]
+          : [values.date];
 
         if (dates.length === 0) {
-          setError("Nenhuma data corresponde aos dias da semana selecionados nesse período.")
-          helpers.setSubmitting(false)
-          return
+          setError("Nenhuma data corresponde aos dias da semana selecionados nesse período.");
+          helpers.setSubmitting(false);
+          return;
         }
 
-        const studentTargets = values.targetType === "student" ? values.studentIds : [null]
-        const combos = dates.flatMap((date) => studentTargets.map((studentUuid) => ({ date, studentUuid })))
+        const studentTargets = values.targetType === "student" ? values.studentIds : [null];
+        const combos = dates.flatMap((date) => studentTargets.map((studentUuid) => ({ date, studentUuid })));
 
-        const recurrenceGroupUuid = values.isRecurring && dates.length > 1 ? crypto.randomUUID() : undefined
+        const recurrenceGroupUuid = values.isRecurring && dates.length > 1 ? crypto.randomUUID() : undefined;
 
-        let created = 0
-        const failures: { date: string; message: string }[] = []
+        let created = 0;
+        const failures: { date: string; message: string }[] = [];
 
         for (const combo of combos) {
           const payload: ClassSessionCreateDTO = {
@@ -217,47 +243,47 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
             endTime: `${combo.date}T${values.endTime}:00`,
             report: { content: DEFAULT_REPORT_CONTENT },
             recurrenceGroupUuid,
-          }
-          if (values.targetType === "student") payload.studentUuid = combo.studentUuid as string
-          else payload.classUuid = values.classGroupId
+          };
+          if (values.targetType === "student") payload.studentUuid = combo.studentUuid as string;
+          else payload.classUuid = values.classGroupId;
 
           try {
-            await api.post("/classsession", payload)
-            created += 1
+            await api.post("/classsession", payload);
+            created += 1;
           } catch (err: unknown) {
-            const e = err as { response?: { data?: { mensagem?: string } } }
+            const e = err as { response?: { data?: { mensagem?: string } } };
             failures.push({
               date: combo.date,
               message: e?.response?.data?.mensagem ?? "erro desconhecido",
-            })
+            });
           }
         }
 
         if (created === 0) {
-          throw new Error(failures[0]?.message ?? "Erro ao salvar agendamento.")
+          throw new Error(failures[0]?.message ?? "Erro ao salvar agendamento.");
         }
 
         if (failures.length > 0) {
-          const dias = [...new Set(failures.map((f) => f.date.split("-").reverse().join("/")))]
+          const dias = [...new Set(failures.map((f) => f.date.split("-").reverse().join("/")))];
           setError(
             `${created} de ${combos.length} aulas criadas. ` +
             `Não foi possível agendar em: ${dias.slice(0, 5).join(", ")}` +
             `${dias.length > 5 ? ` e mais ${dias.length - 5}` : ""}. Motivo: ${failures[0].message}`
-          )
-          onSuccess(values.date)
-          helpers.setSubmitting(false)
-          return
+          );
+          onSuccess(values.date);
+          helpers.setSubmitting(false);
+          return;
         }
       }
-      onSuccess(values.date)
-      onClose()
+      onSuccess(values.date);
+      onClose();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { mensagem?: string } }; message?: string }
-      setError(e?.response?.data?.mensagem ?? e?.message ?? "Erro ao salvar agendamento.")
+      const e = err as { response?: { data?: { mensagem?: string } }; message?: string };
+      setError(e?.response?.data?.mensagem ?? e?.message ?? "Erro ao salvar agendamento.");
     } finally {
-      helpers.setSubmitting(false)
+      helpers.setSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -276,7 +302,7 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                   .filter((st) => !values.subjectId || st.subject.uuid === values.subjectId)
                   .map((st) => [st.employee.uuid, st.employee])
               ).values(),
-            ]
+            ];
 
             const availableSubjects = [
               ...new Map(
@@ -284,9 +310,9 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                   .filter((st) => !values.teacherId || st.employee.uuid === values.teacherId)
                   .map((st) => [st.subject.uuid, st.subject])
               ).values(),
-            ]
+            ];
 
-            const availableStudents = sortedByName(students.filter((st) => !values.studentIds.includes(st.uuid)))
+            const availableStudents = sortedByName(students.filter((st) => !values.studentIds.includes(st.uuid)));
 
             return (
               <Form className="flex flex-1 flex-col overflow-hidden">
@@ -323,18 +349,22 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs text-muted-foreground">Início</Label>
-                          <Input
-                            type="time"
+                          <TimeSelect
                             value={values.startTime}
-                            onChange={(e) => setFieldValue("startTime", e.target.value)}
+                            onChange={(v) => {
+                              setFieldValue("startTime", v);
+                              // Mudar o início invalida um fim que ficou para trás.
+                              if (values.endTime && values.endTime <= v) setFieldValue("endTime", "");
+                            }}
                           />
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs text-muted-foreground">Fim</Label>
-                          <Input
-                            type="time"
+                          <TimeSelect
                             value={values.endTime}
-                            onChange={(e) => setFieldValue("endTime", e.target.value)}
+                            startFrom={values.startTime}
+                            disabled={!values.startTime}
+                            onChange={(v) => setFieldValue("endTime", v)}
                           />
                         </div>
                       </div>
@@ -361,6 +391,7 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                               <WeekdayPicker
                                 value={values.recurringWeekdays}
                                 onChange={(v) => setFieldValue("recurringWeekdays", v)}
+                                disabledDays={unavailableDays}
                                 className="flex-wrap"
                               />
                             </div>
@@ -395,9 +426,10 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                             onValueChange={(v) => {
                               const subjectStillValid = subjectTeachers.some(
                                 (st) => st.employee.uuid === v && st.subject.uuid === values.subjectId
-                              )
-                              setFieldValue("teacherId", v)
-                              if (!subjectStillValid) setFieldValue("subjectId", "")
+                              );
+                              setFieldValue("teacherId", v);
+                              setTeacherOverride(v);
+                              if (!subjectStillValid) setFieldValue("subjectId", "");
                             }}
                           >
                             <SelectTrigger className="flex-1 min-w-0">
@@ -416,12 +448,21 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                               type="button"
                               title="Limpar professor"
                               className="shrink-0"
-                              onClick={() => setFieldValue("teacherId", "")}
+                              onClick={() => { setFieldValue("teacherId", ""); setTeacherOverride(""); }}
                             >
                               <X className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
+                        {values.teacherId && (
+                          <TeacherAvailabilityHint
+                            blocks={availability}
+                            date={values.date}
+                            startTime={values.startTime}
+                            endTime={values.endTime}
+                            recurringWeekdays={values.isRecurring ? values.recurringWeekdays : []}
+                          />
+                        )}
                       </div>
 
                       <div className="space-y-1.5">
@@ -434,9 +475,9 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                             onValueChange={(v) => {
                               const teacherStillValid = subjectTeachers.some(
                                 (st) => st.subject.uuid === v && st.employee.uuid === values.teacherId
-                              )
-                              setFieldValue("subjectId", v)
-                              if (!teacherStillValid) setFieldValue("teacherId", "")
+                              );
+                              setFieldValue("subjectId", v);
+                              if (!teacherStillValid) setFieldValue("teacherId", "");
                             }}
                           >
                             <SelectTrigger className="flex-1 min-w-0">
@@ -544,7 +585,7 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                         {values.studentIds.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 pt-1">
                             {values.studentIds.map((id) => {
-                              const student = students.find((s) => s.uuid === id)
+                              const student = students.find((s) => s.uuid === id);
                               return student ? (
                                 <span
                                   key={id}
@@ -561,7 +602,7 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                                     <X className="h-3 w-3" />
                                   </button>
                                 </span>
-                              ) : null
+                              ) : null;
                             })}
                           </div>
                         )}
@@ -609,10 +650,10 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: Sche
                   </Button>
                 </DialogFooter>
               </Form>
-            )
+            );
           }}
         </Formik>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

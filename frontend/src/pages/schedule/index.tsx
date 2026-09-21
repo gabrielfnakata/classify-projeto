@@ -1,103 +1,144 @@
-import { useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, Loader2, Plus, Search } from "lucide-react"
-import useFetch from "@/hooks/useFetch"
+import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2, Plus, Search } from "lucide-react";
+import useFetch from "@/hooks/useFetch";
+import api from "@/services/api";
 
-import { ScheduleForm } from "@/components/features/schedule-form"
-import { ScheduleModal } from "@/components/features/schedule-modal"
-import { ScheduleSeriesForm } from "@/components/features/schedule-series-form"
-import { MetricCard } from "@/components/features/metric-card"
-import { SectionTitle } from "@/components/features/section-title"
-import { ScheduleCalendar } from "@/components/features/schedule-calendar"
-import { ContentCard } from "@/components/layout/content-card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
-import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
-import { formatDateLabel, formatMonthYearLabel, formatYMD } from "@/shared/utils/date-formatter"
-import { classroomNameMap, resolveClassroomName } from "@/shared/utils/class-session-helpers"
-import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping"
+import { ScheduleForm } from "@/components/features/schedule-form";
+import { ScheduleModal } from "@/components/features/schedule-modal";
+import { ScheduleSeriesForm } from "@/components/features/schedule-series-form";
+import { CancelSessionDialog } from "@/components/features/cancel-session-dialog";
+import { MetricCard } from "@/components/features/metric-card";
+import { SectionTitle } from "@/components/features/section-title";
+import { ScheduleCalendar } from "@/components/features/schedule-calendar";
+import { ContentCard } from "@/components/layout/content-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
+import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
+import { formatDateLabel, formatMonthYearLabel, formatYMD } from "@/shared/utils/date-formatter";
+import { classroomNameMap, resolveClassroomName } from "@/shared/utils/class-session-helpers";
+import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping";
 
-type ViewMode = "day" | "week" | "month"
+type ViewMode = "day" | "week" | "month";
 
 function sessionDate(dto: ClassSessionDTO): string {
-  return formatYMD(new Date(dto.startTime as unknown as string))
+  return formatYMD(new Date(dto.startTime as unknown as string));
 }
 
 export default function SchedulePage() {
-  const [refreshKey, setRefreshKey] = useState(0)
-  const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO>(`/classsession?r=${refreshKey}`)
-  const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
-  const classroomNames = useMemo(() => classroomNameMap(classrooms ?? []), [classrooms])
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO>(`/classsession?r=${refreshKey}`);
+  const { data: classrooms } = useFetch<ClassroomDTO>("/classroom");
+  const classroomNames = useMemo(() => classroomNameMap(classrooms ?? []), [classrooms]);
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedGroup, setSelectedGroup] = useState<SessionGroup | null>(null)
-  const [currentDate, setCurrentDate] = useState(new Date())
-  const [viewMode, setViewMode] = useState<ViewMode>("day")
-  const [formOpen, setFormOpen] = useState(false)
-  const [editingSessions, setEditingSessions] = useState<ClassSessionDTO[] | null>(null)
-  const [seriesFormOpen, setSeriesFormOpen] = useState(false)
-  const [editingSeries, setEditingSeries] = useState<ClassSessionDTO[] | null>(null)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState<SessionGroup | null>(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingSessions, setEditingSessions] = useState<ClassSessionDTO[] | null>(null);
+  const [seriesFormOpen, setSeriesFormOpen] = useState(false);
+  const [editingSeries, setEditingSeries] = useState<ClassSessionDTO[] | null>(null);
 
-  const fetchSessions = () => setRefreshKey((k) => k + 1)
+  const fetchSessions = () => setRefreshKey((k) => k + 1);
 
-  const sessions = useMemo(() => rawSessions ?? [], [rawSessions])
+  const sessions = useMemo(() => rawSessions ?? [], [rawSessions]);
 
   const metrics = useMemo(() => {
-    const todayStr = formatYMD(new Date())
-    const weekStart = new Date(currentDate)
-    weekStart.setDate(currentDate.getDate() - currentDate.getDay())
-    weekStart.setHours(0, 0, 0, 0)
-    const weekEnd = new Date(weekStart)
-    weekEnd.setDate(weekStart.getDate() + 6)
-    weekEnd.setHours(23, 59, 59, 999)
+    const todayStr = formatYMD(new Date());
+    const weekStart = new Date(currentDate);
+    weekStart.setDate(currentDate.getDate() - currentDate.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
 
-    const selectedStr = formatYMD(currentDate)
-    const selectedDay = sessions.filter((s) => sessionDate(s) === selectedStr)
+    const selectedStr = formatYMD(currentDate);
+    const selectedDay = sessions.filter((s) => sessionDate(s) === selectedStr);
 
     return {
       classesToday: sessions.filter((s) => sessionDate(s) === todayStr).length,
       classesThisWeek: sessions.filter((s) => {
-        const d = new Date(sessionDate(s) + "T00:00:00")
-        return d >= weekStart && d <= weekEnd
+        const d = new Date(sessionDate(s) + "T00:00:00");
+        return d >= weekStart && d <= weekEnd;
       }).length,
       totalStudents: selectedDay.filter((s) => s.student).length,
       occupiedRooms: new Set(selectedDay.map((s) => s.classroomUuid)).size,
-    }
-  }, [sessions, currentDate])
+    };
+  }, [sessions, currentDate]);
 
   const filteredSessions = useMemo(() => {
-    if (!searchQuery.trim()) return sessions
-    const q = searchQuery.toLowerCase()
+    if (!searchQuery.trim()) return sessions;
+    const q = searchQuery.toLowerCase();
     return sessions.filter(
       (s) =>
         s.subjectTeacher.subject.description.toLowerCase().includes(q) ||
         s.subjectTeacher.employee.name.toLowerCase().includes(q) ||
         resolveClassroomName(classroomNames, s.classroomUuid).toLowerCase().includes(q) ||
         (s.student?.name.toLowerCase().includes(q) ?? false)
-    )
-  }, [sessions, searchQuery, classroomNames])
+    );
+  }, [sessions, searchQuery, classroomNames]);
 
   const navigate = (dir: -1 | 1) => {
-    const d = new Date(currentDate)
-    if (viewMode === "week") d.setDate(d.getDate() + dir * 7)
-    else if (viewMode === "month") d.setMonth(d.getMonth() + dir)
-    else d.setDate(d.getDate() + dir)
-    setCurrentDate(d)
-  }
+    const d = new Date(currentDate);
+    if (viewMode === "week") d.setDate(d.getDate() + dir * 7);
+    else if (viewMode === "month") d.setMonth(d.getMonth() + dir);
+    else d.setDate(d.getDate() + dir);
+    setCurrentDate(d);
+  };
 
   const openEditForm = () => {
-    setEditingSessions(selectedGroup?.sessions ?? null)
-    setSelectedGroup(null)
-    setFormOpen(true)
-  }
+    setEditingSessions(selectedGroup?.sessions ?? null);
+    setSelectedGroup(null);
+    setFormOpen(true);
+  };
+
+  // Cancelar/reativar age só nas aulas daquele horário — a recorrência inteira se
+  // gerencia pela tela de detalhe da turma, do professor ou da disciplina.
+  const [cancelTarget, setCancelTarget] = useState<ClassSessionDTO[] | null>(null);
+  // Guarda de onde o cancelamento foi aberto, para o "Voltar" devolver ao modal da aula.
+  const [cancelReturnTo, setCancelReturnTo] = useState<SessionGroup | null>(null);
+
+  const openCancel = () => {
+    setCancelTarget(selectedGroup?.sessions ?? null);
+    setCancelReturnTo(selectedGroup);
+    setSelectedGroup(null);
+  };
+
+  const closeCancel = () => {
+    setCancelTarget(null);
+    setSelectedGroup(cancelReturnTo);
+    setCancelReturnTo(null);
+  };
+
+  const confirmCancel = async (reason: string) => {
+    for (const session of cancelTarget ?? []) {
+      await api.put(`/classsession/${session.uuid}/status`, {
+        status: "CANCELED",
+        cancellationReason: reason || null,
+      });
+    }
+    setCancelTarget(null);
+    setCancelReturnTo(null);
+    fetchSessions();
+  };
+
+  const reactivateSelected = async () => {
+    const targets = selectedGroup?.sessions ?? [];
+    setSelectedGroup(null);
+    for (const session of targets) {
+      await api.put(`/classsession/${session.uuid}/status`, { status: "SCHEDULED", cancellationReason: null });
+    }
+    fetchSessions();
+  };
 
   const openEditSeries = () => {
-    if (!selectedGroup) return
-    const recurrenceUuid = groupRecurrenceUuid(selectedGroup)
-    if (!recurrenceUuid) return
+    if (!selectedGroup) return;
+    const recurrenceUuid = groupRecurrenceUuid(selectedGroup);
+    if (!recurrenceUuid) return;
 
-    const anchor = new Date(selectedGroup.sessions[0].startTime as unknown as string)
+    const anchor = new Date(selectedGroup.sessions[0].startTime as unknown as string);
     const seriesSessions = sessions
       .filter(
         (s) =>
@@ -107,15 +148,15 @@ export default function SchedulePage() {
       .sort(
         (a, b) =>
           new Date(a.startTime as unknown as string).getTime() - new Date(b.startTime as unknown as string).getTime()
-      )
+      );
 
-    setEditingSeries(seriesSessions)
-    setSelectedGroup(null)
-    setSeriesFormOpen(true)
-  }
+    setEditingSeries(seriesSessions);
+    setSelectedGroup(null);
+    setSeriesFormOpen(true);
+  };
 
   const dateLabel =
-    viewMode === "month" ? formatMonthYearLabel(currentDate) : formatDateLabel(currentDate)
+    viewMode === "month" ? formatMonthYearLabel(currentDate) : formatDateLabel(currentDate);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 p-6 md:p-8">
@@ -123,7 +164,7 @@ export default function SchedulePage() {
         title="Agendamentos de Aula"
         description="Controle de cronograma e fluxo de alunos."
         action={
-          <Button onClick={() => { setEditingSessions(null); setFormOpen(true) }}>
+          <Button onClick={() => { setEditingSessions(null); setFormOpen(true); }}>
             <Plus />
             Novo Agendamento
           </Button>
@@ -224,13 +265,21 @@ export default function SchedulePage() {
         onClose={() => setSelectedGroup(null)}
         onEdit={openEditForm}
         onEditSeries={openEditSeries}
+        onCancel={openCancel}
+        onReactivate={reactivateSelected}
+      />
+      <CancelSessionDialog
+        open={cancelTarget !== null}
+        count={cancelTarget?.length ?? 0}
+        onClose={closeCancel}
+        onConfirm={confirmCancel}
       />
       <ScheduleForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSuccess={(date) => {
-          fetchSessions()
-          setCurrentDate(new Date(date + "T00:00:00"))
+          fetchSessions();
+          setCurrentDate(new Date(date + "T00:00:00"));
         }}
         editingSessions={editingSessions}
       />
@@ -241,5 +290,5 @@ export default function SchedulePage() {
         sessions={editingSeries}
       />
     </div>
-  )
+  );
 }

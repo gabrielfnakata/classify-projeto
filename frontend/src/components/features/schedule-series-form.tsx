@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react"
-import { CalendarSync, Loader2, X } from "lucide-react"
-import { Formik, Form } from "formik"
-import type { FormikHelpers } from "formik"
-import * as yup from "yup"
+import { useEffect, useMemo, useState } from "react";
+import { CalendarSync, Loader2, X } from "lucide-react";
+import { Formik, Form } from "formik";
+import type { FormikHelpers } from "formik";
+import * as yup from "yup";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,41 +12,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import api from "@/services/api"
-import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
-import type { ClassSessionUpdateDTO } from "@/shared/dtos/class-session/ClassSessionUpdateDTO"
-import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSessionCreateDTO"
-import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO"
-import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
-import useFetch from "@/hooks/useFetch"
-import { formatYMD } from "@/shared/utils/date-formatter"
-import { sortedByName } from "@/shared/utils/sort-by-name"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TimeSelect } from "@/components/common/time-select";
+import api from "@/services/api";
+import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
+import type { ClassSessionUpdateDTO } from "@/shared/dtos/class-session/ClassSessionUpdateDTO";
+import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSessionCreateDTO";
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
+import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO";
+import useFetch from "@/hooks/useFetch";
+import { formatYMD } from "@/shared/utils/date-formatter";
+import { sortedByName } from "@/shared/utils/sort-by-name";
 import {
   DEFAULT_REPORT_CONTENT,
   describeWeekdays,
   generateRecurringDates,
   weekdaysOfDates,
-} from "@/shared/utils/recurrence"
+} from "@/shared/utils/recurrence";
 
-const pad = (n: number) => String(n).padStart(2, "0")
+const pad = (n: number) => String(n).padStart(2, "0");
 function toHHMM(raw: unknown): string {
-  const d = new Date(raw as string)
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const d = new Date(raw as string);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 interface FormValues {
-  teacherId: string
-  subjectId: string
-  classroomId: string
-  classGroupId: string
-  startTime: string
-  endTime: string
-  until: string
+  teacherId: string;
+  subjectId: string;
+  classroomId: string;
+  classGroupId: string;
+  startTime: string;
+  endTime: string;
+  until: string;
 }
 
 const ScheduleSeriesSchema = yup.object({
@@ -58,58 +59,58 @@ const ScheduleSeriesSchema = yup.object({
     .string()
     .required("Informe o horário de fim")
     .test("after-start", "O fim deve ser depois do início", function (endTime) {
-      const { startTime } = this.parent
-      if (!startTime || !endTime) return true
-      return endTime > startTime
+      const { startTime } = this.parent;
+      if (!startTime || !endTime) return true;
+      return endTime > startTime;
     }),
   until: yup.string().required("Informe até quando a recorrência vai"),
   classGroupId: yup.string(),
-})
+});
 
 interface ScheduleSeriesFormProps {
-  open: boolean
-  onClose: () => void
-  onSuccess: () => void
-  sessions: ClassSessionDTO[] | null
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  sessions: ClassSessionDTO[] | null;
 }
 
 export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: ScheduleSeriesFormProps) {
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO>("/subjectteacher")
-  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO>("/classroom")
-  const { data: classGroupsData, loading: loadingCG } = useFetch<ClassGroupDTO>("/class")
+  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO>("/subjectteacher");
+  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO>("/classroom");
+  const { data: classGroupsData, loading: loadingCG } = useFetch<ClassGroupDTO>("/class");
 
-  const subjectTeachers = subjectTeachersData ?? []
-  const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled)
-  const classGroups = classGroupsData ?? []
-  const loading = loadingST !== false || loadingCR !== false || loadingCG !== false
+  const subjectTeachers = subjectTeachersData ?? [];
+  const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled);
+  const classGroups = classGroupsData ?? [];
+  const loading = loadingST !== false || loadingCR !== false || loadingCG !== false;
 
-  const primary = sessions?.[0] ?? null
-  const isClassSeries = Boolean(primary?.classDTO)
+  const primary = sessions?.[0] ?? null;
+  const isClassSeries = Boolean(primary?.classDTO);
 
   const occurrenceCount = useMemo(() => {
-    if (!sessions) return 0
-    return new Set(sessions.map((s) => formatYMD(new Date(s.startTime as unknown as string)))).size
-  }, [sessions])
+    if (!sessions) return 0;
+    return new Set(sessions.map((s) => formatYMD(new Date(s.startTime as unknown as string)))).size;
+  }, [sessions]);
 
   useEffect(() => {
-    if (!open) return
-    setError(null)
-  }, [open])
+    if (!open) return;
+    setError(null);
+  }, [open]);
 
   const lastDate = useMemo(() => {
-    if (!sessions || sessions.length === 0) return ""
+    if (!sessions || sessions.length === 0) return "";
     return sessions
       .map((s) => formatYMD(new Date(s.startTime as unknown as string)))
       .sort()
-      .slice(-1)[0]
-  }, [sessions])
+      .slice(-1)[0];
+  }, [sessions]);
 
   const seriesWeekdays = useMemo(
     () => weekdaysOfDates((sessions ?? []).map((s) => new Date(s.startTime as unknown as string))),
     [sessions]
-  )
+  );
 
   const initialValues: FormValues = useMemo(
     () =>
@@ -125,70 +126,70 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
           }
         : { teacherId: "", subjectId: "", classroomId: "", classGroupId: "", startTime: "", endTime: "", until: "" },
     [primary, open, lastDate]
-  )
+  );
 
   const handleSubmit = async (values: FormValues, helpers: FormikHelpers<FormValues>) => {
-    setError(null)
+    setError(null);
     try {
-      if (!sessions || sessions.length === 0) return
+      if (!sessions || sessions.length === 0) return;
 
       const subjectTeacherId =
         subjectTeachers.find(
           (st) => st.employee.uuid === values.teacherId && st.subject.uuid === values.subjectId
-        )?.uuid ?? ""
+        )?.uuid ?? "";
 
       if (!subjectTeacherId) {
-        setError("Esse professor não leciona a disciplina selecionada. Escolha outra combinação.")
-        helpers.setSubmitting(false)
-        return
+        setError("Esse professor não leciona a disciplina selecionada. Escolha outra combinação.");
+        helpers.setSubmitting(false);
+        return;
       }
 
-      const dateOf = (s: ClassSessionDTO) => formatYMD(new Date(s.startTime as unknown as string))
-      const keep = sessions.filter((s) => dateOf(s) <= values.until)
-      const drop = sessions.filter((s) => dateOf(s) > values.until)
-      const problems: string[] = []
+      const dateOf = (s: ClassSessionDTO) => formatYMD(new Date(s.startTime as unknown as string));
+      const keep = sessions.filter((s) => dateOf(s) <= values.until);
+      const drop = sessions.filter((s) => dateOf(s) > values.until);
+      const problems: string[] = [];
 
-      let updated = 0
+      let updated = 0;
       for (const session of keep) {
-        const date = dateOf(session)
+        const date = dateOf(session);
         const payload: ClassSessionUpdateDTO = {
           subjectTeacherId,
           classroomUuid: values.classroomId,
           startTime: `${date}T${values.startTime}:00`,
           endTime: `${date}T${values.endTime}:00`,
-        }
-        if (isClassSeries) payload.classUuid = values.classGroupId
-        else if (session.student) payload.studentUuid = session.student.uuid
+        };
+        if (isClassSeries) payload.classUuid = values.classGroupId;
+        else if (session.student) payload.studentUuid = session.student.uuid;
 
         try {
-          await api.put(`/classsession/${session.uuid}`, payload)
-          updated += 1
+          await api.put(`/classsession/${session.uuid}`, payload);
+          updated += 1;
         } catch (err: unknown) {
-          const e = err as { response?: { data?: { mensagem?: string } } }
-          problems.push(`${date.split("-").reverse().join("/")}: ${e?.response?.data?.mensagem ?? "falhou"}`)
+          const e = err as { response?: { data?: { mensagem?: string } } };
+          problems.push(`${date.split("-").reverse().join("/")}: ${e?.response?.data?.mensagem ?? "falhou"}`);
         }
       }
 
-      let removed = 0
+      let removed = 0;
       for (const session of drop) {
         try {
-          await api.delete(`/classsession/${session.uuid}`, { data: {} })
-          removed += 1
+          await api.delete(`/classsession/${session.uuid}`, { data: {} });
+          removed += 1;
         } catch (err: unknown) {
-          const e = err as { response?: { data?: { mensagem?: string } } }
-          problems.push(`${dateOf(session).split("-").reverse().join("/")}: ${e?.response?.data?.mensagem ?? "não pôde ser removida"}`)
+          const e = err as { response?: { data?: { mensagem?: string } } };
+          problems.push(`${dateOf(session).split("-").reverse().join("/")}: ${e?.response?.data?.mensagem ?? "não pôde ser removida"}`);
         }
       }
 
-      let addedCount = 0
+      let addedCount = 0;
       if (lastDate && values.until > lastDate) {
-        const weekdays = weekdaysOfDates(sessions.map((s) => new Date(s.startTime as unknown as string)))
-        const existing = new Set(sessions.map(dateOf))
-        const targets = generateRecurringDates(lastDate, values.until, weekdays).filter((d) => !existing.has(d))
+        const weekdays = weekdaysOfDates(sessions.map((s) => new Date(s.startTime as unknown as string)));
+        const existing = new Set(sessions.map(dateOf));
+        const targets = generateRecurringDates(lastDate, values.until, weekdays).filter((d) => !existing.has(d));
 
         const perDate = isClassSeries
           ? [null]
-          : [...new Set(sessions.filter((s) => s.student).map((s) => s.student!.uuid))]
+          : [...new Set(sessions.filter((s) => s.student).map((s) => s.student!.uuid))];
 
         for (const date of targets) {
           for (const studentUuid of perDate) {
@@ -199,16 +200,16 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
               endTime: `${date}T${values.endTime}:00`,
               report: { content: DEFAULT_REPORT_CONTENT },
               recurrenceGroupUuid: primary?.recurrenceGroupUuid ?? undefined,
-            }
-            if (studentUuid) payload.studentUuid = studentUuid
-            else payload.classUuid = values.classGroupId
+            };
+            if (studentUuid) payload.studentUuid = studentUuid;
+            else payload.classUuid = values.classGroupId;
 
             try {
-              await api.post("/classsession", payload)
-              addedCount += 1
+              await api.post("/classsession", payload);
+              addedCount += 1;
             } catch (err: unknown) {
-              const e = err as { response?: { data?: { mensagem?: string } } }
-              problems.push(`${date.split("-").reverse().join("/")}: ${e?.response?.data?.mensagem ?? "falhou"}`)
+              const e = err as { response?: { data?: { mensagem?: string } } };
+              problems.push(`${date.split("-").reverse().join("/")}: ${e?.response?.data?.mensagem ?? "falhou"}`);
             }
           }
         }
@@ -219,21 +220,21 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
           `${updated} atualizada(s), ${removed} removida(s), ${addedCount} criada(s). ` +
           `Pendências — ${problems.slice(0, 4).join(" | ")}` +
           `${problems.length > 4 ? ` e mais ${problems.length - 4}` : ""}`
-        )
-        onSuccess()
-        helpers.setSubmitting(false)
-        return
+        );
+        onSuccess();
+        helpers.setSubmitting(false);
+        return;
       }
 
-      onSuccess()
-      onClose()
+      onSuccess();
+      onClose();
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { mensagem?: string } }; message?: string }
-      setError(e?.response?.data?.mensagem ?? e?.message ?? "Erro ao atualizar a recorrência.")
+      const e = err as { response?: { data?: { mensagem?: string } }; message?: string };
+      setError(e?.response?.data?.mensagem ?? e?.message ?? "Erro ao atualizar a recorrência.");
     } finally {
-      helpers.setSubmitting(false)
+      helpers.setSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -252,7 +253,7 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
                   .filter((st) => !values.subjectId || st.subject.uuid === values.subjectId)
                   .map((st) => [st.employee.uuid, st.employee])
               ).values(),
-            ]
+            ];
 
             const availableSubjects = [
               ...new Map(
@@ -260,7 +261,7 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
                   .filter((st) => !values.teacherId || st.employee.uuid === values.teacherId)
                   .map((st) => [st.subject.uuid, st.subject])
               ).values(),
-            ]
+            ];
 
             return (
               <Form>
@@ -287,18 +288,21 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Início</Label>
-                        <Input
-                          type="time"
+                        <TimeSelect
                           value={values.startTime}
-                          onChange={(e) => setFieldValue("startTime", e.target.value)}
+                          onChange={(v) => {
+                            setFieldValue("startTime", v);
+                            if (values.endTime && values.endTime <= v) setFieldValue("endTime", "");
+                          }}
                         />
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Fim</Label>
-                        <Input
-                          type="time"
+                        <TimeSelect
                           value={values.endTime}
-                          onChange={(e) => setFieldValue("endTime", e.target.value)}
+                          startFrom={values.startTime}
+                          disabled={!values.startTime}
+                          onChange={(v) => setFieldValue("endTime", v)}
                         />
                       </div>
                     </div>
@@ -335,9 +339,9 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
                             onValueChange={(v) => {
                               const subjectStillValid = subjectTeachers.some(
                                 (st) => st.employee.uuid === v && st.subject.uuid === values.subjectId
-                              )
-                              setFieldValue("teacherId", v)
-                              if (!subjectStillValid) setFieldValue("subjectId", "")
+                              );
+                              setFieldValue("teacherId", v);
+                              if (!subjectStillValid) setFieldValue("subjectId", "");
                             }}
                           >
                             <SelectTrigger className="flex-1 min-w-0"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
@@ -372,9 +376,9 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
                             onValueChange={(v) => {
                               const teacherStillValid = subjectTeachers.some(
                                 (st) => st.subject.uuid === v && st.employee.uuid === values.teacherId
-                              )
-                              setFieldValue("subjectId", v)
-                              if (!teacherStillValid) setFieldValue("teacherId", "")
+                              );
+                              setFieldValue("subjectId", v);
+                              if (!teacherStillValid) setFieldValue("teacherId", "");
                             }}
                           >
                             <SelectTrigger className="flex-1 min-w-0"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
@@ -464,10 +468,10 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
                   </Button>
                 </DialogFooter>
               </Form>
-            )
+            );
           }}
         </Formik>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

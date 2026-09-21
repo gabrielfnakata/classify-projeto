@@ -1,32 +1,33 @@
-import { useState } from "react"
-import { useNavigate } from "react-router"
-import { Formik, Form } from "formik"
-import type { FormikHelpers } from "formik"
-import { CalendarPlus, Loader2, X } from "lucide-react"
+import { useState } from "react";
+import { useNavigate } from "react-router";
+import { Formik, Form } from "formik";
+import type { FormikHelpers } from "formik";
+import { CalendarPlus, Loader2, X } from "lucide-react";
 
-import api from "@/services/api"
-import useFetch from "@/hooks/useFetch"
-import { FormikInput } from "@/components/formik-input/FormikInput"
-import { FormGrid } from "@/components/features/form-grid"
-import { WeekdayPicker } from "@/components/features/weekday-picker"
-import { RecurrencePreview } from "@/components/features/recurrence-preview"
-import { PageHeader } from "@/components/layout/page-header"
-import { ContentCard } from "@/components/layout/content-card"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
-import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
-import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
-import type { ClassGroupCreateDTO } from "@/shared/dtos/class-group/ClassGroupCreateDTO"
-import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO"
-import type { AddStudentsToClassGroupDTO } from "@/shared/dtos/class-group/AddStudentsToClassGroupDTO"
-import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSessionCreateDTO"
-import { DEFAULT_REPORT_CONTENT, generateRecurringDates } from "@/shared/utils/recurrence"
-import { sortedByName } from "@/shared/utils/sort-by-name"
-import { NewClassGroupValidationSchema } from "@/validation/ClassGroupSchema"
+import api from "@/services/api";
+import useFetch from "@/hooks/useFetch";
+import { FormikInput } from "@/components/formik-input/FormikInput";
+import { FormGrid } from "@/components/features/form-grid";
+import { WeekdayPicker } from "@/components/features/weekday-picker";
+import { RecurrencePreview } from "@/components/features/recurrence-preview";
+import { TimeSelect } from "@/components/common/time-select";
+import { PageHeader } from "@/components/layout/page-header";
+import { ContentCard } from "@/components/layout/content-card";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
+import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
+import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO";
+import type { ClassGroupCreateDTO } from "@/shared/dtos/class-group/ClassGroupCreateDTO";
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
+import type { AddStudentsToClassGroupDTO } from "@/shared/dtos/class-group/AddStudentsToClassGroupDTO";
+import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSessionCreateDTO";
+import { DEFAULT_REPORT_CONTENT, generateRecurringDates } from "@/shared/utils/recurrence";
+import { sortedByName } from "@/shared/utils/sort-by-name";
+import { NewClassGroupValidationSchema } from "@/validation/ClassGroupSchema";
 
 interface FormValues {
     name: string;
@@ -58,7 +59,7 @@ const INITIAL_VALUES: FormValues = {
     isRecurring: false,
     recurringWeekdays: [],
     recurringUntil: "",
-}
+};
 
 export default function NewClassGroup() {
     const navigate = useNavigate();
@@ -354,18 +355,21 @@ export default function NewClassGroup() {
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <Label className="text-xs text-muted-foreground">Início</Label>
-                                                        <Input
-                                                            type="time"
+                                                        <TimeSelect
                                                             value={values.startTime}
-                                                            onChange={(e) => setFieldValue("startTime", e.target.value)}
+                                                            onChange={(v) => {
+                                                                setFieldValue("startTime", v);
+                                                                if (values.endTime && values.endTime <= v) setFieldValue("endTime", "");
+                                                            }}
                                                         />
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <Label className="text-xs text-muted-foreground">Fim</Label>
-                                                        <Input
-                                                            type="time"
+                                                        <TimeSelect
                                                             value={values.endTime}
-                                                            onChange={(e) => setFieldValue("endTime", e.target.value)}
+                                                            startFrom={values.startTime}
+                                                            disabled={!values.startTime}
+                                                            onChange={(v) => setFieldValue("endTime", v)}
                                                         />
                                                     </div>
                                                 </div>
@@ -421,7 +425,7 @@ export default function NewClassGroup() {
                                     )}
 
                                     <div className="flex flex-row justify-end gap-4">
-                                        <Button type="button" className="h-10 px-5 rounded-xl bg-red-400 text-sm font-semibold" onClick={() => { navigate("/class-groups") }}>
+                                        <Button type="button" className="h-10 px-5 rounded-xl bg-red-400 text-sm font-semibold" onClick={() => { navigate("/class-groups"); }}>
                                             Voltar
                                         </Button>
                                         <Button type="submit" disabled={isSubmitting || !isValid} className="h-10 px-5 rounded-xl text-sm font-semibold">

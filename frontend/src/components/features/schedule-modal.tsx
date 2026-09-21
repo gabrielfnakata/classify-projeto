@@ -1,8 +1,10 @@
-import { BookOpen, CalendarSync, ClipboardCheck, Clock, MapPin, Pencil, Users } from "lucide-react"
-import { useNavigate } from "react-router"
+import {
+  BookOpen, CalendarCheck, CalendarSync, CalendarX, ClipboardCheck, Clock, MapPin, Pencil, Users,
+} from "lucide-react";
+import { useNavigate } from "react-router";
 
-import { StatusBadge } from "@/components/features/status-badge"
-import { Button } from "@/components/ui/button"
+import { StatusBadge } from "@/components/features/status-badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,42 +12,47 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { formatYMD } from "@/shared/utils/date-formatter"
-import { resolveClassroomName } from "@/shared/utils/class-session-helpers"
-import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping"
+} from "@/components/ui/dialog";
+import { formatYMD } from "@/shared/utils/date-formatter";
+import { resolveClassroomName } from "@/shared/utils/class-session-helpers";
+import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping";
+import { isCanceled } from "@/shared/utils/class-session-helpers";
 
 interface ScheduleModalProps {
-  group: SessionGroup | null
-  classroomNames: Map<string, string>
-  onClose: () => void
-  onEdit: () => void
-  onEditSeries: () => void
+  group: SessionGroup | null;
+  classroomNames: Map<string, string>;
+  onClose: () => void;
+  onEdit: () => void;
+  onEditSeries: () => void;
+  onCancel: () => void;
+  onReactivate: () => void;
 }
 
-type SessionStatus = "info" | "success"
+type SessionStatus = "info" | "success" | "danger";
 
 const statusLabels: Record<SessionStatus, string> = {
   info: "Agendado",
   success: "Concluído",
-}
+  danger: "Cancelada",
+};
 
-const pad = (n: number) => String(n).padStart(2, "0")
+const pad = (n: number) => String(n).padStart(2, "0");
 
 function toHHMM(raw: unknown): string {
-  const d = new Date(raw as string)
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const d = new Date(raw as string);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function groupStatus(group: SessionGroup): SessionStatus {
-  return new Date(group.sessions[0].endTime as unknown as string) < new Date() ? "success" : "info"
+  if (group.sessions.every(isCanceled)) return "danger";
+  return new Date(group.sessions[0].endTime as unknown as string) < new Date() ? "success" : "info";
 }
 
 function formatDisplayDate(raw: unknown): string {
-  const date = new Date(raw as string)
+  const date = new Date(raw as string);
   return new Intl.DateTimeFormat("pt-BR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
-  }).format(new Date(formatYMD(date) + "T00:00:00"))
+  }).format(new Date(formatYMD(date) + "T00:00:00"));
 }
 
 function Initials({ name }: { name: string }) {
@@ -54,31 +61,35 @@ function Initials({ name }: { name: string }) {
     .filter(Boolean)
     .slice(0, 2)
     .map((w) => w[0].toUpperCase())
-    .join("")
+    .join("");
 
   return (
     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-bold text-primary">
       {initials}
     </div>
-  )
+  );
 }
 
-export function ScheduleModal({ group, classroomNames, onClose, onEdit, onEditSeries }: ScheduleModalProps) {
-  const navigate = useNavigate()
-  const primary = group?.sessions[0] ?? null
+export function ScheduleModal({
+  group, classroomNames, onClose, onEdit, onEditSeries, onCancel, onReactivate,
+}: ScheduleModalProps) {
+  const navigate = useNavigate();
+  const primary = group?.sessions[0] ?? null;
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) onClose()
-  }
+    if (!open) onClose();
+  };
 
-  const status = group ? groupStatus(group) : "info"
+  const status = group ? groupStatus(group) : "info";
+  const canceled = status === "danger";
+  const reason = group?.sessions.find((s) => s.cancellationReason)?.cancellationReason;
 
   const handleAttendance = () => {
-    if (!group) return
-    const [first, ...rest] = group.sessions
-    const query = rest.length > 0 ? `?group=${rest.map((s) => s.uuid).join(",")}` : ""
-    navigate(`/attendance/${first.uuid}${query}`)
-  }
+    if (!group) return;
+    const [first, ...rest] = group.sessions;
+    const query = rest.length > 0 ? `?group=${rest.map((s) => s.uuid).join(",")}` : "";
+    navigate(`/attendance/${first.uuid}${query}`);
+  };
 
   return (
     <Dialog open={!!group} onOpenChange={handleOpenChange}>
@@ -99,6 +110,7 @@ export function ScheduleModal({ group, classroomNames, onClose, onEdit, onEditSe
           </div>
           <DialogDescription className="mt-1">
             {primary ? formatDisplayDate(primary.startTime) : ""}
+            {canceled && reason ? ` · Motivo: ${reason}` : ""}
           </DialogDescription>
         </DialogHeader>
 
@@ -169,6 +181,8 @@ export function ScheduleModal({ group, classroomNames, onClose, onEdit, onEditSe
           <Button
             variant="outline"
             className="flex-1"
+            disabled={canceled}
+            title={canceled ? "Aula cancelada não tem chamada" : undefined}
             onClick={handleAttendance}
           >
             <ClipboardCheck className="h-4 w-4" />
@@ -178,6 +192,17 @@ export function ScheduleModal({ group, classroomNames, onClose, onEdit, onEditSe
             <Pencil className="h-4 w-4" />
             Editar Agendamento
           </Button>
+          {canceled ? (
+            <Button variant="outline" className="flex-1" onClick={onReactivate}>
+              <CalendarCheck className="h-4 w-4" />
+              Reativar Aula
+            </Button>
+          ) : (
+            <Button variant="outline" className="flex-1" onClick={onCancel}>
+              <CalendarX className="h-4 w-4" />
+              Cancelar Aula
+            </Button>
+          )}
           {group && groupRecurrenceUuid(group) && (
             <Button variant="outline" className="flex-1" onClick={onEditSeries}>
               <CalendarSync className="h-4 w-4" />
@@ -187,5 +212,5 @@ export function ScheduleModal({ group, classroomNames, onClose, onEdit, onEditSe
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
