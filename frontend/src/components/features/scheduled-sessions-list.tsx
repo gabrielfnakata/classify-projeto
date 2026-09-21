@@ -11,6 +11,7 @@ import { ScheduleForm } from "@/components/features/schedule-form";
 import { ScheduleSeriesForm } from "@/components/features/schedule-series-form";
 import { CancelSessionDialog } from "@/components/features/cancel-session-dialog";
 import { EmptyState } from "@/components/common/empty-state";
+import { IconAction } from "@/components/common/icon-action";
 import { Button } from "@/components/ui/button";
 import { ContentCard } from "@/components/layout/content-card";
 import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence";
@@ -18,6 +19,7 @@ import { formatDMY, formatHHMM } from "@/shared/utils/date-formatter";
 import { isCanceled, sessionEnd, sessionStart } from "@/shared/utils/class-session-helpers";
 import { apiErrorMessage } from "@/shared/utils/api-error";
 import { buildScheduleBlocks, type ScheduleBlock } from "@/shared/utils/schedule-blocks";
+import { cn } from "@/lib/utils";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type { BatchResultDTO } from "@/shared/dtos/class-session/BatchResultDTO";
 import type { ScheduleFormState } from "@/shared/models/forms/ScheduleFormState";
@@ -30,12 +32,6 @@ interface ScheduledSessionsListProps {
   title?: string;
   emptyDescription?: string;
 }
-
-/** Aulas do bloco que ainda vão acontecer — só elas podem ser canceladas ou reativadas. */
-const upcomingOf = (block: ScheduleBlock): ClassSessionDTO[] => {
-  const now = Date.now();
-  return block.sessions.filter((session) => sessionStart(session).getTime() >= now);
-};
 
 interface BlockRowProps {
   block: ScheduleBlock;
@@ -59,9 +55,9 @@ const BlockRow = memo(function BlockRow({
 
   const canceledCount = block.sessions.filter(isCanceled).length;
   const allCanceled = canceledCount === block.sessions.length;
-  const upcoming = upcomingOf(block);
-  const upcomingActive = upcoming.filter((session) => !isCanceled(session));
-  const upcomingCanceled = upcoming.filter(isCanceled);
+  const activeCount = block.sessions.length - canceledCount;
+
+  const partialCanceled = canceledCount > 0 && !allCanceled;
 
   const when = isSeries
     ? `${describeWeekdays(weekdaysOfDates(block.sessions.map(sessionStart)))} · ${timeRange} · ${formatDMY(start)} a ${formatDMY(sessionStart(last))}`
@@ -71,93 +67,78 @@ const BlockRow = memo(function BlockRow({
 
   return (
     <div
-      className={`flex flex-col gap-3 rounded-xl border border-border bg-panel-soft p-4 sm:flex-row sm:items-center sm:justify-between ${
-        allCanceled ? "opacity-70" : ""
-      }`}
+      className={cn(
+        "flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between",
+        allCanceled
+          ? "border-dashed border-border/60 bg-panel-soft/40 opacity-60"
+          : "border-border bg-panel-soft"
+      )}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <div className={cn(
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+          allCanceled ? "bg-muted" : "bg-primary/10"
+        )}>
           {allCanceled
             ? <CalendarX className="h-4.5 w-4.5 text-muted-foreground" />
             : isSeries
               ? <CalendarSync className="h-4.5 w-4.5 text-primary" />
               : <Clock className="h-4.5 w-4.5 text-primary" />}
         </div>
-        <div className="min-w-0">
+        <div className={cn("min-w-0", allCanceled && "line-through decoration-muted-foreground/70")}>
           <div className="flex flex-wrap items-center gap-2">
-            <p className={`font-semibold text-foreground ${allCanceled ? "line-through" : ""}`}>
+            <p className="font-semibold text-foreground">
               {first.subjectTeacher.subject.description}
             </p>
-            {isSeries && <StatusBadge variant="info">{block.sessions.length} aulas</StatusBadge>}
-            {canceledCount > 0 && (
-              <StatusBadge variant="danger">
-                {allCanceled ? "Cancelada" : `${canceledCount} cancelada${canceledCount > 1 ? "s" : ""}`}
-              </StatusBadge>
+            {isSeries && !allCanceled && (
+              <StatusBadge variant="info">{block.sessions.length} aulas</StatusBadge>
             )}
           </div>
           <p className="truncate text-sm text-muted-foreground">
             {when}
             {extra ? ` · ${extra}` : ""}
             {reason ? ` · Motivo: ${reason}` : ""}
+            {partialCanceled ? ` · ${canceledCount} de ${block.sessions.length} canceladas` : ""}
           </p>
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={allCanceled}
-          title={allCanceled ? "Aula cancelada não tem chamada" : isSeries ? "Fazer chamada de todas as datas" : "Fazer chamada desta aula"}
-          onClick={() =>
-            navigate(isSeries ? `/attendance/series/${block.recurrenceUuid}` : `/attendance/${first.uuid}`)
-          }
-        >
-          <ClipboardCheck className="h-4 w-4" />
-          Chamada
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          title={isSeries ? "Editar recorrência" : "Editar aula"}
-          onClick={() => onEdit(block)}
-        >
-          <Pencil className="h-4 w-4" />
-          Editar
-        </Button>
-        {upcomingActive.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            title="Cancelar mantém a aula no histórico e libera o horário"
-            onClick={() => onCancel(block)}
-          >
-            <CalendarX className="h-4 w-4" />
-            Cancelar
-            {upcomingActive.length > 1 ? ` (${upcomingActive.length})` : ""}
-          </Button>
-        )}
-        {upcomingActive.length === 0 && upcomingCanceled.length > 0 && (
-          <Button
-            variant="outline"
-            size="sm"
-            title="Voltar a agendar esta aula"
+      <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+        {allCanceled ? (
+          <IconAction
+            label="Reativar e voltar a agendar"
+            icon={<CalendarCheck />}
             onClick={() => onReactivate(block)}
-          >
-            <CalendarCheck className="h-4 w-4" />
-            Reativar
-          </Button>
+          />
+        ) : (
+          <>
+            <IconAction
+              label={isSeries ? "Fazer chamada de todas as datas" : "Fazer chamada desta aula"}
+              icon={<ClipboardCheck />}
+              onClick={() =>
+                navigate(isSeries ? `/attendance/series/${block.recurrenceUuid}` : `/attendance/${first.uuid}`)
+              }
+            />
+            <IconAction
+              label={isSeries ? "Editar recorrência" : "Editar aula"}
+              icon={<Pencil />}
+              onClick={() => onEdit(block)}
+            />
+            <IconAction
+              label={activeCount > 1
+                ? `Cancelar as ${activeCount} aulas (ficam no histórico)`
+                : "Cancelar a aula (fica no histórico)"}
+              icon={<CalendarX />}
+              onClick={() => onCancel(block)}
+            />
+            <IconAction
+              label={isSeries ? "Excluir a recorrência do sistema" : "Excluir a aula do sistema"}
+              icon={<Trash2 />}
+              onClick={() => onDelete(block)}
+              className="text-destructive hover:text-destructive"
+            />
+          </>
         )}
-        <Button
-          variant="outline"
-          size="sm"
-          title={isSeries ? "Excluir recorrência inteira (apaga do sistema)" : "Excluir aula (apaga do sistema)"}
-          onClick={() => onDelete(block)}
-          className="text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-          Excluir
-        </Button>
       </div>
     </div>
   );
@@ -233,7 +214,7 @@ export function ScheduledSessionsList({
 
   const handleReactivate = useCallback((block: ScheduleBlock) =>
     runBatch(
-      upcomingOf(block).filter(isCanceled),
+      block.sessions.filter(isCanceled),
       (uuids) => api.put("/classsession/status/batch", { uuids, status: "SCHEDULED", cancellationReason: null }),
       "Algumas aulas não puderam ser reativadas"
     ),
@@ -248,7 +229,7 @@ export function ScheduledSessionsList({
   [runBatch]);
 
   const handleCancel = useCallback((block: ScheduleBlock) => {
-    setCancelTarget(upcomingOf(block).filter((session) => !isCanceled(session)));
+    setCancelTarget(block.sessions.filter((session) => !isCanceled(session)));
   }, []);
 
   const canSchedule = schedulePreset !== undefined;
