@@ -6,6 +6,8 @@ import java.time.Month;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
 import br.com.ifsp.classify.dtos.create.SubjectCreateDTO;
@@ -26,7 +28,9 @@ import br.com.ifsp.classify.services.UserService;
 @Configuration
 public class DataInitializer {
     
+    // Roda antes do DemoDataSeeder: ele depende dos cargos e dos usuários criados aqui.
     @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     CommandLineRunner initDatabase(RoleRepository roleRepository, RoleService roleService, EmployeeService employeeService, UserRepository userRepository, UserService userService, SubjectService subjectService, SubjectTeacherService subjectTeacherService) {
         return (args) -> {
             if (roleRepository.count() == 0) {
