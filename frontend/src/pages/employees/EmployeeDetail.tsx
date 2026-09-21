@@ -42,7 +42,6 @@ export default function EmployeeDetail() {
 
   const [editing, setEditing] = useState(false);
 
-  // Vínculos deste professor, indexados pela disciplina (para remover pelo uuid do vínculo).
   const linkBySubject = useMemo(() => {
     const map = new Map<string, SubjectTeacherDTO>();
     for (const link of links) {

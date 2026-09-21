@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatDuration } from "@/shared/utils/time-format";
+import { formatDuration } from "@/shared/utils/date-formatter";
 import { cn } from "@/lib/utils";
 
 const STEP_MINUTES = 15;

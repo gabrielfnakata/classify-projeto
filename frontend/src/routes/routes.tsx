@@ -23,6 +23,7 @@ import StudentDetail from "@/pages/students/StudentDetail";
 import EmployeeDetail from "@/pages/employees/EmployeeDetail";
 import SubjectDetail from "@/pages/subjects/SubjectDetail";
 import ClassroomDetail from "@/pages/classrooms/ClassroomDetail";
+import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
 
 export default function AppRoutes() {
     return (
@@ -111,6 +112,9 @@ export default function AppRoutes() {
             }/>
             <Route path="/class-groups/:uuid" element={
                 <ProtectedRoute children={<ClassGroupDetail />} />
+            }/>
+            <Route path="/student-home-page" element={
+                <ProtectedRoute children={<StudentHomePage />} />
             }/>
         </Routes>
     );

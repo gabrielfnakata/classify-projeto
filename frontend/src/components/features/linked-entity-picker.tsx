@@ -16,7 +16,6 @@ interface LinkedEntityPickerProps {
   onSelect: (uuid: string) => void;
 }
 
-// Busca com dropdown para vincular um registro (aluno, disciplina, professor...) a outro.
 export function LinkedEntityPicker({
   options,
   placeholder,

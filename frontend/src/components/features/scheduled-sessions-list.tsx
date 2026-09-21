@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { ContentCard } from "@/components/layout/content-card";
 import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence";
-import { formatDMY, formatHM } from "@/shared/utils/time-format";
+import { formatDMY, formatHHMM } from "@/shared/utils/date-formatter";
 import { isCanceled, sessionEnd, sessionStart } from "@/shared/utils/class-session-helpers";
 import { apiErrorMessage } from "@/shared/utils/api-error";
 import { buildScheduleBlocks, type ScheduleBlock } from "@/shared/utils/schedule-blocks";
@@ -25,9 +25,7 @@ import type { ScheduleFormState } from "@/shared/models/forms/ScheduleFormState"
 interface ScheduledSessionsListProps {
   sessions: ClassSessionDTO[];
   onChanged: () => void;
-  // Quando informado, habilita o botão "Agendar aula" já com os campos da entidade preenchidos.
   schedulePreset?: Partial<ScheduleFormState>;
-  // Texto de contexto no fim da linha (ex.: "Prof. Fulano" ou "Turma 3A · Sala 12").
   secondaryInfo?: (session: ClassSessionDTO) => string;
   title?: string;
   emptyDescription?: string;
@@ -48,7 +46,6 @@ interface BlockRowProps {
   onDelete: (block: ScheduleBlock) => void;
 }
 
-// Memoizado: a lista inteira re-renderiza a cada refetch, mas cada linha só muda se o bloco mudar.
 const BlockRow = memo(function BlockRow({
   block, secondaryInfo, onEdit, onCancel, onReactivate, onDelete,
 }: BlockRowProps) {
@@ -58,7 +55,7 @@ const BlockRow = memo(function BlockRow({
   const last = block.sessions[block.sessions.length - 1];
   const isSeries = block.recurrenceUuid !== null;
   const start = sessionStart(first);
-  const timeRange = `${formatHM(start)}–${formatHM(sessionEnd(first))}`;
+  const timeRange = `${formatHHMM(start)}–${formatHHMM(sessionEnd(first))}`;
 
   const canceledCount = block.sessions.filter(isCanceled).length;
   const allCanceled = canceledCount === block.sessions.length;
@@ -166,8 +163,6 @@ const BlockRow = memo(function BlockRow({
   );
 });
 
-// Bloco "Aulas Agendadas" usado nas telas de detalhe (turma, aluno, professor, sala,
-// disciplina). Agrupa recorrências, e concentra chamada, edição, cancelamento, exclusão e criação.
 export function ScheduledSessionsList({
   sessions,
   onChanged,

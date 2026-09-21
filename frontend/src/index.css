@@ -58,7 +58,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  
+
   --color-sidebar-background: var(--sidebar-background-base);
   --color-sidebar-gradient: var(--sidebar-background-gradient);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -288,5 +288,27 @@
 
   .scrollbar-slim::-webkit-scrollbar-corner {
     background: transparent;
+  }
+
+  .scrollbar-themed {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
   }
 }

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
@@ -13,10 +13,12 @@ import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
 const collator = new Intl.Collator("pt-BR", { sensitivity: "base" });
 
 export default function StudentRegistration() {
-    const { data } = useFetch<StudentDTO>('/student');
+    const [refreshKey, setRefreshKey] = useState(0);
+    const handleRefresh = () => setRefreshKey(k => k + 1);
+
+    const { data } = useFetch<StudentDTO>(`/student?r=${refreshKey}`);
     const { data: classGroups } = useFetch<ClassGroupDTO>('/class');
 
-    // aluno → nomes das turmas em que está matriculado (uma passada sobre as turmas).
     const classGroupsByStudent = useMemo(() => {
         const map = new Map<string, string[]>();
         for (const classGroup of classGroups ?? []) {
@@ -43,7 +45,6 @@ export default function StudentRegistration() {
         {name: 'cpf', inputType: 'cpf', placeholder: 'CPF', width: 25},
         {name: 'telephone', inputType: 'text', placeholder: 'Telefone', width: 25},
     ];
-
     return (
         <RegistrationPage
             data={sortedByName(data ?? [])}
@@ -52,6 +53,7 @@ export default function StudentRegistration() {
             title="Alunos"
             registrationRoute="/new-student"
             detailRoute={(row) => `/students/${row.uuid}`}
+            onRefresh={handleRefresh}
         >
         </RegistrationPage>
     );

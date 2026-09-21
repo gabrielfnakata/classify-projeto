@@ -15,8 +15,6 @@ interface EntityDetailLayoutProps {
   children: ReactNode;
 }
 
-// Cabeçalho padrão das telas de detalhe (título, voltar e o toggle Editar/Concluir),
-// no mesmo desenho da tela de Turma.
 export function EntityDetailLayout({
   title,
   description,

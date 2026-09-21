@@ -2,7 +2,6 @@ import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 
 const collator = new Intl.Collator("pt-BR", { sensitivity: "base" });
 
-// Índices dos vínculos professor↔disciplina, nos dois sentidos, com nomes já ordenados.
 export function teachersBySubject(links: SubjectTeacherDTO[]): Map<string, string[]> {
   return groupNames(links, (link) => link.subject.uuid, (link) => link.employee.name);
 }

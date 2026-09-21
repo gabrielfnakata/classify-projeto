@@ -22,7 +22,6 @@ interface TeacherAvailabilitySectionProps {
 const EMPTY: TeacherAvailabilityDTO[] = [];
 const WEEKDAYS_DEFAULT = [1, 2, 3, 4, 5]; // seg–sex, em índices de Date#getDay()
 
-// Quadro "Disponibilidade" da tela do professor: blocos por dia da semana, com edição no card.
 export function TeacherAvailabilitySection({ employeeUuid, editing }: TeacherAvailabilitySectionProps) {
   const { data, refetch } = useFetchList<TeacherAvailabilityDTO>(`/employee/${employeeUuid}/availability`);
   const blocks = data ?? EMPTY;

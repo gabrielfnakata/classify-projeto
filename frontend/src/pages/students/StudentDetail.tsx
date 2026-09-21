@@ -13,7 +13,7 @@ import { ScheduledSessionsList } from "@/components/features/scheduled-sessions-
 import { SectionTitle } from "@/components/features/section-title";
 import { EmptyState } from "@/components/common/empty-state";
 import { ContentCard } from "@/components/layout/content-card";
-import { formatDMY } from "@/shared/utils/time-format";
+import { formatDMY } from "@/shared/utils/date-formatter";
 import { scheduleWindowQuery } from "@/shared/utils/schedule-window";
 import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
@@ -44,7 +44,6 @@ export default function StudentDetail() {
 
   const [editingClassGroups, setEditingClassGroups] = useState(false);
 
-  // Uma única passada sobre as turmas separa "matriculado" de "disponível para matricular".
   const { enrolled, available } = useMemo(() => {
     const enrolled: LinkedEntity[] = [];
     const available: PickerOption[] = [];
@@ -69,8 +68,6 @@ export default function StudentDetail() {
     return { enrolled, available };
   }, [classGroups, uuid]);
 
-  // Disciplinas cursadas = disciplinas das aulas (individuais ou via turma) que o aluno tem,
-  // com os professores que as dão para esse aluno.
   const subjects = useMemo<StudentSubject[]>(() => {
     const byUuid = new Map<string, { description: string; teachers: Set<string> }>();
 
@@ -92,7 +89,6 @@ export default function StudentDetail() {
       .sort((a, b) => a.description.localeCompare(b.description, "pt-BR"));
   }, [sessions]);
 
-  // Entrar/sair de uma turma muda as aulas do aluno, então as duas listas recarregam.
   const refreshAll = useCallback(() => {
     refetchClassGroups();
     refetchSessions();

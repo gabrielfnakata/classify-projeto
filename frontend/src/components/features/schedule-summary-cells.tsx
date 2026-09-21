@@ -1,8 +1,6 @@
 import { StatusBadge } from "@/components/features/status-badge";
 import type { ScheduleSummary } from "@/hooks/useScheduleSummary";
 
-// Células reutilizadas pelas listagens que mostram resumo de agenda.
-
 export function UpcomingSessionsBadge({ summary }: { summary?: ScheduleSummary }) {
   if (!summary || summary.upcoming === 0) {
     return <StatusBadge variant="muted">Sem aulas</StatusBadge>;

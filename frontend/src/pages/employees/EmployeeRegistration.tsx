@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
@@ -13,7 +13,10 @@ import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO";
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO";
 
 export default function EmployeeRegistration() {
-    const { data } = useFetch<EmployeeDTO>('/employee');
+    const [refreshKey, setRefreshKey] = useState(0);
+    const handleRefresh = () => setRefreshKey(k => k + 1);
+
+    const { data } = useFetch<EmployeeDTO>(`/employee?r=${refreshKey}`);
     const { data: links } = useFetch<SubjectTeacherDTO>('/subjectteacher');
     const scheduleByEmployee = useScheduleSummary("EMPLOYEE");
 
@@ -37,7 +40,6 @@ export default function EmployeeRegistration() {
             ]
         }
     ];
-
     return (
         <RegistrationPage
             data={sortedByName(data ?? [])}
@@ -46,6 +48,7 @@ export default function EmployeeRegistration() {
             title="Funcionários"
             registrationRoute="/new-employee"
             detailRoute={(row) => `/employees/${row.uuid}`}
+            onRefresh={handleRefresh}
         >
         </RegistrationPage>
     );

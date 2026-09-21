@@ -32,8 +32,6 @@ interface LinkedEntitiesSectionProps {
   children?: ReactNode;
 }
 
-// Seção "registros vinculados" das telas de detalhe: busca para adicionar (em edição),
-// grade de cards com remoção e estado vazio. Quem usa só informa itens, opções e callbacks.
 export function LinkedEntitiesSection({
   title,
   description,

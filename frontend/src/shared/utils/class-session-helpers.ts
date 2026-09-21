@@ -1,19 +1,19 @@
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type { ClassSessionStudentDTO } from "@/shared/dtos/class-session/ClassSessionStudentDTO";
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
+import { toDate } from "@/shared/utils/date-formatter";
 
-export const sessionStart = (session: ClassSessionDTO): Date => new Date(session.startTime as unknown as string);
-export const sessionEnd = (session: ClassSessionDTO): Date => new Date(session.endTime as unknown as string);
+export const sessionStart = (session: ClassSessionDTO): Date => toDate(session.startTime);
+export const sessionEnd = (session: ClassSessionDTO): Date => toDate(session.endTime);
 
 export const isCanceled = (session: ClassSessionDTO): boolean => session.status === "CANCELED";
 
 export function isSessionActiveAt(session: ClassSessionDTO, at: number): boolean {
-  // Aula cancelada não ocupa a sala.
   if (isCanceled(session)) return false;
   return sessionStart(session).getTime() <= at && at < sessionEnd(session).getTime();
 }
 
-// Quantas pessoas a aula coloca na sala: a turma inteira ou o aluno individual.
+/** Quantas pessoas a aula coloca na sala: a turma inteira ou o aluno individual. */
 export function sessionAttendeeCount(session: ClassSessionDTO): number {
   if (session.classDTO) return session.classDTO.students.length;
   return session.student ? 1 : 0;
