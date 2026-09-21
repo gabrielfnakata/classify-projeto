@@ -23,8 +23,8 @@ export const mainNavigation: Group[] = [
     title: 'Agenda',
     icon: Calendar,
     items: [
-      { title: 'Calendário', url: '/schedule' },
-      { title: 'Agendamentos', url: '/schedule' }
+      { title: 'Agendamentos', url: '/schedule' },
+      { title: 'Chamada', url: '/attendance' }
     ]
   },
   {
