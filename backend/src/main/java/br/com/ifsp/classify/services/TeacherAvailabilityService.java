@@ -12,6 +12,7 @@ import br.com.ifsp.classify.repositories.TeacherAvailabilityRepository;
 import br.com.ifsp.classify.specifications.ClassSessionSpecification;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.specifications.TeacherAvailabilitySpecification;
+import br.com.ifsp.classify.utils.ApplicationClock;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.stereotype.Service;
@@ -42,12 +43,14 @@ public class TeacherAvailabilityService {
     private final TeacherAvailabilityRepository repository;
     private final EmployeeRepository employeeRepository;
     private final ClassSessionRepository classSessionRepository;
+    private final ApplicationClock clock;
 
     public TeacherAvailabilityService(TeacherAvailabilityRepository repository, EmployeeRepository employeeRepository,
-            ClassSessionRepository classSessionRepository) {
+            ClassSessionRepository classSessionRepository, ApplicationClock clock) {
         this.repository = repository;
         this.employeeRepository = employeeRepository;
         this.classSessionRepository = classSessionRepository;
+        this.clock = clock;
     }
 
     public List<TeacherAvailabilityGetDTO> listByEmployee(String employeeUuid) {
@@ -96,7 +99,8 @@ public class TeacherAvailabilityService {
         if (block == null || !block.getEmployee().getId().equals(employee.getId()))
             throw new DtoException("O bloco de disponibilidade informado não foi encontrado");
 
-        List<TeacherAvailability> remaining = blocksOf(employee).stream()
+        List<TeacherAvailability> current = blocksOf(employee);
+        List<TeacherAvailability> remaining = current.stream()
                 .filter(b -> !b.getId().equals(block.getId()))
                 .collect(Collectors.toList());
 
@@ -104,8 +108,7 @@ public class TeacherAvailabilityService {
         // nenhum outro cobre. Aulas já fora da disponibilidade (agendadas antes dela existir) não
         // impedem a remoção — senão o professor ficaria preso aos blocos que cadastrou por engano.
         if (!remaining.isEmpty()) {
-            List<TeacherAvailability> current = blocksOf(employee);
-            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime now = clock.now();
             List<ClassSession> broken = classSessionRepository
                     .findAll(ClassSessionSpecification.filter(null, employeeUuid, null, null, null))
                     .stream()
