@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.services;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -105,7 +106,7 @@ public class AuditService {
         audit.setRegisterId(registerId);
         audit.setOperation(operation.trim().toUpperCase());
         audit.setUser(currentUser);
-        audit.setDate(LocalDateTime.now());
+        audit.setDate(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
         audit.setOldData(oldJson);
         audit.setNewData(newJson);
 
