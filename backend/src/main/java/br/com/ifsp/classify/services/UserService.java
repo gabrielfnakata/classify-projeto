@@ -2,6 +2,7 @@ package br.com.ifsp.classify.services;
 
 import java.time.LocalDateTime;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +27,14 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmployeeRepository employeeRepository;
+    private final AuditService auditService;
 
-    public UserService(UserRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, EmployeeRepository employeeRepository) {
+    public UserService(UserRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, EmployeeRepository employeeRepository, AuditService auditService) {
         super(repository);
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.employeeRepository = employeeRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -96,8 +99,10 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         employee.setUser(newUser);
 
         repository.save(newUser);
+        UserGetDTO createdUser = returnDTO(newUser);
+        auditService.logInsert("USER", newUser.getId(), createdUser);
 
-        return returnDTO(newUser);
+        return createdUser;
     }
 
     public User createUserFromEmployee(UserCreateDTO userDTO) {
@@ -139,6 +144,8 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         if (user == null || userDTO == null)
             return null;
 
+        UserGetDTO oldUser = returnDTO(user);
+
         if (!Utils.isNullOrEmpty(userDTO.email()))
             user.setEmail(Utils.trimAndUpper(userDTO.email()));
 
@@ -154,14 +161,18 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         }
 
         repository.save(user);
+        UserGetDTO updatedUser = returnDTO(user);
+        auditService.logUpdate("USER", user.getId(), oldUser, updatedUser);
 
-        return returnDTO(user);
+        return updatedUser;
     }
 
     public User updateUser(String userUuid, UserUpdateDTO userDTO) {
         User user = getEntityById(userUuid);
         if (user == null || userDTO == null)
             return null;
+
+        UserGetDTO oldUser = returnDTO(user);
 
         if (!Utils.isNullOrEmpty(userDTO.email()))
             user.setEmail(Utils.trimAndUpper(userDTO.email()));
@@ -177,6 +188,25 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
             user.setRole(role);
         }
 
+        UserGetDTO updatedUser = returnDTO(user);
+        if (user.getId() != null) {
+            auditService.logUpdate("USER", user.getId(), oldUser, updatedUser);
+        }
+
         return user;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        User user = getEntityById(uuid);
+        if (user == null)
+            return ResponseEntity.badRequest().build();
+
+        UserGetDTO oldUser = returnDTO(user);
+        Long id = user.getId();
+        repository.delete(user);
+        auditService.logDelete("USER", id, oldUser);
+
+        return ResponseEntity.noContent().build();
     }
 }

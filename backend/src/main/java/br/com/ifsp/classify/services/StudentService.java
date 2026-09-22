@@ -3,10 +3,8 @@ package br.com.ifsp.classify.services;
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
-import br.com.ifsp.classify.dtos.get.AddressGetDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
-import br.com.ifsp.classify.dtos.get.TelephoneGetDTO;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
@@ -17,6 +15,7 @@ import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,11 +25,13 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
 
     private final TelephoneService telephoneService;
     private final AddressService addressService;
+    private final AuditService auditService;
 
-    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService) {
+    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService) {
         super(repository);
         this.telephoneService = telephoneService;
         this.addressService = addressService;
+        this.auditService = auditService;
     }
 
     @Override
@@ -118,8 +119,10 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         }
 
         repository.save(newStudent);
+        StudentGetDTO createdStudent = returnDTO(newStudent);
+        auditService.logInsert("STUDENT", newStudent.getId(), createdStudent);
 
-        return returnDTO(newStudent);
+        return createdStudent;
     }
 
     @Override
@@ -127,6 +130,8 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         Student student = getEntityById(uuid);
         if (studentDTO == null || student == null)
             return null;
+
+        StudentGetDTO oldStudent = returnDTO(student);
 
         if (!Utils.isNullOrEmpty(studentDTO.name()))
             student.setName(Utils.trimAndUpper(studentDTO.name()));
@@ -149,8 +154,24 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         // }
 
         repository.save(student);
+        StudentGetDTO updatedStudent = returnDTO(student);
+        auditService.logUpdate("STUDENT", student.getId(), oldStudent, updatedStudent);
 
-        return returnDTO(student);
+        return updatedStudent;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        Student student = getEntityById(uuid);
+        if (student == null)
+            return ResponseEntity.badRequest().build();
+
+        StudentGetDTO oldStudent = returnDTO(student);
+        Long id = student.getId();
+        repository.delete(student);
+        auditService.logDelete("STUDENT", id, oldStudent);
+
+        return ResponseEntity.noContent().build();
     }
 
     public List<GuardianGetDTO> addGuardians(String studentUuid, List<GuardianCreateDTO> guardiansDTO) {

@@ -8,15 +8,18 @@ import br.com.ifsp.classify.models.Classroom;
 import br.com.ifsp.classify.repositories.ClassroomRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ClassroomService extends AbstractService<Classroom, ClassroomCreateDTO, ClassroomGetDTO, ClassroomUpdateDTO, Integer> {
 
     private final String CAPACITY_ZERO_OR_LESS_MESSAGE = "A capacidade da sala deve ser maior do que 0";
+    private final AuditService auditService;
 
-    public ClassroomService(ClassroomRepository repository) {
+    public ClassroomService(ClassroomRepository repository, AuditService auditService) {
         super(repository);
+        this.auditService = auditService;
     }
 
     @Override
@@ -52,8 +55,10 @@ public class ClassroomService extends AbstractService<Classroom, ClassroomCreate
         newClassroom.setDisabled(classroomDTO.isDisabled() != null && classroomDTO.isDisabled());
 
         repository.save(newClassroom);
+        ClassroomGetDTO createdClassroom = returnDTO(newClassroom);
+        auditService.logInsert("CLASSROOM", Long.valueOf(newClassroom.getId()), createdClassroom);
 
-        return returnDTO(newClassroom);
+        return createdClassroom;
     }
 
     @Override
@@ -61,6 +66,8 @@ public class ClassroomService extends AbstractService<Classroom, ClassroomCreate
         Classroom classroom = getEntityById(uuid);
         if (classroom == null || classroomDTO == null)
             return null;
+
+        ClassroomGetDTO oldClassroom = returnDTO(classroom);
 
         if (!Utils.isNullOrEmpty(classroomDTO.name()))
             classroom.setName(classroomDTO.name().trim().toUpperCase());
@@ -76,7 +83,23 @@ public class ClassroomService extends AbstractService<Classroom, ClassroomCreate
             classroom.setDisabled(classroomDTO.isDisabled());
 
         repository.save(classroom);
+        ClassroomGetDTO updatedClassroom = returnDTO(classroom);
+        auditService.logUpdate("CLASSROOM", Long.valueOf(classroom.getId()), oldClassroom, updatedClassroom);
 
-        return returnDTO(classroom);
+        return updatedClassroom;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        Classroom classroom = getEntityById(uuid);
+        if (classroom == null)
+            return ResponseEntity.badRequest().build();
+
+        ClassroomGetDTO oldClassroom = returnDTO(classroom);
+        Long id = Long.valueOf(classroom.getId());
+        repository.delete(classroom);
+        auditService.logDelete("CLASSROOM", id, oldClassroom);
+
+        return ResponseEntity.noContent().build();
     }
 }

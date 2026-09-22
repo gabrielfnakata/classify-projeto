@@ -8,13 +8,17 @@ import br.com.ifsp.classify.models.Subject;
 import br.com.ifsp.classify.repositories.SubjectRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, Integer> {
 
-    public SubjectService(SubjectRepository repository) {
+    private final AuditService auditService;
+
+    public SubjectService(SubjectRepository repository, AuditService auditService) {
         super(repository);
+        this.auditService = auditService;
     }
 
     @Override
@@ -41,8 +45,10 @@ public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, S
         newSubject.setDescription(subjectDTO.description().trim().toUpperCase());
 
         repository.save(newSubject);
+        SubjectGetDTO createdSubject = returnDTO(newSubject);
+        auditService.logInsert("SUBJECT", Long.valueOf(newSubject.getId()), createdSubject);
 
-        return returnDTO(newSubject);
+        return createdSubject;
     }
 
     @Override
@@ -51,11 +57,29 @@ public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, S
         if (subjectDTO == null || subject == null)
             return null;
 
+        SubjectGetDTO oldSubject = returnDTO(subject);
+
         if (!Utils.isNullOrEmpty(subjectDTO.description()))
             subject.setDescription(subjectDTO.description().trim().toUpperCase());
 
         repository.save(subject);
+        SubjectGetDTO updatedSubject = returnDTO(subject);
+        auditService.logUpdate("SUBJECT", Long.valueOf(subject.getId()), oldSubject, updatedSubject);
 
-        return returnDTO(subject);
+        return updatedSubject;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        Subject subject = getEntityById(uuid);
+        if (subject == null)
+            return ResponseEntity.badRequest().build();
+
+        SubjectGetDTO oldSubject = returnDTO(subject);
+        Long id = Long.valueOf(subject.getId());
+        repository.delete(subject);
+        auditService.logDelete("SUBJECT", id, oldSubject);
+
+        return ResponseEntity.noContent().build();
     }
 }

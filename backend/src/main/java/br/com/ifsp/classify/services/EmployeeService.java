@@ -1,5 +1,6 @@
 package br.com.ifsp.classify.services;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +22,13 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
 
     private final TelephoneService telephoneService;
     private final UserService userService;
+    private final AuditService auditService;
 
-    public EmployeeService(EmployeeRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, TelephoneService telephoneService, UserService userService) {
+    public EmployeeService(EmployeeRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, TelephoneService telephoneService, UserService userService, AuditService auditService) {
         super(repository);
         this.telephoneService = telephoneService;
         this.userService = userService;
+        this.auditService = auditService;
     }
 
     @Override
@@ -82,8 +85,10 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         }
 
         repository.save(newEmployee);
+        EmployeeGetDTO createdEmployee = returnDTO(newEmployee);
+        auditService.logInsert("EMPLOYEE", newEmployee.getId(), createdEmployee);
 
-        return returnDTO(newEmployee);
+        return createdEmployee;
     }
 
     @Override
@@ -91,6 +96,8 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         Employee employee = getEntityById(employeeUuid);
         if (employee == null || employeeDTO == null)
             return null;
+
+        EmployeeGetDTO oldEmployee = returnDTO(employee);
 
         if (!Utils.isNullOrEmpty(employeeDTO.name()))
             employee.setName(Utils.trimAndUpper(employeeDTO.name()));
@@ -114,7 +121,23 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         }
 
         repository.save(employee);
+        EmployeeGetDTO updatedEmployee = returnDTO(employee);
+        auditService.logUpdate("EMPLOYEE", employee.getId(), oldEmployee, updatedEmployee);
 
-        return returnDTO(employee);
+        return updatedEmployee;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        Employee employee = getEntityById(uuid);
+        if (employee == null)
+            return ResponseEntity.badRequest().build();
+
+        EmployeeGetDTO oldEmployee = returnDTO(employee);
+        Long id = employee.getId();
+        repository.delete(employee);
+        auditService.logDelete("EMPLOYEE", id, oldEmployee);
+
+        return ResponseEntity.noContent().build();
     }
 }
