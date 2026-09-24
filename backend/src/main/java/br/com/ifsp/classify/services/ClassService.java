@@ -3,6 +3,7 @@ package br.com.ifsp.classify.services;
 import br.com.ifsp.classify.dtos.create.ClassCreateDTO;
 import br.com.ifsp.classify.dtos.get.ClassGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassStudentSummaryDTO;
+import br.com.ifsp.classify.dtos.get.ClassSummaryDTO;
 import br.com.ifsp.classify.dtos.update.ClassUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.models.Class;
@@ -66,6 +67,22 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
                         student.getName()
                 ))
                 .toList()
+        );
+    }
+
+    /**
+     * Versão enxuta para quando a turma aparece dentro de outro recurso (uma aula, por exemplo):
+     * manda a contagem de alunos em vez da lista inteira, que se repetiria a cada aula.
+     */
+    ClassSummaryDTO returnSummaryDTO(Class classModel) {
+        if (classModel == null)
+            return null;
+
+        return new ClassSummaryDTO(
+            UuidUtils.convertBytesToString(classModel.getUuid()),
+            classModel.getName(),
+            classModel.getDescription(),
+            classModel.getStudents().size()
         );
     }
 

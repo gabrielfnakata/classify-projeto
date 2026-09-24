@@ -20,6 +20,7 @@ import br.com.ifsp.classify.models.enums.ClassSessionStatus;
 import br.com.ifsp.classify.repositories.AttendanceRepository;
 import br.com.ifsp.classify.repositories.ClassRepository;
 import br.com.ifsp.classify.repositories.ClassSessionRepository;
+import br.com.ifsp.classify.repositories.projections.SessionCountProjection;
 import br.com.ifsp.classify.repositories.ClassroomRepository;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.repositories.SubjectTeacherRepository;
@@ -38,16 +39,14 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 public class ClassSessionService extends AbstractService<ClassSession, ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, Long> {
 
+    private final ClassSessionRepository repository;
     private final SubjectTeacherRepository subjectTeacherRepository;
     private final ClassroomRepository classroomRepository;
     private final StudentRepository studentRepository;
@@ -71,6 +70,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         StudentService studentService, ReportService reportService, ClassService classService,
         TeacherAvailabilityService availabilityService, ApplicationClock clock) {
         super(repository);
+        this.repository = repository;
         this.subjectTeacherRepository = subjectTeacherRepository;
         this.subjectTeacherService = subjectTeacherService;
         this.classroomRepository = classroomRepository;
@@ -189,49 +189,28 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                 .toList();
     }
 
-    /**
-     * Contagem de aulas futuras e de hoje por disciplina, professor, sala ou turma. As listagens
-     * usam isso no lugar de baixar a agenda inteira só para mostrar um contador.
-     */
+    /** Contagem de aulas futuras e de hoje por disciplina, professor, sala ou turma. */
     public List<ClassSessionSummaryDTO> summary(String groupBy) {
-        Function<ClassSession, byte[]> key = keyExtractor(groupBy);
         LocalDateTime now = clock.now();
-        LocalDate today = clock.today();
+        LocalDateTime dayStart = clock.today().atStartOfDay();
+        LocalDateTime dayEnd = dayStart.plusDays(1);
 
-        Map<String, long[]> counters = new LinkedHashMap<>();
+        List<SessionCountProjection> rows = switch (Utils.trimAndUpper(groupBy) == null ? "" : Utils.trimAndUpper(groupBy)) {
+            case "SUBJECT" -> repository.countBySubject(now, dayStart, dayEnd);
+            case "EMPLOYEE" -> repository.countByEmployee(now, dayStart, dayEnd);
+            case "CLASSROOM" -> repository.countByClassroom(now, dayStart, dayEnd);
+            case "CLASS" -> repository.countByClass(now, dayStart, dayEnd);
+            default -> throw new DtoException("Agrupamento inválido: use SUBJECT, EMPLOYEE, CLASSROOM ou CLASS");
+        };
 
-        for (ClassSession session : repository.findAll()) {
-            if (session.isCanceled())
-                continue;
-
-            byte[] rawKey = key.apply(session);
-            if (rawKey == null)
-                continue;
-
-            long[] counts = counters.computeIfAbsent(UuidUtils.convertBytesToString(rawKey), k -> new long[2]);
-            if (!session.getStartTime().isBefore(now))
-                counts[0]++;
-            if (session.getStartTime().toLocalDate().equals(today))
-                counts[1]++;
-        }
-
-        return counters.entrySet()
-                .stream()
-                .map(entry -> new ClassSessionSummaryDTO(entry.getKey(), entry.getValue()[0], entry.getValue()[1]))
+        return rows.stream()
+                .map(row -> new ClassSessionSummaryDTO(
+                        UuidUtils.convertBytesToString(row.getKey()),
+                        row.getUpcoming(),
+                        row.getToday()))
                 .toList();
     }
 
-    private Function<ClassSession, byte[]> keyExtractor(String groupBy) {
-        return switch (Utils.trimAndUpper(groupBy) == null ? "" : Utils.trimAndUpper(groupBy)) {
-            case "SUBJECT" -> session -> session.getSubjectTeacher().getSubject().getUuid();
-            case "EMPLOYEE" -> session -> session.getSubjectTeacher().getEmployee().getUuid();
-            case "CLASSROOM" -> session -> session.getClassroom().getUuid();
-            case "CLASS" -> session -> session.getClassSessionClass() == null
-                    ? null
-                    : session.getClassSessionClass().getUuid();
-            default -> throw new DtoException("Agrupamento inválido: use SUBJECT, EMPLOYEE, CLASSROOM ou CLASS");
-        };
-    }
 
     @Override
     ClassSessionGetDTO returnDTO(ClassSession classSession) {
@@ -245,7 +224,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                 classSession.getStartTime(),
                 classSession.getEndTime(),
                 reportService.returnDTO(classSession.getReport()),
-                classService.returnDTO(classSession.getClassSessionClass()),
+                classService.returnSummaryDTO(classSession.getClassSessionClass()),
                 studentService.returnDTO(classSession.getStudent()),
                 classSession.getRecurrenceGroupId() == null ? null : UuidUtils.convertBytesToString(classSession.getRecurrenceGroupId()),
                 classSession.getStatus().name(),

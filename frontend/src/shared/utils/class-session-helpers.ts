@@ -15,7 +15,7 @@ export function isSessionActiveAt(session: ClassSessionDTO, at: number): boolean
 
 /** Quantas pessoas a aula coloca na sala: a turma inteira ou o aluno individual. */
 export function sessionAttendeeCount(session: ClassSessionDTO): number {
-  if (session.classDTO) return session.classDTO.students.length;
+  if (session.classDTO) return session.classDTO.studentCount;
   return session.student ? 1 : 0;
 }
 

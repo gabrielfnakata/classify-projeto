@@ -5,7 +5,7 @@ export interface ClassSessionClassDTO {
     uuid: string,
     name: string,
     description: string | null,
-    students: ClassSessionStudentDTO[],
+    studentCount: number,
 };
 
 export interface ClassSessionReportDTO {
