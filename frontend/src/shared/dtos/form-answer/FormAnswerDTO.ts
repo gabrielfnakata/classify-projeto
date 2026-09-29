@@ -3,5 +3,7 @@ export interface FormAnswerDTO {
     questionUuid: string;
     optionUuid?: string;
     answerText?: string;
+    answerFileUrl?: string;
     teacherFeedback: string;
+    correct?: boolean;
 }

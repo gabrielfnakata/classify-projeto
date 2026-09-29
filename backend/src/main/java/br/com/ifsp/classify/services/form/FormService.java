@@ -1,8 +1,6 @@
 package br.com.ifsp.classify.services.form;
 
-import br.com.ifsp.classify.dtos.create.AssignFormToClassDTO;
-import br.com.ifsp.classify.dtos.create.AssignFormToStudentsDTO;
-import br.com.ifsp.classify.dtos.create.FormCreateDTO;
+import br.com.ifsp.classify.dtos.create.*;
 import br.com.ifsp.classify.dtos.get.*;
 import br.com.ifsp.classify.models.Class;
 import br.com.ifsp.classify.models.Employee;
@@ -17,15 +15,22 @@ import br.com.ifsp.classify.repositories.form.FormQuestionRepository;
 import br.com.ifsp.classify.repositories.form.FormRepository;
 import br.com.ifsp.classify.repositories.form.FormSubmissionRepository;
 import br.com.ifsp.classify.security.AuthenticatedUser;
+import br.com.ifsp.classify.services.FileStorageService;
 import br.com.ifsp.classify.utils.UuidUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class FormService {
@@ -36,6 +41,7 @@ public class FormService {
     public FormQuestionOptionRepository formQuestionOptionRepository;
     public FormSubmissionRepository formSubmissionRepository;
     public ClassRepository classRepository;
+    public FileStorageService fileStorageService;
 
     public FormService(
             UserRepository userRepository,
@@ -44,7 +50,8 @@ public class FormService {
             FormQuestionRepository formQuestionRepository,
             FormQuestionOptionRepository formQuestionOptionRepository,
             FormSubmissionRepository formSubmissionRepository,
-            ClassRepository classRepository
+            ClassRepository classRepository,
+            FileStorageService fileStorageService
     ) {
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
@@ -53,7 +60,10 @@ public class FormService {
         this.formQuestionOptionRepository = formQuestionOptionRepository;
         this.formSubmissionRepository = formSubmissionRepository;
         this.classRepository = classRepository;
+        this.fileStorageService = fileStorageService;
     }
+
+    private final String ANSWER_FILES_BUCKET = "form.answers";
 
     public FormGetDTO create(FormCreateDTO dto, String teacherEmail) {
         User teacher = userRepository.findByEmail(teacherEmail).orElseThrow();
@@ -196,20 +206,17 @@ public class FormService {
                 form.getTitle(),
                 UuidUtils.convertBytesToString(submission.getStudent().getUuid()),
                 submission.getStudent().getName(),
-                submission.getFormAnswer().stream().map(answer -> new FormAnswerGetDTO(
-                        answer.getUuid().toString(),
-                        answer.getQuestion().getUuid().toString(),
-                        answer.getOption().getUuid().toString(),
-                        answer.getAnswerText(),
-                        answer.getTeacherFeedback()
-                )).toList(),
+                submission.getFormAnswer().stream()
+                        .flatMap(this::toFormAnswerGetDTOs)
+                        .toList(),
                 submission.getStatus(),
                 submission.getStartedAt(),
                 submission.getSubmittedAt(),
                 submission.getCorrectedAt(),
                 submission.getScore()
-                )).toList();
+        )).toList();
     }
+
 
     public void sendFormsToStudents(AssignFormToStudentsDTO dto) {
         Form form = formRepository.findByUuid(UUID.fromString(dto.formUuid())).orElseThrow();
@@ -252,4 +259,63 @@ public class FormService {
             formSubmissionRepository.saveAll(submissionsToCreate);
         }
     }
+
+    @Transactional
+    public void makeFormCorrection(FormCorrectionCreateDTO dto) {
+        FormSubmission submission = formSubmissionRepository
+                .getByUuid(UUID.fromString(dto.formSubmissionUuid())).orElseThrow();
+        Map<String, FormFeedbackCreateDTO> feedbacks = dto.formFeedbacks().stream()
+                .collect(Collectors.toMap(FormFeedbackCreateDTO::questionUuid, Function.identity()));
+        submission.getFormAnswer().forEach(answer -> {
+            FormFeedbackCreateDTO feedback = feedbacks.get(answer.getQuestion().getUuid().toString());
+
+            answer.setTeacherFeedback(feedback.teacherFeedback());
+            answer.setCorrect(feedback.correct());
+        });
+
+        submission.setScore(BigDecimal.valueOf(dto.score()));
+        formSubmissionRepository.save(submission);
+    }
+
+    private Stream<FormAnswerGetDTO> toFormAnswerGetDTOs(FormAnswer answer) {
+        String questionUuid = answer.getQuestion().getUuid().toString();
+        String optionUuid = answer.getOption() != null
+                ? answer.getOption().getUuid().toString()
+                : null;
+
+        if (answer.getFiles() != null && !answer.getFiles().isEmpty()) {
+            return answer.getFiles().stream().map(file -> {
+                String key = file.getUuid() + "." + file.getFileName();
+                return new FormAnswerGetDTO(
+                        file.getUuid().toString(),
+                        questionUuid,
+                        optionUuid,
+                        answer.getAnswerText(),
+                        resolveFileUrl(key),
+                        answer.getTeacherFeedback(),
+                        answer.getCorrect()
+                );
+            });
+        }
+
+        return Stream.of(new FormAnswerGetDTO(
+                answer.getUuid().toString(),
+                questionUuid,
+                optionUuid,
+                answer.getAnswerText(),
+                null,
+                answer.getTeacherFeedback(),
+                answer.getCorrect()
+        ));
+    }
+
+
+    private String resolveFileUrl(String key) {
+        try {
+            return fileStorageService.generateDownloadUrl(ANSWER_FILES_BUCKET, key);
+        } catch (Exception e) {
+            throw new RuntimeException("Falha ao gerar URL de download para " + key, e);
+        }
+    }
+
 }

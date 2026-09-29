@@ -29,13 +29,13 @@ public class FileStorageService {
         );
     }
 
-    public String generateDownloadUrl(String bucket, String uuid) throws Exception {
+    public String generateDownloadUrl(String bucket, String key) throws Exception {
         return minioClient.getPresignedObjectUrl(
                 GetPresignedObjectUrlArgs.builder()
                         .method(Method.GET)
                         .bucket(bucket)
-                        .object(uuid)
-                        .expiry(10, TimeUnit.MINUTES)
+                        .object(key)
+                        .expiry(60, TimeUnit.MINUTES)
                         .build()
         );
     }

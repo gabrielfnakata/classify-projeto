@@ -16,6 +16,12 @@ export default function FormAnswers() {
     const location = useLocation();
     const formTitle = location.state?.formTitle as string | undefined;
 
+    const goToSubmission = (submission: FormSubmissionDTO) =>
+        navigate(`/form-answers/${submission.formUuid}/${submission.studentUuid}`, {
+            state: { submission, submissions: data ?? [] },
+    });
+
+
     const columns: DataTableColumn<FormSubmissionDTO>[] = [
         {key: 'studentName', header: 'Aluno', cell: row => row.studentName},
         {key: 'startedAt', header: 'Iniciado em', cell: row => row.startedAt ? formatDateLabel(new Date(row.startedAt)) : '-'},
@@ -29,7 +35,7 @@ export default function FormAnswers() {
                 <div className="flex gap-2">
                      <Tooltip>
                         <TooltipTrigger
-                            onClick={() => navigate(`/form-answers/${row.formUuid}/${row.studentUuid}`, {state: {submission: row}})}
+                            onClick={() => goToSubmission(row)}
                             asChild
                         >
                             <Eye className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground"/>

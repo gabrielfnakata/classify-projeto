@@ -5,6 +5,8 @@ public record FormAnswerGetDTO(
         String questionUuid,
         String optionUuid,
         String answerText,
-        String teacherFeedback
+        String answerFileUrl,
+        String teacherFeedback,
+        Boolean correct
 ) {
 }

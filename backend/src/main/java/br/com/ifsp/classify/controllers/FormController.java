@@ -105,6 +105,12 @@ public class FormController {
         return new ResponseEntity<>(this.formService.getFormSubmissions(formId), HttpStatus.OK);
     }
 
+    @PostMapping("/form-correction")
+    public ResponseEntity<?> correctForm(@Valid @RequestBody FormCorrectionCreateDTO dto) {
+        this.formService.makeFormCorrection(dto);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     /* TODO:
      - Suporte à filtros e paginação (aguardar merge)
      - Endpoint pra professor corrigir formulário
