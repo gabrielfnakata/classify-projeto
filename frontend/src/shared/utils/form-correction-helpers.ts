@@ -10,16 +10,10 @@ export function isObjectiveAnswerCorrect(
     options: FormQuestionOptionDTO[],
     answers: FormAnswerDTO[]
 ): boolean {
-    if (answers.length === 0) return false;
-
-    const selectedUuids = new Set(
-        answers.map((a) => a.optionUuid).filter((uuid): uuid is string => uuid !== undefined)
+    const selected = new Set(
+        answers.map(a => a.optionUuid).filter((uuid): uuid is string => !!uuid)
     );
-    const correctUuids = new Set(options.filter((o) => o.correct).map((o) => o.uuid));
+    const correct = new Set(options.filter(o => o.correct).map(o => o.uuid));
 
-    if (selectedUuids.size !== correctUuids.size) return false;
-    for (const uuid of selectedUuids) {
-        if (!correctUuids.has(uuid)) return false;
-    }
-    return true;
+    return correct.size === selected.size && [...correct].every(uuid => selected.has(uuid));
 }

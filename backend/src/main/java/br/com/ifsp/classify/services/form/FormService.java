@@ -274,6 +274,8 @@ public class FormService {
         });
 
         submission.setScore(BigDecimal.valueOf(dto.score()));
+        submission.setCorrectedAt(LocalDateTime.now());
+        submission.setStatus(FormStatus.CORRECTED);
         formSubmissionRepository.save(submission);
     }
 

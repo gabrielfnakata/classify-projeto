@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { ArrowLeft, ChevronLeft, ChevronRight, Save } from "lucide-react";
-import type { CorrectionFormValues } from "../FormCorrection";
+import type {FormCorrectionCreateDTO} from "@/shared/dtos/form-correction/FormCorrectionCreateDTO.ts";
 
 interface CorrectFormHeaderActionsProps {
     formTitle: string;
@@ -20,7 +20,7 @@ interface CorrectFormHeaderActionsProps {
 export default function CorrectFormHeaderActions(
     { formTitle, onPrevious, onNext, hasPrevious, hasNext, position, studentName }: CorrectFormHeaderActionsProps
 ) {
-    const { values, isSubmitting, isValid, dirty, setFieldValue, submitForm } = useFormikContext<CorrectionFormValues>();
+    const { values, isSubmitting, isValid, dirty, setFieldValue, submitForm } = useFormikContext<FormCorrectionCreateDTO>();
     const navigate = useNavigate();
 
     const buttonStyle = "h-10 px-5 rounded-xl text-sm font-semibold hover:cursor-pointer";

@@ -1,8 +1,7 @@
-import {useLocation, useNavigate} from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useMemo } from "react";
-import { Formik, type FormikHelpers } from "formik";
+import { Formik } from "formik";
 import { Ghost } from "lucide-react";
-import { ContentCard } from "@/components/layout/content-card.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import useFetch from "@/hooks/useFetch.tsx";
@@ -11,43 +10,66 @@ import { isObjectiveType, isObjectiveAnswerCorrect } from "@/shared/utils/form-c
 import type { FormSubmissionDTO } from "@/shared/dtos/form-submission/FormSubmissionDTO.ts";
 import type { FormAnswerDTO } from "@/shared/dtos/form-answer/FormAnswerDTO.ts";
 import type { FormInfoDTO } from "@/shared/dtos/form/FormInfoDTO.ts";
-import type { FormFeedbackCreateDTO } from "@/shared/dtos/form-correction/FormFeedbackCreateDTO.ts";
 import type { FormCorrectionCreateDTO } from "@/shared/dtos/form-correction/FormCorrectionCreateDTO.ts";
 import { CorrectFormValidationSchema } from "@/validation/FormCorrectionSchema";
 import CorrectFormHeaderActions from "./form-correction/FormCorrectionHeaderActions";
-import QuestionCorrection from "./form-correction/QuestionCorrection";
+import QuestionList from "@/pages/forms/form-correction/QuestionList.tsx";
 
-export interface QuestionFeedbackValues {
-    teacherFeedback: string;
-    correct: boolean;
-}
+const groupAnswersByQuestion = (answers: FormAnswerDTO[] = []) => {
+    const map = new Map<string, FormAnswerDTO[]>();
+    answers.forEach((answer) => {
+        map.set(answer.questionUuid, [...(map.get(answer.questionUuid) ?? []), answer]);
+    });
+    return map;
+};
 
-export interface CorrectionFormValues {
-    score: number;
-    feedbacks: Record<string, QuestionFeedbackValues>;
-}
+const buildInitialValues = (
+    submission: FormSubmissionDTO,
+    form: FormInfoDTO,
+    answersByQuestion: Map<string, FormAnswerDTO[]>
+): FormCorrectionCreateDTO => ({
+    formSubmissionUuid: submission.uuid,
+    score: submission.score ?? 0,
+    formFeedbacks: (form.questions ?? []).map((question) => {
+        const answers = answersByQuestion.get(question.uuid) ?? [];
+        return {
+            questionUuid: question.uuid,
+            teacherFeedback: answers[0]?.teacherFeedback ?? "",
+            correct: isObjectiveType(question.answerType)
+                ? isObjectiveAnswerCorrect(question.options ?? [], answers)
+                : answers[0]?.correct ?? false,
+        };
+    }),
+});
 
 export default function CorrectForm() {
-    const location = useLocation();
     const navigate = useNavigate();
+    const { state } = useLocation();
 
-    const submission = location.state?.submission as FormSubmissionDTO | undefined;
-    const submissions = (location.state?.submissions as FormSubmissionDTO[] | undefined) ?? [];
+    const submission = state?.submission as FormSubmissionDTO | undefined;
+    const submissions = (state?.submissions as FormSubmissionDTO[] | undefined) ?? [];
 
-    const { data: form } = useFetch<FormInfoDTO>(
-        submission ? `/form/${submission.formUuid}` : null
+    const { data: form } = useFetch<FormInfoDTO>(submission ? `/form/${submission.formUuid}` : null);
+
+    const answersByQuestion = useMemo(
+        () => groupAnswersByQuestion(submission?.answers),
+        [submission]
     );
 
-    const currentIndex = submission
-        ? submissions.findIndex((s) => s.studentUuid === submission.studentUuid)
-        : -1;
-    const previousSubmission = currentIndex > 0 ? submissions[currentIndex - 1] : undefined;
-    const nextSubmission =
-        currentIndex !== -1 && currentIndex < submissions.length - 1
-            ? submissions[currentIndex + 1]
-            : undefined;
+    const initialValues = useMemo<FormCorrectionCreateDTO>(
+        () =>
+            submission && form
+                ? buildInitialValues(submission, form, answersByQuestion)
+                : { formSubmissionUuid: "", score: 0, formFeedbacks: [] },
+        [submission, form, answersByQuestion]
+    );
 
-    const goToSubmission = (target?: FormSubmissionDTO) => {
+    const currentIndex = submissions.findIndex((s) => s.studentUuid === submission?.studentUuid);
+    const hasIndex = currentIndex >= 0;
+    const previous = hasIndex ? submissions[currentIndex - 1] : undefined;
+    const next = hasIndex ? submissions[currentIndex + 1] : undefined;
+
+    const goTo = (target?: FormSubmissionDTO) => {
         if (!target) return;
         navigate(`/form-answers/${target.formUuid}/${target.studentUuid}`, {
             state: { submission: target, submissions },
@@ -55,70 +77,16 @@ export default function CorrectForm() {
         });
     };
 
-    const answersByQuestion = useMemo(() => {
-        const map = new Map<string, FormAnswerDTO[]>();
-        submission?.answers.forEach((answer) => {
-            const list = map.get(answer.questionUuid) ?? [];
-            list.push(answer);
-            map.set(answer.questionUuid, list);
-        });
-        return map;
-    }, [submission]);
-
-    const initialValues: CorrectionFormValues = useMemo(() => {
-        if (!submission || !form?.questions) return { score: 0, feedbacks: {} };
-
-        const feedbacks: CorrectionFormValues["feedbacks"] = {};
-        form.questions.forEach((question) => {
-            const answers = answersByQuestion.get(question.uuid) ?? [];
-            feedbacks[question.uuid] = {
-                teacherFeedback: answers[0]?.teacherFeedback ?? "",
-                correct: isObjectiveType(question.answerType)
-                    ? isObjectiveAnswerCorrect(question.options ?? [], answers)
-                    : answers[0]?.correct ?? false,
-            };
-        });
-
-        return { score: submission.score ?? 0, feedbacks };
-    }, [submission, form, answersByQuestion]);
-
-    const handleSubmit = async (values: CorrectionFormValues, helpers: FormikHelpers<CorrectionFormValues>) => {
-        if (!submission || !form?.questions) return;
-        helpers.setSubmitting(true);
-        try {
-            const formFeedbacks: FormFeedbackCreateDTO[] = form.questions.map((question) => {
-                const answers = answersByQuestion.get(question.uuid) ?? [];
-                const correct = isObjectiveType(question.answerType)
-                    ? isObjectiveAnswerCorrect(question.options ?? [], answers)
-                    : values.feedbacks[question.uuid]?.correct ?? false;
-
-                return {
-                    questionUuid: question.uuid,
-                    teacherFeedback: values.feedbacks[question.uuid]?.teacherFeedback ?? "",
-                    correct,
-                };
-            });
-
-            const payload: FormCorrectionCreateDTO = {
-                formSubmissionUuid: submission.uuid,
-                formFeedbacks,
-                score: values.score,
-            };
-
-            await api.post("/form-correction", payload);
-            alert("Correção salva com sucesso");
-            navigate(-1);
-        } finally {
-            helpers.setSubmitting(false);
-        }
+    const handleSubmit = async (values: FormCorrectionCreateDTO) => {
+        await api.post("/form/form-correction", values);
+        alert("Correção salva com sucesso");
+        navigate(-1);
     };
 
     if (!submission) {
         return (
             <div className="flex flex-col w-full h-full items-center justify-center gap-4">
-                <Label className="text-muted-foreground">
-                    Não foi possível carregar essa submissão.
-                </Label>
+                <Label className="text-muted-foreground">Não foi possível carregar essa submissão.</Label>
                 <Button variant="secondary" onClick={() => navigate(-1)}>Voltar</Button>
             </div>
         );
@@ -143,53 +111,33 @@ export default function CorrectForm() {
                 <div className="flex flex-col w-full h-full py-23 gap-[2vh] justify-start items-center">
                     <CorrectFormHeaderActions
                         formTitle={form.title}
-                        onPrevious={() => goToSubmission(previousSubmission)}
-                        onNext={() => goToSubmission(nextSubmission)}
-                        hasPrevious={!!previousSubmission}
-                        hasNext={!!nextSubmission}
-                        position={currentIndex !== -1 ? `${currentIndex + 1} de ${submissions.length}` : undefined}
                         studentName={submission.studentName}
+                        onPrevious={() => goTo(previous)}
+                        onNext={() => goTo(next)}
+                        hasPrevious={!!previous}
+                        hasNext={!!next}
+                        position={hasIndex ? `${currentIndex + 1} de ${submissions.length}` : undefined}
                     />
 
                     <div className="flex flex-col w-8/10 gap-12 mb-8 items-start justify-center">
-                        <div className="flex flex-row w-full items-center">
-                            <Label className="w-full h-24 border-b-2 px-4 border-table-foreground text-4xl font-bold text-foreground">
-                                {form.title}
-                            </Label>
-                        </div>
-                        <div className="flex flex-row w-full justify-start items-center">
-                            <Label className="w-full px-4 text-xl text-muted-foreground font-bold">
-                                {form.description}
-                            </Label>
-                        </div>
+                        <Label className="w-full h-24 border-b-2 px-4 border-table-foreground text-4xl font-bold text-foreground">
+                            {form.title}
+                        </Label>
+                        <Label className="w-full px-4 text-xl text-muted-foreground font-bold">
+                            {form.description}
+                        </Label>
                     </div>
 
-                    <div className="flex flex-col gap-10 w-8/10">
-                        {form.questions && form.questions.length > 0 ? (
-                            form.questions.map((question, index) => (
-                                <ContentCard key={index} className="flex flex-col w-full gap-8">
-                                    <div className="flex w-full">
-                                        <Label className="w-full h-16 px-2 text-2xl font-bold text-foreground">
-                                            {question.question} {question.isRequired ? "*" : ""}
-                                        </Label>
-                                    </div>
-                                    <QuestionCorrection
-                                        questionUuid={question.uuid}
-                                        type={question.answerType}
-                                        options={question.options ?? []}
-                                        answers={answersByQuestion.get(question.uuid) ?? []}
-                                    />
-                                </ContentCard>
-                            ))
-                        ) : (
-                            <div className="flex flex-col justify-center items-center w-full mt-24 gap-8">
-                                <Ghost className="scale-200 text-foreground opacity-50" />
-                                <Label className="text-foreground text-center opacity-50">
-                                    Não há questões nesse formulário
-                                </Label>
-                            </div>
-                        )}
-                    </div>
+                    {form.questions?.length ? (
+                        <QuestionList questions={form.questions} answers={answersByQuestion} />
+                    ) : (
+                        <div className="flex flex-col justify-center items-center w-full mt-24 gap-8">
+                            <Ghost className="scale-200 text-foreground opacity-50" />
+                            <Label className="text-foreground text-center opacity-50">
+                                Não há questões nesse formulário
+                            </Label>
+                        </div>
+                    )}
                 </div>
             </div>
         </Formik>
