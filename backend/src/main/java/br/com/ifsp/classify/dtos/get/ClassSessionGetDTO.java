@@ -10,5 +10,6 @@ public record ClassSessionGetDTO(
         LocalDateTime endTime,
         ReportGetDTO report,
         ClassGetDTO classDTO,
-        StudentGetDTO student
+        StudentGetDTO student,
+        String recurrenceGroupUuid
 ) {}

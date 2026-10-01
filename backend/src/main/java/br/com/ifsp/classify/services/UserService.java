@@ -11,6 +11,7 @@ import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.dtos.get.UserGetDTO;
 import br.com.ifsp.classify.dtos.update.UserUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Employee;
 import br.com.ifsp.classify.models.Role;
 import br.com.ifsp.classify.models.User;
@@ -59,14 +60,14 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
             return null;
 
         if (Utils.isNullOrEmpty(userDTO.email()))
-            throw new DtoException("É necessário informar o email do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail do usuário.");
 
         if (Utils.isNullOrEmpty(userDTO.password()))
-            throw new DtoException("É necessário informar a senha do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha do usuário.");
 
         Role role;
         if (Utils.isNullOrEmpty(userDTO.roleId())) {
-            throw new DtoException("É necessário informar o cargo do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o cargo do usuário.");
         }
         else {
             role = roleRepository
@@ -74,12 +75,12 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
 
             if (role == null)
-                throw new DtoException("O cargo informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
         }
 
         Employee employee;
         if (Utils.isNullOrEmpty(userDTO.employeeUuid())) {
-            throw new DtoException("É necessário informar um funcionário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar um funcionário.");
         }
         else {
             employee = employeeRepository
@@ -87,7 +88,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
             
             if (employee == null)
-                throw new DtoException("O funcionário informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O funcionário informado não existe.");
         }
 
         User newUser = new User();
@@ -110,14 +111,14 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
             return null;
 
         if (Utils.isNullOrEmpty(userDTO.email()))
-            throw new DtoException("É necessário informar o email do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail do usuário.");
 
         if (Utils.isNullOrEmpty(userDTO.password()))
-            throw new DtoException("É necessário informar a senha do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha do usuário.");
 
         Role role;
         if (Utils.isNullOrEmpty(userDTO.roleId())) {
-            throw new DtoException("É necessário informar o cargo do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o cargo do usuário.");
         }
         else {
             role = roleRepository
@@ -125,7 +126,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
 
             if (role == null)
-                throw new DtoException("O cargo informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
         }
 
         User newUser = new User();
@@ -155,7 +156,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
 
             if (role == null)
-                throw new DtoException("O cargo informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
 
             user.setRole(role);
         }
@@ -183,7 +184,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
 
             if (role == null)
-                throw new DtoException("O cargo informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
 
             user.setRole(role);
         }

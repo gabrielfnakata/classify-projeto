@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
@@ -21,7 +22,11 @@ export default function EmployeeRegistration() {
             }) ?? []
         }
     ];
-    const {data} = useFetch<EmployeeDTO>('/employee');
+    const [refreshKey, setRefreshKey] = useState(0);
+    const {data} = useFetch<EmployeeDTO>(`/employee?r=${refreshKey}`);
+
+    const handleRefresh = () => setRefreshKey(k => k + 1);
+
     return (
         <>
             <RegistrationPage
@@ -30,6 +35,7 @@ export default function EmployeeRegistration() {
                 filters={filters}
                 title="Funcionários"
                 registrationRoute="/new-employee"
+                onRefresh={handleRefresh}
             >
             </RegistrationPage>  
         </>

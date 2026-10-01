@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import br.com.ifsp.classify.dtos.create.AddressCreateDTO;
 import br.com.ifsp.classify.dtos.get.AddressGetDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Address;
 import br.com.ifsp.classify.utils.Utils;
 
@@ -31,22 +32,22 @@ public class AddressService {
             return null;
 
         if (Utils.isNullOrEmpty(addressDTO.zipCode()))
-            throw new DtoException("É necessário informar um CEP");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar um CEP.");
 
         if (Utils.isNullOrEmpty(addressDTO.street()))
-            throw new DtoException("É necessário informar uma rua");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o nome da rua.");
 
         if (Utils.isNullOrEmpty(addressDTO.number()))
-            throw new DtoException("É necessário informar um número");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o número do endereço.");
 
         if (Utils.isNullOrEmpty(addressDTO.neighborhood()))
-            throw new DtoException("É necessário informar um bairro");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o bairro.");
 
         if (Utils.isNullOrEmpty(addressDTO.city()))
-            throw new DtoException("É necessário informar uma cidade");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a cidade.");
 
         if (Utils.isNullOrEmpty(addressDTO.state()))
-            throw new DtoException("É necessário informar um estado");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o estado.");
 
         // TODO: Fazer a validação correta dos endereços
         Address newAddress = new Address();

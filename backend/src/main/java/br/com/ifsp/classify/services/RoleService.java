@@ -4,6 +4,7 @@ import br.com.ifsp.classify.dtos.create.RoleCreateDTO;
 import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.dtos.update.RoleUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Role;
 import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.utils.Utils;
@@ -41,12 +42,12 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
             return null;
 
         if (Utils.isNullOrEmpty(roleDTO.id()))
-            throw new DtoException("É necessário informar um id");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o identificador do cargo.");
         else if (roleDTO.id().trim().length() != 5)
-            throw new DtoException("O id deve possuir 5 caracteres");
+            throw new DtoException(ExceptionCode.INVALID_ROLE, "O identificador do cargo deve possuir 5 caracteres.");
 
         if (Utils.isNullOrEmpty(roleDTO.description()))
-            throw new DtoException("A descrição do cargo não pode ser vazia");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "A descrição do cargo não pode ser vazia.");
 
         Role newRole = new Role();
         newRole.setId(Utils.trimAndUpper(roleDTO.id()));

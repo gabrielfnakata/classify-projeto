@@ -1,7 +1,9 @@
+import { useState } from "react";
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import useFetch from "@/hooks/useFetch";
+import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
 
 export default function StudentRegistration() {
@@ -17,15 +19,20 @@ export default function StudentRegistration() {
         {name: 'cpf', inputType: 'cpf', placeholder: 'CPF', width: 25},
         {name: 'telephone', inputType: 'text', placeholder: 'Telefone', width: 25},
     ];
-    const {data} = useFetch<StudentDTO>('/student');
+    const [refreshKey, setRefreshKey] = useState(0);
+    const {data} = useFetch<StudentDTO>(`/student?r=${refreshKey}`);
+
+    const handleRefresh = () => setRefreshKey(k => k + 1);
+
     return (
         <>
             <RegistrationPage
-                data={data ?? []} 
+                data={sortedByName(data ?? [])} 
                 columns={columns}
                 filters={filters}
                 title="Alunos"
                 registrationRoute="/new-student"
+                onRefresh={handleRefresh}
             >
             </RegistrationPage>  
         </>

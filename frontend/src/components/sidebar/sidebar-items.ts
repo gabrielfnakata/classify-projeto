@@ -5,7 +5,10 @@ export const mainNavigation: Group[] = [
   {
     title: "Início",
     icon: Home,
-    items: [],
+    items: [
+      { title: "Visão do Professor", url: "/home" },
+      { title: "Visão do Aluno", url: "/student-home-page" },
+    ],
     url: '/home'
   },
   {
@@ -16,6 +19,7 @@ export const mainNavigation: Group[] = [
       { title: "Funcionários", url: "/employees" },
       { title: "Salas", url: "/classrooms" },
       { title: "Disciplinas", url: "/subjects" },
+      { title: "Turmas", url: "/class-groups" },
     ],
   },
   {
