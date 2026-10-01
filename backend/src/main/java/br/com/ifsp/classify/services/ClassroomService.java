@@ -19,7 +19,6 @@ public class ClassroomService extends AbstractService<Classroom, ClassroomCreate
 
     private final String CAPACITY_ZERO_OR_LESS_MESSAGE = "A capacidade da sala deve ser maior do que 0";
     private final AuditService auditService;
-    private final String CAPACITY_ZERO_OR_LESS_MESSAGE = "A capacidade da sala deve ser maior do que zero";
 
     public ClassroomService(ClassroomRepository repository, AuditService auditService) {
         super(repository);
