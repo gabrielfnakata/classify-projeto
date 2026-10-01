@@ -47,7 +47,7 @@ export default function Login() {
                     validateOnMount={true}
                 >
                     {({isSubmitting, isValid, setFieldValue, values}) => (
-                        <Form className="flex flex-col gap-[1.5vh] items-center justify-evenly">
+                        <Form className="flex flex-col gap-6 items-center justify-evenly">
                             {erroLogin && (
                                 <div className="w-[20vw] rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
                                     <p className="leading-relaxed">{erroLogin}</p>
@@ -66,7 +66,7 @@ export default function Login() {
                                 label="Senha"
                                 type="password"
                             />
-                            <div className="w-[20vw] flex flex-row items-center justify-between">
+                            <div className="pt-2 w-[20vw] flex flex-row items-center justify-between">
                                 <FieldGroup className="w-[36%]">
                                     <UIField orientation="horizontal">
                                         <Checkbox 

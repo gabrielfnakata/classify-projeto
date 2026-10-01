@@ -55,7 +55,7 @@ export default function NewEntityPage<T>({
                     >
                         {({ isSubmitting, isValid }) => (
                             <Form className="flex flex-col gap-[3vh]">
-                                <FormGrid>
+                                <FormGrid className="!gap-y-8">
                                     {fields.map(field => {
                                         switch(field.type) {
                                             case 'text':

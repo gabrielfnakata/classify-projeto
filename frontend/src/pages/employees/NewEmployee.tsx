@@ -16,9 +16,9 @@ export default function NewEmployee() {
     const fields = [
         { key: 'name', name: 'name', label: 'Nome', type: 'text' as const, required: true },
         { key: 'birthDate', name: 'birthDate', label: 'Data de nascimento', type: 'date' as const, required: true },
+        { key: 'email', name: 'email', label: 'E-mail', type: 'text' as const, required: true },
         { key: 'cpf', name: 'cpf', label: 'CPF', type: 'cpf' as const, required: true },
         { key: 'hireDate', name: 'hireDate', label: 'Data de contratação', type: 'date' as const, required: true },
-        { key: 'email', name: 'email', label: 'E-mail', type: 'text' as const, required: true },
         {
             key: 'roleId', name: 'roleId', label: 'Cargo', type: 'select' as const, required: true,
             options: (roles ?? []).map(role => ({ label: role.description, value: role.id }))
