@@ -33,7 +33,12 @@ public class Role implements Serializable {
     }
 
     public String getDescription() {
-        return description;
+        return switch (this.id) {
+            case "ADMIN" -> "Administrador do Sistema";
+            case "PROFE" -> "Professor";
+            case "SECRE" -> "Secretário(a)";
+            default -> this.description;
+        };
     }
 
     public void setDescription(String description) {

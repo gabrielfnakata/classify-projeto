@@ -15,23 +15,7 @@ import {
 import { auditService } from "@/services/auditService";
 import type { AuditDTO, AuditFilterParams } from "@/shared/dtos/audit/AuditDTO";
 import FilterRow, { type FilterConfig } from "@/components/filter-row/FilterRow";
-
-const TABLE_NAMES: { value: string; label: string }[] = [
-    { value: "ALL", label: "Todas as tabelas" },
-    { value: "STUDENT", label: "Alunos" },
-    { value: "EMPLOYEE", label: "Funcionários" },
-    { value: "USER", label: "Usuários" },
-    { value: "CLASSROOM", label: "Salas" },
-    { value: "SUBJECT", label: "Disciplinas" },
-    { value: "SUBJECT_TEACHER", label: "Professor por Matéria" },
-    { value: "CLASS", label: "Turmas" },
-    { value: "CLASS_SESSION", label: "Aulas" },
-    { value: "ASSESSMENT", label: "Avaliações" },
-    { value: "REPORT", label: "Relatórios" },
-    { value: "GUARDIAN", label: "Responsáveis" },
-    { value: "TELEPHONE", label: "Telefones" },
-    { value: "ADDRESS", label: "Endereços" },
-];
+import {AuditTables, normalizeTableName, TABLE_NAMES} from "@/shared/models/enums/audit-tables.ts";
 
 const OPERATION_OPTIONS: { value: string; label: string }[] = [
     { value: "ALL", label: "Todas as operações" },
@@ -154,7 +138,7 @@ export default function AuditLogs() {
         {
             key: "tableName",
             header: "Tabela / Entidade",
-            cell: (row) => <span className="font-semibold">{row.tableName}</span>,
+            cell: (row) => <span className="font-semibold">{normalizeTableName(row.tableName as AuditTables)}</span>,
         },
         {
             key: "registerId",
@@ -171,8 +155,8 @@ export default function AuditLogs() {
             header: "Usuário Responsável",
             cell: (row) => (
                 <div className="flex flex-col text-xs">
-                    <span className="font-medium text-foreground">{row.user?.email || "Sistema"}</span>
-                    <span className="text-muted-foreground">{row.user?.role || "-"}</span>
+                    <span className="font-medium text-foreground">{row.userEmail || "Sistema"}</span>
+                    <span className="text-muted-foreground">{row.userRole || "-"}</span>
                 </div>
             ),
         },
@@ -242,7 +226,7 @@ export default function AuditLogs() {
                             </DialogTitle>
                         </div>
                         <DialogDescription>
-                            Registro de {selectedAudit?.operation} na tabela <strong>{selectedAudit?.tableName}</strong> (ID #{selectedAudit?.registerId}) em {selectedAudit && formatDate(selectedAudit.date)} por <strong>{selectedAudit?.user?.email || "Sistema"}</strong>.
+                            Registro de {selectedAudit?.operation} na tabela <strong>{selectedAudit?.tableName}</strong> (ID #{selectedAudit?.registerId}) em {selectedAudit && formatDate(selectedAudit.date)} por <strong>{selectedAudit?.userEmail || "Sistema"}</strong>.
                         </DialogDescription>
                     </DialogHeader>
 

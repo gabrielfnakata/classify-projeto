@@ -3,11 +3,9 @@ export interface AuditDTO {
     tableName: string;
     registerId: number;
     operation: 'INSERT' | 'UPDATE' | 'DELETE';
-    user: {
-        uuid: string;
-        email: string;
-        role: string;
-    };
+    userEmail: string;
+    userUuid: string;
+    userRole?: string;
     date: string;
     oldData: string | null;
     newData: string;

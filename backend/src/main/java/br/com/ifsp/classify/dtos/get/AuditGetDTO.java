@@ -9,6 +9,7 @@ public record AuditGetDTO(
     String operation,
     String userEmail,
     String userUuid,
+    String userRole,
     LocalDateTime date,
     String oldData,
     String newData

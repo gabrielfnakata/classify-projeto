@@ -50,6 +50,8 @@ public class AuditService {
         String userUuid = (audit.getUser() != null && audit.getUser().getUuid() != null)
                 ? UuidUtils.convertBytesToString(audit.getUser().getUuid())
                 : null;
+        String userRole = (audit.getUser() != null && audit.getUser().getUuid() != null)
+                ? audit.getUser().getRole().getDescription() : null;
 
         return new AuditGetDTO(
                 audit.getId(),
@@ -58,6 +60,7 @@ public class AuditService {
                 audit.getOperation(),
                 userEmail,
                 userUuid,
+                userRole,
                 audit.getDate(),
                 audit.getOldData(),
                 audit.getNewData()
