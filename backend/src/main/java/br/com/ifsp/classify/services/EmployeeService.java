@@ -17,6 +17,8 @@ import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 
+import java.time.LocalDate;
+
 @Service
 public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO, Long> {
 
@@ -59,6 +61,16 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         if (Utils.isNullOrEmpty(employeeDTO.cpf())) {
             throw new DtoException(ExceptionCode.MISSING_FIELD, "O CPF do funcionário não pode ser nulo ou vazio.");
         }
+
+        if (employeeDTO.birthDate().isAfter(LocalDate.now())) {
+            throw new DtoException(ExceptionCode.DATA_INTEGRITY, "A data de nascimento não pode ser uma data futura.");
+        }
+
+        if (employeeDTO.birthDate().isAfter(employeeDTO.hireDate())) {
+            throw new DtoException(ExceptionCode.DATA_INTEGRITY,
+                    "O funcionário não pode ter uma data de contratação anterior ao seu nascimento.");
+        }
+
         else if (!Utils.cpfValidator(employeeDTO.cpf())) {
             throw new DtoException(ExceptionCode.INVALID_CPF, "O CPF informado é inválido.");
         }

@@ -94,6 +94,11 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             throw new DtoException(ExceptionCode.DATA_INTEGRITY, "A data de nascimento não pode ser uma data futura.");
         }
 
+        if (studentDTO.birthDate().isAfter(studentDTO.registrationDate())) {
+            throw new DtoException(ExceptionCode.DATA_INTEGRITY,
+                    "O aluno não pode ter uma data de matrícula anterior ao seu nascimento.");
+        }
+
         Student newStudent = new Student();
         newStudent.setUuid(UuidUtils.generateUUID());
         newStudent.setName(Utils.trimAndUpper(studentDTO.name()));

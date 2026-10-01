@@ -51,6 +51,7 @@ export default function NewEntityPage<T>({
                         initialValues={initialFormValue}
                         onSubmit={handleSubmit}
                         validationSchema={validationSchema}
+                        validateOnMount
                     >
                         {({ isSubmitting, isValid }) => (
                             <Form className="flex flex-col gap-[3vh]">
