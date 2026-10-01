@@ -1,6 +1,6 @@
 import axios from "axios";
 
-type ApiExceptionPayload = {
+export type ApiExceptionPayload = {
     code?: string;
     message?: string;
     status?: number;

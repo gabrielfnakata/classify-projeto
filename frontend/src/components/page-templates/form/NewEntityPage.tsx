@@ -52,7 +52,7 @@ export default function NewEntityPage<T>({
                         onSubmit={handleSubmit}
                         validationSchema={validationSchema}
                     >
-                        {({ isSubmitting }) => (
+                        {({ isSubmitting, isValid }) => (
                             <Form className="flex flex-col gap-[3vh]">
                                 <FormGrid>
                                     {fields.map(field => {
@@ -85,7 +85,7 @@ export default function NewEntityPage<T>({
                                     <Button type="button" className="h-10 px-5 rounded-xl bg-red-400 text-sm font-semibold" onClick={() => {navigate(backRoute)}}>
                                         Voltar
                                     </Button>
-                                    <Button type="submit" disabled={isSubmitting} className="h-10 px-5 rounded-xl text-sm font-semibold">
+                                    <Button type="submit" disabled={isSubmitting || !isValid} className="h-10 px-5 rounded-xl text-sm font-semibold">
                                         Salvar
                                     </Button>
                                 </div>

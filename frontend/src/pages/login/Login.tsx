@@ -10,6 +10,8 @@ import { LoginValidationSchema } from "@/validation/LoginSchema";
 import { useEffect, useState } from "react";
 import { ContentCard } from "@/components/layout/content-card";
 import type { LoginForm } from "@/shared/models/forms/loginForm";
+import type {AxiosError} from "axios";
+import type {ApiExceptionPayload} from "@/services/api.ts";
 
 export default function Login() {
     const { login, logout } = useAuth();
@@ -20,9 +22,10 @@ export default function Login() {
         setErroLogin(null);
         await login(values)
         .then(() => navigate('/classes'))
-        .catch((err) => {
-            const mensagem = err?.response?.data?.mensagem ?? err?.message ?? "E-mail ou senha inválidos.";
-            setErroLogin(mensagem);
+        .catch((error: AxiosError) => {
+            const data = error.response?.data as ApiExceptionPayload;
+            const message = data.message ?? "Ocorreu um erro. Tente novamente.";
+            setErroLogin(message);
         })
         .finally(() => helpers.setSubmitting(false));
     }

@@ -6,6 +6,6 @@ export const NewStudentValidationSchema = yup.object({
     email: yup.string().email().required(),
     cpf: yup.string().required(),
     registrationDate: yup.date().required(),
-    telephone1: yup.string().required(),
+    telephone1: yup.string(),
     telephone2: yup.string(),
 });

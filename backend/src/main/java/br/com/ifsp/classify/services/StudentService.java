@@ -18,6 +18,7 @@ import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -88,6 +89,10 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
 
         if (studentDTO.registrationDate() == null)
             throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a data de matrícula do aluno.");
+
+        if (studentDTO.birthDate().isAfter(LocalDate.now())) {
+            throw new DtoException(ExceptionCode.DATA_INTEGRITY, "A data de nascimento não pode ser uma data futura.");
+        }
 
         Student newStudent = new Student();
         newStudent.setUuid(UuidUtils.generateUUID());
