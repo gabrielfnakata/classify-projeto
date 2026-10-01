@@ -41,9 +41,9 @@ public class TelephoneService {
             throw new DtoException(ExceptionCode.INVALID_PHONE, "Foi informado um número de telefone inválido.");
 
         Telephone newTelephone = new Telephone();
-        newTelephone.setCountry(Utils.trimAndUpper(telephoneDTO.country().trim()));
-        newTelephone.setDdd(Utils.trimAndUpper(telephoneDTO.ddd().trim()));
-        newTelephone.setNumber(Utils.trimAndUpper(telephoneDTO.number().trim()));
+        newTelephone.setCountry(!Utils.isNullOrEmpty(telephoneDTO.country()) ? Utils.trimAndUpper(telephoneDTO.country()) : null);
+        newTelephone.setDdd(!Utils.isNullOrEmpty(telephoneDTO.ddd()) ? Utils.trimAndUpper(telephoneDTO.ddd()) : null);
+        newTelephone.setNumber(Utils.trimAndUpper(telephoneDTO.number()));
 
         return newTelephone;
     }

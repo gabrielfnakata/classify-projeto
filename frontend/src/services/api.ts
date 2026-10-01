@@ -15,9 +15,13 @@ declare module "axios" {
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    headers: {
-        'Content-Type': "application/json"
+});
+
+api.interceptors.request.use((config) => {
+    if (config.data && !(config.data instanceof FormData)) {
+        config.headers['Content-Type'] = 'application/json';
     }
+    return config;
 });
 
 api.interceptors.response.use(

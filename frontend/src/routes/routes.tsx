@@ -14,6 +14,13 @@ import { PublicShell } from "@/components/layout/public-shell";
 import NewSubject from "@/pages/subjects/NewSubject";
 import NewStudent from "@/pages/students/NewStudent";
 import NewClassroom from "@/pages/classrooms/NewClassroom";
+import AttendancePage from "@/pages/attendance";
+import AttendanceOverview from "@/pages/attendance/AttendanceOverview";
+import AttendanceSeriesPage from "@/pages/attendance/AttendanceSeries";
+import ClassGroupRegistration from "@/pages/class-groups/ClassGroupRegistration";
+import NewClassGroup from "@/pages/class-groups/NewClassGroup";
+import ClassGroupDetail from "@/pages/class-groups/ClassGroupDetail";
+import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
 
 export default function AppRoutes() {
     return (
@@ -75,6 +82,27 @@ export default function AppRoutes() {
             }/>
             <Route path="/schedule" element={
                 <ProtectedRoute children={<SchedulePage />} />
+            }/>
+            <Route path="/attendance" element={
+                <ProtectedRoute children={<AttendanceOverview />} />
+            }/>
+            <Route path="/attendance/series/:recurrenceUuid" element={
+                <ProtectedRoute children={<AttendanceSeriesPage />} />
+            }/>
+            <Route path="/attendance/:sessionUuid" element={
+                <ProtectedRoute children={<AttendancePage />} />
+            }/>
+            <Route path="/class-groups" element={
+                <ProtectedRoute children={<ClassGroupRegistration />} />
+            }/>
+            <Route path="/new-class-group" element={
+                <ProtectedRoute children={<NewClassGroup />} />
+            }/>
+            <Route path="/class-groups/:uuid" element={
+                <ProtectedRoute children={<ClassGroupDetail />} />
+            }/>
+            <Route path="/student-home-page" element={
+                <ProtectedRoute children={<StudentHomePage />} />
             }/>
         </Routes>
     )
