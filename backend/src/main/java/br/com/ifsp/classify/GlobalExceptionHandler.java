@@ -68,11 +68,4 @@ public class GlobalExceptionHandler {
                         ExceptionCode.INTERNAL_ERROR.getCode(),
                         "Ocorreu um erro inesperado. Tente novamente mais tarde."));
     }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ExceptionDTO> handleDataIntegrityViolation(DataIntegrityViolationException exception) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body( new ExceptionDTO(HttpStatus.CONFLICT.value(),
-                                        "Não foi possível salvar: já existe um registro com esses dados, ou ele ainda está em uso em outro lugar."));
-    }
 }
