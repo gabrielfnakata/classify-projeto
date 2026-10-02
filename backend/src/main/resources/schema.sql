@@ -252,3 +252,16 @@ CREATE TABLE IF NOT EXISTS audit (
     CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES user (id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
 )$$
+
+CREATE TABLE IF NOT EXISTS user_avatar (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	user_id BIGINT UNSIGNED NOT NULL,
+	preset VARCHAR(30),
+	content_type VARCHAR(50),
+	data LONGBLOB,
+	updated_at DATETIME NOT NULL,
+
+	CONSTRAINT userAvatar_id_pk PRIMARY KEY (id),
+	CONSTRAINT userAvatar_userId_uk UNIQUE (user_id),
+	CONSTRAINT userAvatar_userId_fk FOREIGN KEY (user_id) REFERENCES user (id)
+)$$
