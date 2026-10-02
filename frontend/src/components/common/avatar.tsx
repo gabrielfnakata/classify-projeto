@@ -6,6 +6,7 @@ type AvatarSize = "sm" | "md" | "lg" | "xl"
 interface AvatarProps extends HTMLAttributes<HTMLDivElement> {
   name: string
   seed?: string | number
+  src?: string | null
   size?: AvatarSize
 }
 
@@ -61,6 +62,7 @@ function getColorIndex(value: string) {
 export function Avatar({
   name,
   seed,
+  src,
   size = "md",
   className,
   ...props
@@ -72,7 +74,7 @@ export function Avatar({
   return (
     <div
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full border font-semibold select-none",
+        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border font-semibold select-none",
         sizeClasses[size],
         colorClass,
         className
@@ -81,7 +83,11 @@ export function Avatar({
       title={name}
       {...props}
     >
-      {initials}
+      {src ? (
+        <img src={src} alt={name} className="h-full w-full object-cover" draggable={false} />
+      ) : (
+        initials
+      )}
     </div>
   )
 }
