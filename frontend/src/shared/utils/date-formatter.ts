@@ -16,3 +16,9 @@ export const formatHHMM = (raw: unknown): string => {
   const d = toDate(raw)
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
 }
+
+export const formatIsoDateBR = (iso: string | null | undefined): string => {
+  if (!iso) return ""
+  const [year, month, day] = iso.slice(0, 10).split("-")
+  return `${day}/${month}/${year}`
+}

@@ -22,6 +22,7 @@ import ClassGroupRegistration from "@/pages/class-groups/ClassGroupRegistration"
 import NewClassGroup from "@/pages/class-groups/NewClassGroup";
 import ClassGroupDetail from "@/pages/class-groups/ClassGroupDetail";
 import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
+import ProfilePage from "@/pages/profile/ProfilePage";
 
 export default function AppRoutes() {
     return (
@@ -40,7 +41,7 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<OnDevelopment />} />
             }/>
             <Route path="/account" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute children={<ProfilePage />} />
             }/>
             <Route path="/settings" element={
                 <ProtectedRoute children={<OnDevelopment />} />
