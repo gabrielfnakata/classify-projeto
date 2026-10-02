@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { ExceptionModal } from "@/components/features/exception-modal"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider } from "./context/AuthContext.tsx"
+import { CurrentUserProvider } from "./context/CurrentUserContext.tsx"
 import AppRoutes from "./routes/routes.tsx"
 import { BrowserRouter } from "react-router"
 
@@ -14,10 +15,12 @@ createRoot(document.getElementById("root")!).render(
    <BrowserRouter>
      <ThemeProvider>
        <AuthProvider>
-         <TooltipProvider delayDuration={0}>
-           <AppRoutes/>
-           <ExceptionModal />
-         </TooltipProvider>
+         <CurrentUserProvider>
+           <TooltipProvider delayDuration={0}>
+             <AppRoutes/>
+             <ExceptionModal />
+           </TooltipProvider>
+         </CurrentUserProvider>
        </AuthProvider>
      </ThemeProvider>
    </BrowserRouter>
