@@ -13,7 +13,7 @@ import java.util.List;
 @Table(name = "EMPLOYEE")
 public class Employee implements Serializable {
 
-    @JdbcTypeCode(SqlTypes.TINYINT)
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

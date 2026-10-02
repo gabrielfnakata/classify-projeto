@@ -18,7 +18,7 @@ import jakarta.persistence.Table;
 @Table(name = "TELEPHONE")
 public class Telephone implements Serializable {
 
-    @JdbcTypeCode(SqlTypes.TINYINT)
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
