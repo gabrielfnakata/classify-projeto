@@ -18,7 +18,7 @@ import { AVATAR_PRESETS, avatarPresetSrc } from "@/shared/models/avatar-presets"
 import type { ApiExceptionPayload } from "@/services/api"
 
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"]
-const MAX_ORIGINAL_SIZE = 10 * 1024 * 1024
+const MAX_ORIGINAL_SIZE = 2 * 1024 * 1024
 
 type Selection =
   | { kind: "current" }
@@ -75,7 +75,7 @@ export function AvatarPickerDialog({ open, name, onClose, onSaved }: AvatarPicke
       return
     }
     if (file.size > MAX_ORIGINAL_SIZE) {
-      setError("A imagem deve ter no máximo 10 MB.")
+      setError(`A imagem selecionada tem ${Math.ceil(file.size / 1024).toLocaleString("pt-BR")} KB. O tamanho máximo é 2 MB (2.048 KB).`)
       return
     }
 
@@ -145,7 +145,7 @@ export function AvatarPickerDialog({ open, name, onClose, onSaved }: AvatarPicke
                 Enviar foto
               </Button>
               <p className="text-center text-xs text-muted-foreground sm:text-left">
-                PNG, JPEG ou WEBP. A imagem é recortada em formato quadrado.
+                PNG, JPEG ou WEBP de até 2 MB (2.048 KB). A imagem é recortada em formato quadrado.
               </p>
               {(hasAvatar || selection.kind === "photo" || selection.kind === "preset") && (
                 <Button

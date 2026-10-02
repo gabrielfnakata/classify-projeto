@@ -24,7 +24,7 @@ public class UserAvatarService {
 
     private static final Pattern PRESET_PATTERN = Pattern.compile("^avatar-(0[1-9]|1[0-2])$");
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/png", "image/jpeg", "image/webp");
-    private static final long MAX_PHOTO_SIZE = 1024 * 1024;
+    private static final long MAX_PHOTO_SIZE = 200 * 1024;
 
     private final UserAvatarRepository avatarRepository;
     private final UserRepository userRepository;
@@ -90,7 +90,7 @@ public class UserAvatarService {
             throw new DtoException(ExceptionCode.VALIDATION_ERROR, "A foto deve estar no formato PNG, JPEG ou WEBP.");
 
         if (file.getSize() > MAX_PHOTO_SIZE)
-            throw new DtoException(ExceptionCode.VALIDATION_ERROR, "A foto deve ter no máximo 1 MB.");
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR, "A foto deve ter no máximo 200 KB.");
 
         UserAvatar avatar = getOrCreate(email);
         try {
