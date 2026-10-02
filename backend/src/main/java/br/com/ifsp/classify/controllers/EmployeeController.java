@@ -2,13 +2,20 @@ package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
 import br.com.ifsp.classify.dtos.get.EmployeeGetDTO;
+import br.com.ifsp.classify.dtos.get.ProfileGetDTO;
 import br.com.ifsp.classify.dtos.update.EmployeeUpdateDTO;
+import br.com.ifsp.classify.dtos.update.PasswordUpdateDTO;
+import br.com.ifsp.classify.dtos.update.ProfileUpdateDTO;
 import br.com.ifsp.classify.services.EmployeeService;
+import br.com.ifsp.classify.services.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,10 +30,30 @@ import java.util.Map;
 public class EmployeeController extends AbstractController<EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO> {
 
     private final EmployeeService service;
+    private final UserService userService;
 
-    public EmployeeController(EmployeeService service) {
+    public EmployeeController(EmployeeService service, UserService userService) {
         super(service);
         this.service = service;
+        this.userService = userService;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ProfileGetDTO> getProfile(Authentication authentication) {
+        return ResponseEntity.ok(service.getProfile(authentication.getName()));
+    }
+
+    @PutMapping(value = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ProfileGetDTO> updateProfile(Authentication authentication,
+                                                       @RequestBody ProfileUpdateDTO profile) {
+        return ResponseEntity.ok(service.updateProfile(authentication.getName(), profile));
+    }
+
+    @PutMapping(value = "/me/password", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> changePassword(Authentication authentication,
+                                               @RequestBody PasswordUpdateDTO password) {
+        userService.changePassword(authentication.getName(), password);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping(value = "/template", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

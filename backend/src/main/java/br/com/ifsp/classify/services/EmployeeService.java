@@ -25,6 +25,9 @@ import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.create.UserCreateDTO;
 import br.com.ifsp.classify.dtos.get.EmployeeGetDTO;
+import br.com.ifsp.classify.dtos.get.ProfileGetDTO;
+import br.com.ifsp.classify.dtos.get.RoleGetDTO;
+import br.com.ifsp.classify.dtos.update.ProfileUpdateDTO;
 import br.com.ifsp.classify.dtos.update.EmployeeUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
@@ -45,6 +48,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
     private final UserService userService;
     private final AuditService auditService;
     private final RoleRepository roleRepository;
+    private final EmployeeRepository employeeRepository;
 
     public EmployeeService(EmployeeRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, TelephoneService telephoneService, UserService userService, AuditService auditService) {
         super(repository);
@@ -52,6 +56,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.auditService = auditService;
+        this.employeeRepository = repository;
     }
 
     @Override
@@ -453,6 +458,78 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
                 return null;
             }
         }
+    }
+
+    private Employee getEmployeeByEmail(String email) {
+        return employeeRepository.findByUserEmailAndIsDeletedFalse(email)
+                .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND,
+                        "Não foi encontrado um funcionário vinculado ao usuário logado."));
+    }
+
+    private ProfileGetDTO returnProfileDTO(Employee employee) {
+        User user = employee.getUser();
+        RoleGetDTO role = (user != null && user.getRole() != null)
+                ? new RoleGetDTO(user.getRole().getId(), user.getRole().getDescription())
+                : null;
+
+        return new ProfileGetDTO(
+                UuidUtils.convertBytesToString(employee.getUuid()),
+                employee.getName(),
+                user != null ? user.getEmail() : null,
+                employee.getCpf(),
+                employee.getBirthDate(),
+                employee.getHireDate(),
+                role,
+                employee.getTelephones()
+                    .stream()
+                    .map(telephoneService::returnDTO)
+                    .toList()
+        );
+    }
+
+    public ProfileGetDTO getProfile(String email) {
+        return returnProfileDTO(getEmployeeByEmail(email));
+    }
+
+    public ProfileGetDTO updateProfile(String email, ProfileUpdateDTO profileDTO) {
+        if (profileDTO == null)
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "Os dados do perfil não foram informados.");
+
+        Employee employee = getEmployeeByEmail(email);
+        EmployeeGetDTO oldEmployee = returnDTO(employee);
+
+        if (Utils.isNullOrEmpty(profileDTO.name()))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "O nome não pode ser vazio ou nulo.");
+
+        if (profileDTO.birthDate() != null) {
+            if (profileDTO.birthDate().isAfter(LocalDate.now()))
+                throw new DtoException(ExceptionCode.DATA_INTEGRITY, "A data de nascimento não pode ser uma data futura.");
+
+            if (employee.getHireDate() != null && profileDTO.birthDate().isAfter(employee.getHireDate()))
+                throw new DtoException(ExceptionCode.DATA_INTEGRITY,
+                        "A data de nascimento não pode ser posterior à data de contratação.");
+        }
+
+        employee.setName(Utils.trimAndUpper(profileDTO.name()));
+        employee.setBirthDate(profileDTO.birthDate());
+
+        if (profileDTO.telephone() != null && !Utils.isNullOrEmpty(profileDTO.telephone().number())) {
+            Telephone validated = telephoneService.create(profileDTO.telephone());
+
+            if (employee.getTelephones().isEmpty()) {
+                employee.addTelephone(validated);
+            } else {
+                Telephone current = employee.getTelephones().get(0);
+                current.setCountry(validated.getCountry());
+                current.setDdd(validated.getDdd());
+                current.setNumber(validated.getNumber());
+            }
+        }
+
+        repository.save(employee);
+        auditService.logUpdate("EMPLOYEE", employee.getId(), oldEmployee, returnDTO(employee));
+
+        return returnProfileDTO(employee);
     }
 
     @Override

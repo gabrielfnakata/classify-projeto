@@ -7,8 +7,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import br.com.ifsp.classify.dtos.create.UserCreateDTO;
+import br.com.ifsp.classify.dtos.get.CurrentUserGetDTO;
 import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.dtos.get.UserGetDTO;
+import br.com.ifsp.classify.dtos.update.PasswordUpdateDTO;
 import br.com.ifsp.classify.dtos.update.UserUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
@@ -19,6 +21,7 @@ import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.repositories.UserRepository;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
+import br.com.ifsp.classify.specifications.UserSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 
@@ -137,6 +140,44 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         newUser.setCreatedAt(LocalDateTime.now());
 
         return newUser;
+    }
+
+    public CurrentUserGetDTO getCurrentUser(String email) {
+        User user = repository.findOne(UserSpecification.getByEmail(email))
+                .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "Usuário não encontrado."));
+
+        String name = employeeRepository.findByUserEmailAndIsDeletedFalse(email)
+                .map(Employee::getName)
+                .orElse(null);
+
+        RoleGetDTO role = user.getRole() != null
+                ? new RoleGetDTO(user.getRole().getId(), user.getRole().getDescription())
+                : null;
+
+        return new CurrentUserGetDTO(name, user.getEmail(), role);
+    }
+
+    public void changePassword(String email, PasswordUpdateDTO passwordDTO) {
+        if (passwordDTO == null || Utils.isNullOrEmpty(passwordDTO.currentPassword()) || Utils.isNullOrEmpty(passwordDTO.newPassword()))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha atual e a nova senha.");
+
+        User user = repository.findOne(UserSpecification.getByEmail(email))
+                .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "Usuário não encontrado."));
+
+        if (!passwordEncoder.matches(passwordDTO.currentPassword(), user.getPassword()))
+            throw new DtoException(ExceptionCode.INVALID_CREDENTIALS, "A senha atual está incorreta.");
+
+        String newPassword = passwordDTO.newPassword();
+        if (newPassword.length() < 8 || !newPassword.matches(".*[a-z].*")
+                || !newPassword.matches(".*[A-Z].*") || !newPassword.matches(".*\\d.*"))
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR,
+                    "A nova senha deve ter ao menos 8 caracteres, com letra maiúscula, letra minúscula e número.");
+
+        if (passwordEncoder.matches(newPassword, user.getPassword()))
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR, "A nova senha deve ser diferente da senha atual.");
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        repository.save(user);
     }
 
     @Override
