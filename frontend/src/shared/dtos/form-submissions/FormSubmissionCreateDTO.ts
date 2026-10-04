@@ -1,7 +1,7 @@
-import type {FormAnswerCreateDTO} from "@/shared/dtos/form-answers/FormAnswerCreateDTO.ts";
+import type {FormSubmissionAnswerDTO} from "@/shared/dtos/form-submissions/FormSubmissionAnswerDTO.ts";
 
 export interface FormSubmissionCreateDTO {
-    answers: FormAnswerCreateDTO[]
+    answers: FormSubmissionAnswerDTO[]
     formId: string
     studentId?: string
 }

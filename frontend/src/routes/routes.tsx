@@ -17,7 +17,7 @@ import StudentForms from "@/pages/forms/StudentForms";
 import TeacherForms from "@/pages/forms/TeacherForms";
 import NewForm from "@/pages/forms/NewForm.tsx";
 import PreviewForm from "@/pages/forms/PreviewForm.tsx";
-import SubmissionForm from "@/pages/forms/AnswerForm.tsx";
+import SubmissionForm from "@/pages/forms/SubmissionForm.tsx";
 import AttendancePage from "@/pages/attendance";
 import AttendanceOverview from "@/pages/attendance/AttendanceOverview";
 import AttendanceSeriesPage from "@/pages/attendance/AttendanceSeries";
@@ -127,7 +127,7 @@ export default function AppRoutes() {
             <Route path="/form-answers/:id/:submissionId" element={
                <ProtectedRoute children={<FormCorrection />} />
             }/>
-            <Route path="/submission-form/:uuid" element={
+            <Route path="/submission-form/:formUuid/:submissionUuid" element={
                 <ProtectedRoute children={<SubmissionForm />} />
             }/>
         </Routes>
