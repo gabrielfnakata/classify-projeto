@@ -7,11 +7,16 @@ import { formatDateLabel } from "@/shared/utils/date-formatter";
 import type { FormDTO } from "@/shared/dtos/form/FormDTO";
 import { statusLabel, statusVariant } from "@/shared/models/enums/form-status.ts";
 import {useNavigate} from "react-router";
-import {Eye, Send} from "lucide-react";
+import {Eye, MessageSquareText} from "lucide-react";
 import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip.tsx";
+import SendFormDialog from "@/components/dialogs/SendFormDialog.tsx";
+import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
 
 export default function TeacherForms() {
     const navigate = useNavigate();
+    const {data: studentData} = useFetch<StudentDTO[]>('/student');
+    const {data: classData} = useFetch<ClassGroupDTO[]>('/class');
     const columns: DataTableColumn<FormDTO>[] = [
         {key: 'title', header: 'Título', cell: row => row.title},
         {key: 'createdAt', header: 'Data', cell: row => formatDateLabel(new Date(row.createdAt))},
@@ -26,23 +31,26 @@ export default function TeacherForms() {
             <div className="flex gap-2">
                 <Tooltip>
                     <TooltipTrigger
-                        className="h-8 px-2 bg-button-background rounded-xl text-sm text-white font-semibold
-                        hover:bg-button-highlight hover:cursor-pointer"
-                        onClick={() => navigate(`/form-preview/${row.uuid}`)}
+                        onClick={() => navigate(`/form-preview/${row.uuid}`, {state: {questions: row.questions}})}
+                        asChild
                     >
-                        <Eye/>
+                        <Eye className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground"/>
                     </TooltipTrigger>
                     <TooltipContent>Visualizar Formulário</TooltipContent>
                 </Tooltip>
+                <SendFormDialog
+                    formId={row.uuid}
+                    studentData={studentData ?? []}
+                    classData={classData ?? []}
+                />
                 <Tooltip>
                     <TooltipTrigger
-                        className="h-8 px-2 bg-send rounded-xl text-sm text-white font-semibold
-                        hover:bg-warning hover:cursor-pointer"
-                        onClick={() => {alert('Essa funcionalidade ainda está em desenvolvimento.')}}
+                        onClick={() => navigate(`/form-answers/${row.uuid}`, {state: {formTitle: row.title}})}
+                        asChild
                     >
-                        <Send />
+                        <MessageSquareText className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground"/>
                     </TooltipTrigger>
-                    <TooltipContent>Enviar Formulário</TooltipContent>
+                    <TooltipContent>Visualizar Respostas</TooltipContent>
                 </Tooltip>
             </div>
         )}

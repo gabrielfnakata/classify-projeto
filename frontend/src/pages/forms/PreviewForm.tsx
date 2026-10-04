@@ -1,159 +1,62 @@
-import {PageHeader} from "@/components/layout/page-header.tsx";
-import {Button} from "@/components/ui/button.tsx";
-import {ArrowLeft, Ghost} from "lucide-react";
-import {ContentCard} from "@/components/layout/content-card.tsx";
-import {Label} from "@/components/ui/label.tsx";
-import {useLocation, useNavigate, useParams} from "react-router";
-import {AnswerType} from "@/shared/models/enums/answer-type.ts";
-import {Textarea} from "@/components/ui/textarea.tsx";
-import {Checkbox} from "@/components/ui/checkbox.tsx";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
-import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
+import {useLocation, useParams} from "react-router";
 import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
 import useFetch from "@/hooks/useFetch.tsx";
 import type {FormInfoDTO} from "@/shared/dtos/form/FormInfoDTO.ts";
-import type {FormQuestionOptionDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionDTO.ts";
+import FormHeaderActions from "@/pages/forms/new-form/FormHeaderActions.tsx";
+import FormHeaderFields from "@/pages/forms/new-form/FormHeaderFields.tsx";
+import QuestionList from "@/pages/forms/new-form/QuestionList.tsx";
+import {Formik} from "formik";
+import {formatYMD} from "@/shared/utils/date-formatter.ts";
+import {Skeleton} from "@/components/ui/skeleton.tsx";
 
 export default function PreviewForm() {
     const { id } = useParams();
-    const navigate = useNavigate();
     const location = useLocation();
     const { data: fetchedForm } = useFetch<FormInfoDTO>(id ? `/form/${id}` : null);
-
     const formFromState = location.state?.form as FormCreateDTO | undefined;
+    const questionsQuantity = location.state?.questions as number | undefined;
 
-    const form = id ? fetchedForm : formFromState;
-
-    return (
-        <div className="flex flex-col background h-full w-full items-center justify-center">
-            <div className="flex flex-col w-full h-full py-23 gap-[2vh] justify-start items-center">
-                <div className="flex flex-row w-9/10 items-center justify-between">
-
-                    <PageHeader
-                        title={"Prévia do Formulário"}
-                        action={
-                            <div className="flex flex-row gap-4">
-                                <Button
-                                    className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold
-                                    hover:bg-button-highlight hover:cursor-pointer
-                                    "
-                                    onClick={() =>
-                                        id
-                                        ? navigate('/posted-forms')
-                                        : navigate('/new-form', { state: { form: form } })
-                                    }
-                                >
-                                    <ArrowLeft/>
-                                    Voltar
-                                </Button>
-                            </div>
-                        }
-                    />
-                </div>
-                <div className="flex flex-col w-8/10 gap-12 mb-8 items-start justify-center">
-                    <div className="flex flex-row w-full items-center">
-                        <Label
-                            className="w-full h-24 border-b-2 px-4 border-table-foreground text-4xl font-bold
-                                    text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-button-background
-                                    "
-                        >
-                            {form?.title}
-                        </Label>
-                    </div>
-                    <div className="flex flex-row w-full justify-start items-center">
-                        <Label
-                            className="flex justify-center w-full max-h-fit px-4 text-xl text-muted-foreground font-bold
-                                    text-muted-foreground placeholder:text-muted-foreground focus:outline-none
-                                    "
-                        >
-                            {form?.description}
-                        </Label>
-                    </div>
-                </div>
-                <div className="flex flex-col gap-10 w-8/10">
-                    {
-                        form?.questions && form?.questions.length > 0
-                        ? form?.questions.map((question, index) => {
-                            return (
-                                <ContentCard key={index} className="flex flex-col w-full gap-8">
-                                    <div className="flex w-full">
-                                        <Label
-                                            className="w-full h-16 border-b-1 px-2 border-table-foreground text-xl font-bold
-                                                text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-button-background
-                                                "
-                                        >
-                                            {question.question}
-                                        </Label>
-                                    </div>
-                                    <QuestionAnswer
-                                        type={question.answerType}
-                                        options={question.options ?? []}
-                                    />
-                                </ContentCard>
-                            );
-                        }) : (
-                            <div className="flex flex-col justify-center items-center w-full mt-24 gap-8">
-                                <Ghost className="scale-200 text-foreground opacity-50"/>
-                                <Label className="text-foreground text-center opacity-50">Ainda não há questões no seu
-                                    formulário</Label>
-                            </div>
-                        )
-                    }
-                </div>
-            </div>
-        </div>
-    );
-}
-
-interface QuestionAnswerProps {
-    type: AnswerType;
-    options: FormQuestionOptionCreateDTO[] | FormQuestionOptionDTO[];
-}
-
-function QuestionAnswer({ type, options }: QuestionAnswerProps) {
-    if (type === AnswerType.TEXT) {
-        return (
-            <Textarea
-                className="border-border h-8 p-4 placeholder:text-muted-foreground"
-            />
-        );
+    const fromFormInfoDTO = (source: FormInfoDTO): FormCreateDTO => {
+        return {
+            title: source.title,
+            description: source.description,
+            limitDate: formatYMD(new Date()),
+            hasScore: false,
+            questions: source.questions.map((q) => ({
+                question: q.question,
+                answerType: q.answerType,
+                isRequired: q.isRequired,
+                options: q.options
+            })),
+        };
     }
 
-    const renderIndicator = (_option: FormQuestionOptionCreateDTO | FormQuestionOptionDTO, i: number) => {
-        if (type === AnswerType.MULTI_SELECT) {
-            return (
-                <Checkbox
-                    className="bg-white text-black"
-                />
-            );
-        }
-        return (
-            <RadioGroupItem
-                value={`random-question-${i}`}
-                className="bg-white text-black"
-            />
-        );
-    };
+    const form = id
+        ? (fetchedForm ? fromFormInfoDTO(fetchedForm) : undefined)
+        : formFromState;
 
-    const optionsList = options.map((option, i) => (
-        <div key={i} className="flex justify-start items-center gap-2 pl-4">
-            {renderIndicator(option, i)}
-            <Label
-                className="w-1/2 h-6 pl-4 text-md text-foreground
-                placeholder:text-muted-foreground focus:outline-none"
-            >
-                {option.optionText}
-            </Label>
-        </div>
-    ));
+    const generateSkeletons = () => {
+        if (!questionsQuantity) return null;
+        const list = Array.from({ length: questionsQuantity }).map((_, i) => (
+            <Skeleton key={i} className="w-full h-48 rounded-[22px] p-6"/>
+        ));
+        return (
+            <div className="flex flex-col gap-10 w-8/10">
+                { list }
+            </div>
+        )
+    }
+
 
     return (
-        <>
-            {
-                type === AnswerType.MULTI_SELECT
-                    ? <div className="flex flex-col gap-2">{optionsList}</div>
-                    : <RadioGroup defaultValue=''>{optionsList}</RadioGroup>
-            }
-        </>
+        <Formik initialValues={form ?? {}} onSubmit={() => {}} enableReinitialize>
+            <div className="flex flex-col background h-full w-full items-center justify-center">
+                <div className="flex flex-col w-full h-full py-17 gap-[2vh] justify-start items-center">
+                    <FormHeaderActions type="preview"/>
+                    <FormHeaderFields readOnly/>
+                    { id && !form ? generateSkeletons() : <QuestionList readOnly/> }
+                </div>
+            </div>
+        </Formik>
     );
 }

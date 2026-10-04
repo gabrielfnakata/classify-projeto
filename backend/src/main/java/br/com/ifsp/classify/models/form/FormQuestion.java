@@ -38,6 +38,9 @@ public class FormQuestion {
     @OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
     private Set<FormQuestionOption> formQuestionOptions;
 
+    @JdbcTypeCode(SqlTypes.BIT)
+    private Boolean isRequired;
+
     public Set<FormQuestionOption> getFormQuestionOptions() {
         return formQuestionOptions;
     }
@@ -84,6 +87,14 @@ public class FormQuestion {
 
     public void setForm(Form form) {
         this.form = form;
+    }
+
+    public Boolean getRequired() {
+        return isRequired;
+    }
+
+    public void setRequired(Boolean required) {
+        isRequired = required;
     }
 
     @Override

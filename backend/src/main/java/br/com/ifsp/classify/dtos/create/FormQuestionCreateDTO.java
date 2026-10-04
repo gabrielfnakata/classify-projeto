@@ -7,6 +7,7 @@ import java.util.List;
 public record FormQuestionCreateDTO(
         String question,
         AnswerType answerType,
+        Boolean isRequired,
         List<FormQuestionOptionCreateDTO> options
 ) {
 }

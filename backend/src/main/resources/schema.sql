@@ -164,6 +164,7 @@ CREATE TABLE IF NOT EXISTS class_session (
 	report_id BIGINT UNSIGNED,
 	class_id BIGINT UNSIGNED,
 	student_id BIGINT UNSIGNED,
+	recurrence_group_id BINARY(16),
 
 	CONSTRAINT classSession_id_pk PRIMARY KEY (id),
 	CONSTRAINT classSession_uuid_uk UNIQUE (uuid),
@@ -185,6 +186,27 @@ CREATE TABLE IF NOT EXISTS assessment (
 
 	CONSTRAINT assessment_id_pk PRIMARY KEY (id),
 	CONSTRAINT assessment_classSessionId_fk FOREIGN KEY (class_session_id) REFERENCES class_session (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS attendance (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
+	class_session_id BIGINT UNSIGNED NOT NULL,
+	student_id BIGINT UNSIGNED NOT NULL,
+	status VARCHAR(8) NOT NULL,
+	justification_reason VARCHAR(17),
+	justification_note VARCHAR(255),
+
+	CONSTRAINT attendance_id_pk PRIMARY KEY (id),
+	CONSTRAINT attendance_uuid_uk UNIQUE (uuid),
+	CONSTRAINT attendance_classSessionId_studentId_uk UNIQUE (class_session_id, student_id),
+	CONSTRAINT attendance_classSessionId_fk FOREIGN KEY (class_session_id) REFERENCES class_session (id),
+	CONSTRAINT attendance_studentId_fk FOREIGN KEY (student_id) REFERENCES student (id),
+	CONSTRAINT attendance_status_ck CHECK (status IN ('PRESENTE', 'AUSENTE')),
+	CONSTRAINT attendance_justificationReason_ck CHECK (justification_reason IN ('ATESTADO_MEDICO', 'PROBLEMA_FAMILIAR', 'TRANSPORTE', 'OUTRO')),
+	CONSTRAINT attendance_justificationRequiresAbsence_ck CHECK (
+		(status = 'AUSENTE') OR (justification_reason IS NULL AND justification_note IS NULL)
+	)
 )$$
 
 CREATE TABLE IF NOT EXISTS telephone (
@@ -251,7 +273,8 @@ CREATE TABLE IF NOT EXISTS form_question (
     uuid BINARY(16) NOT NULL,
     form_id BIGINT UNSIGNED NOT NULL,
     question VARCHAR(255) NOT NULL,
-    type_answer VARCHAR(50) NOT NULL,
+    type_answer ENUM('TEXT', 'SELECT', 'MULTI_SELECT', 'FILE', 'IMAGE') NOT NULL,
+    required BIT NOT NULL,
 
     CONSTRAINT fk_form_questions_form
     FOREIGN KEY (form_id) REFERENCES form (id)
@@ -279,6 +302,9 @@ CREATE TABLE IF NOT EXISTS form_submission (
     corrected_at DATETIME,
     score DECIMAL(5,2),
 
+    CONSTRAINT unique_submission_per_student
+    UNIQUE (student_id, form_id),
+
     CONSTRAINT fk_form_submission_student
     FOREIGN KEY (student_id) REFERENCES student (id),
 
@@ -292,8 +318,8 @@ CREATE TABLE IF NOT EXISTS form_answer (
     question_id BIGINT UNSIGNED NOT NULL,
     submission_id BIGINT UNSIGNED NOT NULL,
     option_id BIGINT UNSIGNED,
-    type_answer VARCHAR(50) NOT NULL,
     answer_text VARCHAR(500),
+    file_name VARCHAR(255),
     correct BIT,
     teacher_feedback VARCHAR(500),
 
@@ -305,5 +331,17 @@ CREATE TABLE IF NOT EXISTS form_answer (
 
     CONSTRAINT fk_form_answers_option
     FOREIGN KEY (option_id) REFERENCES form_question_option (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS form_answer_files (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    answer_id BIGINT UNSIGNED NOT NULL,
+    file_size INT UNSIGNED NOT NULL,
+    status ENUM('PENDING', 'FINISHED', 'FAILED') NOT NULL,
+
+    CONSTRAINT fk_answer_files_answer
+    FOREIGN KEY (answer_id) REFERENCES form_answer (id)
 )$$
 

@@ -8,10 +8,11 @@ import {ContentCard} from "@/components/layout/content-card.tsx";
 interface LimitDateDialogProps {
     initialDate: Date;
     onDateChange: (date: Date) => void;
+    disabled: boolean;
     buttonVariant: "secondary" | "link" | "default" | "outline" | "ghost" | "destructive" | null | undefined;
 }
 
-export default function LimitDateDialog( { initialDate, onDateChange, buttonVariant }: LimitDateDialogProps ) {
+export default function LimitDateDialog( { initialDate, onDateChange, disabled, buttonVariant }: LimitDateDialogProps ) {
     const [ open, setOpen ] = useState<boolean>(false);
     const [ limitDate, setLimitDate ] = useState<Date | undefined>(initialDate);
     const minDate = new Date();
@@ -29,6 +30,7 @@ export default function LimitDateDialog( { initialDate, onDateChange, buttonVari
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger>
                 <Button
+                    disabled={disabled}
                     variant={buttonVariant}
                     className="h-10 px-5 rounded-xl text-sm font-semibold
                     hover:cursor-pointer"

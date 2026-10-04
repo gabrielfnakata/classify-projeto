@@ -6,6 +6,6 @@ export interface FormQuestionDTO {
     formUuid: string,
     question: string,
     answerType: AnswerType,
+    isRequired: boolean,
     options: FormQuestionOptionDTO[]
-
 }

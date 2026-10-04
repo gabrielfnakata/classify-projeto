@@ -21,6 +21,14 @@ askUser() {
 	echo ""
     read -rp "Digite a porta para rodar o banco (Em branco para rodar a padrão: 3306): " dbPort
 
+    echo ""
+    echo "-- Silo --"
+    read -rp "Digite o usuário para o Silo Console: " siloUsername
+    read -rsp "Digite a senha para o Silo Console: " siloPassword
+    read -rp "Digite a porta para rodar a API do Silo (Em branco para rodar a padrão: 9000): " siloApiPort
+    read -rp "Digite a porta para rodar o dashboard do Silo (Em branco para rodar a padrão: 9001): " siloDashPort
+    read -rp "Digite um token para autenticação no Silo (Em branco para gerar aleatoriamente): " siloJwtSecret
+
 	echo ""
 	echo "- - - Backend - - -"
     read -rp "Digite a porta para rodar o backend (Em branco para rodar a padrão: 8080): " backPort
@@ -44,7 +52,13 @@ BACK_PORT=${backPort:-8080}
 # Frontend
 FRONT_PORT=${frontPort:-5173}
 VITE_API_URL=http://localhost:${backPort:-8080}
-	" > .env
+
+# Silo
+MINIO_USERNAME=${siloUsername}
+MINIO_PASSWORD=${siloPassword}
+MINIO_API_PORT=${siloApiPort:-9000}
+MINIO_DASHBOARD_PORT=${siloDashPort:-9001}
+MINIO_WEBHOOK_TOKEN=${siloJwtSecret:-${generate_jwt}}" > .env
 }
 
 start_docker () {

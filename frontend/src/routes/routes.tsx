@@ -18,6 +18,14 @@ import TeacherForms from "@/pages/forms/TeacherForms";
 import NewForm from "@/pages/forms/NewForm.tsx";
 import PreviewForm from "@/pages/forms/PreviewForm.tsx";
 import SubmissionForm from "@/pages/forms/AnswerForm.tsx";
+import AttendancePage from "@/pages/attendance";
+import AttendanceOverview from "@/pages/attendance/AttendanceOverview";
+import AttendanceSeriesPage from "@/pages/attendance/AttendanceSeries";
+import ClassGroupRegistration from "@/pages/class-groups/ClassGroupRegistration";
+import NewClassGroup from "@/pages/class-groups/NewClassGroup";
+import ClassGroupDetail from "@/pages/class-groups/ClassGroupDetail";
+import FormAnswers from "@/pages/forms/FormAnswers.tsx";
+import FormCorrection from "@/pages/forms/FormCorrection";
 
 export default function AppRoutes() {
     return (
@@ -80,6 +88,24 @@ export default function AppRoutes() {
             <Route path="/schedule" element={
                 <ProtectedRoute children={<SchedulePage />} />
             }/>
+            <Route path="/attendance" element={
+                <ProtectedRoute children={<AttendanceOverview />} />
+            }/>
+            <Route path="/attendance/series/:recurrenceUuid" element={
+                <ProtectedRoute children={<AttendanceSeriesPage />} />
+            }/>
+            <Route path="/attendance/:sessionUuid" element={
+                <ProtectedRoute children={<AttendancePage />} />
+            }/>
+            <Route path="/class-groups" element={
+                <ProtectedRoute children={<ClassGroupRegistration />} />
+            }/>
+            <Route path="/new-class-group" element={
+                <ProtectedRoute children={<NewClassGroup />} />
+            }/>
+            <Route path="/class-groups/:uuid" element={
+                <ProtectedRoute children={<ClassGroupDetail />} />
+            }/>
             <Route path="/pending-forms" element={
                 <ProtectedRoute children={<StudentForms />} />
             }/>
@@ -94,6 +120,12 @@ export default function AppRoutes() {
             }/>
             <Route path="/form-preview/:id" element={
                 <ProtectedRoute children={<PreviewForm />} />
+            }/>
+            <Route path="/form-answers/:id" element={
+                <ProtectedRoute children={<FormAnswers />} />
+            }/>
+            <Route path="/form-answers/:id/:submissionId" element={
+               <ProtectedRoute children={<FormCorrection />} />
             }/>
             <Route path="/submission-form/:uuid" element={
                 <ProtectedRoute children={<SubmissionForm />} />

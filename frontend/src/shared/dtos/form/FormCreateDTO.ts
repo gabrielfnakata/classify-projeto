@@ -4,5 +4,6 @@ export interface FormCreateDTO {
     title: string,
     description: string,
     limitDate: string,
+    hasScore: boolean,
     questions: FormQuestionCreateDTO[]
 }
