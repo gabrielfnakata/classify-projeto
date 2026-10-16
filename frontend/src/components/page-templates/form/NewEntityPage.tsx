@@ -24,7 +24,7 @@ export interface Field {
     key: string;
     name: string;
     label: string;
-    type: 'text' | 'number' | 'cpf' | 'date' | 'select' | 'phone';
+    type: 'text' | 'password' | 'number' | 'cpf' | 'date' | 'select' | 'phone';
     options?: {label: string, value: string}[];
     required: boolean;
 }
@@ -59,6 +59,7 @@ export default function NewEntityPage<T>({
                                     {fields.map(field => {
                                         switch(field.type) {
                                             case 'text':
+                                            case 'password':
                                             case 'number':
                                                 return <FormikInput
                                                     key={field.key} name={field.name} label={field.label} type={field.type} required={field.required}

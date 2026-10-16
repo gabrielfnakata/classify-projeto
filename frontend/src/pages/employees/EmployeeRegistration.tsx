@@ -5,6 +5,7 @@ import RegistrationPage from "@/components/page-templates/registration/Registrat
 import useFetch from "@/hooks/useFetch";
 import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO";
 import type {RoleDTO} from "@/shared/dtos/role/RoleDTO.ts";
+import { Roles } from "@/shared/models/enums/roles";
 
 export default function EmployeeRegistration() {
     const {data: roles} = useFetch<RoleDTO>('/role');
@@ -17,7 +18,7 @@ export default function EmployeeRegistration() {
         {name: 'cpf', inputType: 'cpf', placeholder: 'CPF', width: 25},
         {name: 'email', inputType: 'text', placeholder: 'E-mail', width: 25},
         {name: 'position', inputType: 'select', placeholder: 'Cargo', width: 25,
-            options: roles?.map(role => {
+            options: roles?.filter(role => role.id !== Roles.ESTUDANTE).map(role => {
                 return {value: role.id, label: role.description}
             }) ?? []
         }
