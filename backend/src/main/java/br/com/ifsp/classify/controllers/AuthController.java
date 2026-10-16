@@ -8,6 +8,7 @@ import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.repositories.UserRepository;
 import br.com.ifsp.classify.security.JwtService;
+import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.specifications.UserSpecification;
 
 import org.springframework.http.HttpStatus;
@@ -47,6 +48,14 @@ public class AuthController {
         }
 
         String role = user.getRole().getId();
+        if (UserRole.fromId(role).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ExceptionDTO(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            ExceptionCode.INVALID_CREDENTIALS.getCode(),
+                            "Seu perfil não está habilitado. Solicite a atualização do acesso ao administrador."));
+        }
+
         String accessToken = jwtService.generateAccessToken(user.getEmail(), role);
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
@@ -77,6 +86,14 @@ public class AuthController {
         }
 
         String role = user.getRole().getId();
+        if (UserRole.fromId(role).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ExceptionDTO(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            ExceptionCode.INVALID_CREDENTIALS.getCode(),
+                            "Seu perfil não está habilitado. Solicite a atualização do acesso ao administrador."));
+        }
+
         String accessToken = jwtService.generateAccessToken(email, role);
 
         return ResponseEntity.ok(new LoginResponseDTO(accessToken, body.refreshToken()));

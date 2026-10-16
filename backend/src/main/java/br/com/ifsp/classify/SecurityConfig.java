@@ -46,9 +46,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh", "/employee").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/student/me", "/student/me/**").hasRole("ESTUDANTE")
+                        .requestMatchers(HttpMethod.GET, "/student/**").hasAnyRole("ADMIN", "PROFESSOR")
+                        .requestMatchers("/student/**").hasRole("ADMIN")
+                        .requestMatchers("/class/**", "/classsession/**", "/attendance/**")
+                                .hasAnyRole("ADMIN", "PROFESSOR")
+                        .requestMatchers(HttpMethod.GET, "/subject/**", "/subjectteacher/**", "/classroom/**")
+                                .hasAnyRole("ADMIN", "PROFESSOR")
+                        .anyRequest().hasRole("ADMIN")
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
