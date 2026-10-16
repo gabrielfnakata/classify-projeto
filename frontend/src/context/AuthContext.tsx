@@ -31,6 +31,7 @@ export const AuthProvider = (params: { children: ReactNode }) => {
 
         setLoginData(response.data);
         api.defaults.headers.Authorization = `Bearer ${response.data?.accessToken}`;
+        getUserFromToken(response.data.accessToken);
         if (values.rememberMe) {
             sessionStorage.setItem('refreshToken', response.data.refreshToken);
         }
