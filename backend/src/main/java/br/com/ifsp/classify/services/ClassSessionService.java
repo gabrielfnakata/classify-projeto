@@ -19,12 +19,16 @@ import br.com.ifsp.classify.repositories.ClassroomRepository;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.repositories.SubjectTeacherRepository;
 import br.com.ifsp.classify.specifications.AttendanceSpecification;
+import br.com.ifsp.classify.specifications.ClassSessionSpecification;
 import br.com.ifsp.classify.specifications.ClassSpecification;
 import br.com.ifsp.classify.specifications.ClassroomSpecification;
 import br.com.ifsp.classify.specifications.StudentSpecification;
 import br.com.ifsp.classify.specifications.SubjectTeacherSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import jakarta.persistence.criteria.CriteriaBuilder;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -99,6 +103,25 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                 studentService.returnDTO(classSession.getStudent()),
                 classSession.getRecurrenceGroupId() == null ? null : UuidUtils.convertBytesToString(classSession.getRecurrenceGroupId())
         );
+    }
+
+    public List<ClassSessionGetDTO> getScheduleForUser(String email) {
+        Student student = studentRepository.findByUserEmail(email).orElse(null);
+        if (student == null)
+            return null;
+
+        List<Long> classIds = student.getClasses().stream()
+                .map(Class::getId)
+                .toList();
+
+        Specification<ClassSession> conditional = (classIds.isEmpty()) 
+            ? ClassSessionSpecification.getByStudentId(student.getId())
+            : ClassSessionSpecification.getByStudentId(student.getId()).or(ClassSessionSpecification.getByClassId(classIds));
+
+        return repository.findAll(conditional)
+            .stream()
+            .map(this::returnDTO)
+            .toList();
     }
 
     @Override

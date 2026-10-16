@@ -176,7 +176,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
             header.getCell(0).setCellComment(makeComment(workbook, drawing, 0, 0, "CAMPO OBRIGATÓRIO"));
             header.getCell(2).setCellComment(makeComment(workbook, drawing, 2, 0, "CAMPO OBRIGATÓRIO"));
             header.getCell(4).setCellComment(makeComment(workbook, drawing, 4, 0, "CAMPO OBRIGATÓRIO"));
-            header.getCell(5).setCellComment(makeComment(workbook, drawing, 5, 0, "CAMPO OBRIGATÓRIO\nCargos válidos: Admin,Profe,Secre"));
+            header.getCell(5).setCellComment(makeComment(workbook, drawing, 5, 0, "CAMPO OBRIGATÓRIO\nCargos válidos: ADMIN, PROFESSOR"));
             header.getCell(6).setCellComment(makeComment(workbook, drawing, 6, 0, "CAMPO OBRIGATÓRIO\nFormato: (99)99999-9999"));
         }
 
@@ -476,7 +476,12 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
             employee.setHireDate(employeeDTO.hireDate());
 
         if (employeeDTO.user() != null) {
-            User userUpdated = userService.updateUser(employeeUuid, employeeDTO.user());
+            if (employee.getUser() == null) {
+                throw new DtoException(ExceptionCode.VALIDATION_ERROR, "O funcionário não possui uma conta para atualizar.");
+            }
+
+            String userUuid = UuidUtils.convertBytesToString(employee.getUser().getUuid());
+            User userUpdated = userService.updateUser(userUuid, employeeDTO.user());
 
             if (userUpdated == null)
                 throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Erro ao atualizar o usuário.");

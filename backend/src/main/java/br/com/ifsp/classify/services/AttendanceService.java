@@ -130,6 +130,17 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
                 .toList();
     }
 
+    public List<AttendanceGetDTO> getForStudentAccount(String email) {
+        Student student = studentService.getEntityForUser(email);
+        if (student == null)
+            return null;
+
+        return repository.findAll(AttendanceSpecification.getByStudentId(student.getId()))
+                .stream()
+                .map(this::returnDTO)
+                .toList();
+    }
+
     public List<AttendanceSessionStatusDTO> getStatusForAllSessions() {
         List<ClassSession> sessions = classSessionRepository.findAll();
 
