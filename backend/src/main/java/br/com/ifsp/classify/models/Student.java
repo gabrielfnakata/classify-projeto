@@ -46,6 +46,10 @@ public class Student implements Serializable {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
+
     @ManyToMany
     @JoinTable(
         name = "STUDENT_GUARDIAN",
@@ -127,6 +131,14 @@ public class Student implements Serializable {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public List<Guardian> getGuardians() {
