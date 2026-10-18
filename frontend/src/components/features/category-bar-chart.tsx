@@ -12,6 +12,8 @@ interface CategoryBarChartProps {
   seriesName: string
   height?: number
   valueFormatter?: (value: number) => string
+  // Teto fixo da escala (ex.: 100 para percentuais); sem ele, a maior barra ocupa a largura toda.
+  domainMax?: number
 }
 
 function truncateLabel(label: string, max = 16): string {
@@ -23,6 +25,7 @@ export function CategoryBarChart({
   seriesName,
   height,
   valueFormatter = (value) => `${value}`,
+  domainMax,
 }: CategoryBarChartProps) {
   const resolvedHeight = height ?? Math.max(140, data.length * 34)
   const longestLabel = data.reduce((max, d) => Math.max(max, truncateLabel(d.label).length), 0)
@@ -38,7 +41,7 @@ export function CategoryBarChart({
           barCategoryGap="22%"
         >
           <CartesianGrid horizontal={false} stroke="var(--border)" strokeOpacity={0.6} />
-          <XAxis type="number" allowDecimals={false} hide domain={[0, "dataMax"]} tickCount={4} />
+          <XAxis type="number" allowDecimals={false} hide domain={[0, domainMax ?? "dataMax"]} tickCount={4} />
           <YAxis
             type="category"
             dataKey="label"
