@@ -25,4 +25,9 @@ public class AttendanceSpecification {
                 cb.equal(root.get("student").get("id"), studentId)
         );
     }
+
+    public static Specification<Attendance> getByStudentId(Long studentId) {
+        return (root, query, cb) ->
+                cb.equal(root.get("student").get("id"), studentId);
+    }
 }

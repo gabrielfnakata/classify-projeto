@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.ifsp.classify.dtos.get.CurrentUserGetDTO;
+import br.com.ifsp.classify.security.AuthenticatedUser;
 import br.com.ifsp.classify.services.UserService;
 
 @RestController
@@ -22,6 +23,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<CurrentUserGetDTO> getCurrentUser(Authentication authentication) {
-        return ResponseEntity.ok(service.getCurrentUser(authentication.getName()));
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        return ResponseEntity.ok(service.getCurrentUser(user.username()));
     }
 }

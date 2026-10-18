@@ -24,7 +24,7 @@ export interface Field {
     key: string;
     name: string;
     label: string;
-    type: 'text' | 'number' | 'cpf' | 'date' | 'select' | 'phone';
+    type: 'text' | 'password' | 'number' | 'cpf' | 'date' | 'select' | 'phone';
     options?: {label: string, value: string}[];
     required: boolean;
 }
@@ -39,7 +39,7 @@ export default function NewEntityPage<T>({
     };
 
     return (
-        <div className="flex flex-col background h-full w-full items-center justify-center">
+        <div className="flex flex-col background h-screen w-full items-center justify-center">
             <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
                 <div className="flex flex-row w-4/5 items-center justify-between">
                     <PageHeader
@@ -59,6 +59,7 @@ export default function NewEntityPage<T>({
                                     {fields.map(field => {
                                         switch(field.type) {
                                             case 'text':
+                                            case 'password':
                                             case 'number':
                                                 return <FormikInput
                                                     key={field.key} name={field.name} label={field.label} type={field.type} required={field.required}

@@ -45,7 +45,7 @@ public class Employee implements Serializable {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
-    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Telephone> telephones = new ArrayList<>();
 
     public Long getId() {

@@ -1,6 +1,10 @@
 package br.com.ifsp.classify.utils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Utils {
 
@@ -51,5 +55,9 @@ public class Utils {
             expectedDigit = 0;
 
         return Character.getNumericValue(cpf.charAt(length)) == expectedDigit;
+    }
+
+    public static <T, K> Map<K, T> mountIndexedMap(List<T> list, Function<T, K> keyExtractor) {
+        return list.stream().collect(Collectors.toMap(keyExtractor, Function.identity()));
     }
 }

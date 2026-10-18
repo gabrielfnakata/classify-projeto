@@ -27,6 +27,29 @@ CREATE TABLE IF NOT EXISTS guardian (
 	CONSTRAINT guardian_addressId_fk FOREIGN KEY (address_id) REFERENCES address (id)
 )$$
 
+CREATE TABLE IF NOT EXISTS role (
+    id CHAR(10) NOT NULL,
+    description VARCHAR(80) NOT NULL,
+
+    CONSTRAINT role_id_pk PRIMARY KEY (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS user (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
+	email VARCHAR(320) NOT NULL,
+	password VARCHAR(100) NOT NULL,
+	refresh_token VARCHAR(255),
+	created_at DATETIME DEFAULT NOW(),
+	role_id CHAR(10) NOT NULL,
+
+	CONSTRAINT user_id_pk PRIMARY KEY (id),
+	CONSTRAINT user_uuid_uk UNIQUE (uuid),
+	CONSTRAINT user_email_uk UNIQUE (email),
+	CONSTRAINT user_refreshToken_uk UNIQUE (refresh_token),
+	CONSTRAINT user_roleId_fk FOREIGN KEY (role_id) REFERENCES role (id)
+)$$
+
 CREATE TABLE IF NOT EXISTS student (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	uuid BINARY(16) NOT NULL,
@@ -36,11 +59,13 @@ CREATE TABLE IF NOT EXISTS student (
 	cpf CHAR(11),
 	registration_date DATE NOT NULL,
 	is_deleted BOOLEAN NOT NULL DEFAULT 0,
+	user_id BIGINT UNSIGNED,
 
 	CONSTRAINT student_id_pk PRIMARY KEY (id),
 	CONSTRAINT student_uuid_uk UNIQUE (uuid),
 	CONSTRAINT student_email_uk UNIQUE (email),
-	CONSTRAINT student_cpf_uk UNIQUE (cpf)
+	CONSTRAINT student_cpf_uk UNIQUE (cpf),
+	CONSTRAINT student_userId_fk FOREIGN KEY (user_id) REFERENCES user (id)
 )$$
 
 CREATE TABLE IF NOT EXISTS student_guardian (
@@ -71,29 +96,6 @@ CREATE TABLE IF NOT EXISTS student_class (
 	CONSTRAINT studentclass_studentId_classId_pk PRIMARY KEY (student_id, class_id),
 	CONSTRAINT studentclass_studentId_fk FOREIGN KEY (student_id) REFERENCES student (id),
 	CONSTRAINT studentclass_classId_fk FOREIGN KEY (class_id) REFERENCES class (id)
-)$$
-
-CREATE TABLE IF NOT EXISTS role (
-    id CHAR(5) NOT NULL,
-    description VARCHAR(80) NOT NULL,
-
-    CONSTRAINT role_id_pk PRIMARY KEY (id)
-)$$
-
-CREATE TABLE IF NOT EXISTS user (
-	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	uuid BINARY(16) NOT NULL,
-	email VARCHAR(320) NOT NULL,
-	password VARCHAR(100) NOT NULL,
-	refresh_token VARCHAR(255),
-	created_at DATETIME DEFAULT NOW(),
-	role_id CHAR(5) NOT NULL,
-
-	CONSTRAINT user_id_pk PRIMARY KEY (id),
-	CONSTRAINT user_uuid_uk UNIQUE (uuid),
-	CONSTRAINT user_email_uk UNIQUE (email),
-	CONSTRAINT user_refreshToken_uk UNIQUE (refresh_token),
-	CONSTRAINT user_roleId_fk FOREIGN KEY (role_id) REFERENCES role (id)
 )$$
 
 CREATE TABLE IF NOT EXISTS employee (
@@ -265,3 +267,96 @@ CREATE TABLE IF NOT EXISTS user_avatar (
 	CONSTRAINT userAvatar_userId_uk UNIQUE (user_id),
 	CONSTRAINT userAvatar_userId_fk FOREIGN KEY (user_id) REFERENCES user (id)
 )$$
+
+
+CREATE TABLE IF NOT EXISTS form (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    teacher_id BIGINT UNSIGNED NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    limit_date DATETIME,
+    has_score BIT NOT NULL DEFAULT 0,
+
+    CONSTRAINT fk_form_teacher
+    FOREIGN KEY (teacher_id) REFERENCES employee (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS form_question (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    form_id BIGINT UNSIGNED NOT NULL,
+    question VARCHAR(255) NOT NULL,
+    type_answer ENUM('TEXT', 'SELECT', 'MULTI_SELECT', 'FILE', 'IMAGE') NOT NULL,
+    required BIT NOT NULL,
+
+    CONSTRAINT fk_form_questions_form
+    FOREIGN KEY (form_id) REFERENCES form (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS form_question_option (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    question_id BIGINT UNSIGNED NOT NULL,
+    option_text VARCHAR(255) NOT NULL,
+    correct BIT NOT NULL DEFAULT 0,
+
+    CONSTRAINT fk_form_question_options_question
+    FOREIGN KEY (question_id) REFERENCES form_question (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS form_submission (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    student_id BIGINT UNSIGNED NOT NULL,
+    form_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('ANSWERED', 'CORRECTED', 'PENDING') NOT NULL,
+    started_at DATETIME,
+    submitted_at DATETIME,
+    corrected_at DATETIME,
+    score DECIMAL(5,2),
+
+    CONSTRAINT unique_submission_per_student
+    UNIQUE (student_id, form_id),
+
+    CONSTRAINT fk_form_submission_student
+    FOREIGN KEY (student_id) REFERENCES student (id),
+
+    CONSTRAINT fk_form_submission_form
+    FOREIGN KEY (form_id) REFERENCES form (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS form_answer (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    question_id BIGINT UNSIGNED NOT NULL,
+    submission_id BIGINT UNSIGNED NOT NULL,
+    option_id BIGINT UNSIGNED,
+    answer_text VARCHAR(500),
+    file_name VARCHAR(255),
+    correct BIT,
+    teacher_feedback VARCHAR(500),
+
+    CONSTRAINT fk_form_answers_question
+    FOREIGN KEY (question_id) REFERENCES form_question (id),
+
+    CONSTRAINT fk_form_answers_submission
+    FOREIGN KEY (submission_id) REFERENCES form_submission (id),
+
+    CONSTRAINT fk_form_answers_option
+    FOREIGN KEY (option_id) REFERENCES form_question_option (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS form_answer_files (
+    id BIGINT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    uuid BINARY(16) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    answer_id BIGINT UNSIGNED NOT NULL,
+    file_size INT UNSIGNED NOT NULL,
+    status ENUM('PENDING', 'FINISHED', 'FAILED') NOT NULL,
+
+    CONSTRAINT fk_answer_files_answer
+    FOREIGN KEY (answer_id) REFERENCES form_answer (id)
+)$$
+

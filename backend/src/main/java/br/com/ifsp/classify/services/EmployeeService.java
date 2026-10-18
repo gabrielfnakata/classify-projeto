@@ -39,6 +39,8 @@ import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 
+import java.util.List;
+
 import java.time.LocalDate;
 
 @Service
@@ -64,10 +66,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         if (employee == null)
             return null;
 
-        String email = employee.getUser() != null ? employee.getUser().getEmail() : null;
-        String roleId = (employee.getUser() != null && employee.getUser().getRole() != null)
-                ? employee.getUser().getRole().getId()
-                : null;
+        User user = employee.getUser();
 
         return new EmployeeGetDTO(
                 UuidUtils.convertBytesToString(employee.getUuid()),
@@ -75,13 +74,20 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
                 employee.getBirthDate(),
                 employee.getCpf(),
                 employee.getHireDate(),
-                email,
-                roleId,
                 employee.getTelephones()
                     .stream()
                     .map(telephone -> telephoneService.returnDTO(telephone))
                     .toList(),
-                UuidUtils.convertBytesToString(employee.getUuid())
+                UuidUtils.convertBytesToString(employee.getUuid()),
+                (user != null)
+                    ? user.getEmail()
+                    : null,
+                ((user != null) && (user.getRole() != null))
+                    ? user.getRole().getId()
+                    : null,
+                ((user != null) && (user.getRole() != null))
+                    ? user.getRole().getDescription()
+                    : null
         );
     }
 
@@ -181,7 +187,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
             header.getCell(0).setCellComment(makeComment(workbook, drawing, 0, 0, "CAMPO OBRIGATÓRIO"));
             header.getCell(2).setCellComment(makeComment(workbook, drawing, 2, 0, "CAMPO OBRIGATÓRIO"));
             header.getCell(4).setCellComment(makeComment(workbook, drawing, 4, 0, "CAMPO OBRIGATÓRIO"));
-            header.getCell(5).setCellComment(makeComment(workbook, drawing, 5, 0, "CAMPO OBRIGATÓRIO\nCargos válidos: Admin,Profe,Secre"));
+            header.getCell(5).setCellComment(makeComment(workbook, drawing, 5, 0, "CAMPO OBRIGATÓRIO\nCargos válidos: ADMIN, PROFESSOR"));
             header.getCell(6).setCellComment(makeComment(workbook, drawing, 6, 0, "CAMPO OBRIGATÓRIO\nFormato: (99)99999-9999"));
         }
 
@@ -553,12 +559,39 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
             employee.setHireDate(employeeDTO.hireDate());
 
         if (employeeDTO.user() != null) {
-            User userUpdated = userService.updateUser(employeeUuid, employeeDTO.user());
+            if (employee.getUser() == null) {
+                throw new DtoException(ExceptionCode.VALIDATION_ERROR, "O funcionário não possui uma conta para atualizar.");
+            }
+
+            User userUpdated = userService.updateUser(UuidUtils.convertBytesToString(employee.getUser().getUuid()), employeeDTO.user());
 
             if (userUpdated == null)
                 throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Erro ao atualizar o usuário.");
             
             employee.setUser(userUpdated);
+        }
+
+        if (employeeDTO.telephones() != null) {
+            List<String> newNumbers = employeeDTO.telephones()
+                .stream()
+                .map(TelephoneCreateDTO::number)
+                .toList();
+
+            employee.getTelephones().removeIf(telephone -> !newNumbers.contains(telephone.getNumber()));
+
+            List<String> existingNumbers = employee.getTelephones()
+                .stream()
+                .map(Telephone::getNumber)
+                .toList();
+
+            for (TelephoneCreateDTO telephoneDTO : employeeDTO.telephones()) {
+                if (!existingNumbers.contains(telephoneDTO.number())) {
+                    Telephone newTelephone = telephoneService.create(telephoneDTO);
+
+                    if (newTelephone != null)
+                        employee.addTelephone(newTelephone);
+                }
+            }
         }
 
         repository.save(employee);

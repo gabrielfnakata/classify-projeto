@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ExceptionDTO> handleDataIntegrityViolation(DataIntegrityViolationException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ExceptionDTO(HttpStatus.CONFLICT.value(),ExceptionCode.DATA_INTEGRITY.getCode(),
-                        "Não foi possível salvar: já existe um registro com esses dados."));
+                        "Não foi possível salvar, pois já existe um registro com esses dados ou que depende dele."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

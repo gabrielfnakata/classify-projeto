@@ -16,9 +16,9 @@ interface registrationPageProps<T> {
     data: T[];
     filters: FilterConfig[];
     columns: DataTableColumn<T>[];
-    registrationRoute: string;
+    registrationRoute?: string;
     onRefresh?: () => void;
-} 
+}
 
 interface dataType {
     uuid: string;
@@ -43,10 +43,15 @@ export default function RegistrationPage<T extends dataType>({
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
     const [importLoading, setImportLoading] = useState(false);
-    const entityPath = registrationRoute.includes('student') ? '/student' : registrationRoute.includes('employee') ? '/employee' : null;
     const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
     const navigate = useNavigate();
+
+    const entityPath = registrationRoute?.includes('student')
+        ? '/student'
+        : registrationRoute?.includes('employee')
+            ? '/employee'
+            : null;
 
     const handleFilterSubmit = (values: Record<string, string>) => {
         setFilterValues(values);
@@ -150,12 +155,12 @@ export default function RegistrationPage<T extends dataType>({
 
     return (
         <>
-            <div className="flex flex-col background h-full w-full items-center justify-center">
-                <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
+            <div className="flex flex-col background h-screen w-full items-center justify-center">
+                <div className="flex flex-col w-full h-screen gap-[2vh] justify-center items-center">
                     <div className="flex flex-row w-9/10 items-center justify-between">
                     <PageHeader
                         title={`Registro de ${title}`}
-                        action={
+                        action={registrationRoute ? (
                             <div className="flex items-center gap-2">
                                         {entityPath ? (
                                             <DropdownMenu>
@@ -184,7 +189,7 @@ export default function RegistrationPage<T extends dataType>({
                                             Criar novo registro
                                         </Button>
                                     </div>
-                                }
+                                ) : undefined}
                             />
                             </div> 
                     <ContentCard className="flex flex-col w-9/10 h-[70vh] p-8 gap-[4vh]">

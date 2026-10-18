@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import br.com.ifsp.classify.dtos.get.AvatarGetDTO;
 import br.com.ifsp.classify.dtos.update.AvatarPresetUpdateDTO;
 import br.com.ifsp.classify.models.UserAvatar;
+import br.com.ifsp.classify.security.AuthenticatedUser;
 import br.com.ifsp.classify.services.UserAvatarService;
 
 @RestController
@@ -30,12 +31,14 @@ public class UserAvatarController {
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AvatarGetDTO> getAvatar(Authentication authentication) {
-        return ResponseEntity.ok(service.getAvatar(authentication.getName()));
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        return ResponseEntity.ok(service.getAvatar(user.username()));
     }
 
     @GetMapping("/photo")
     public ResponseEntity<byte[]> getPhoto(Authentication authentication) {
-        UserAvatar avatar = service.getPhoto(authentication.getName());
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        UserAvatar avatar = service.getPhoto(user.username());
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(avatar.getContentType()))
@@ -46,18 +49,21 @@ public class UserAvatarController {
     @PutMapping(value = "/preset", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AvatarGetDTO> choosePreset(Authentication authentication,
                                                      @RequestBody AvatarPresetUpdateDTO body) {
-        return ResponseEntity.ok(service.choosePreset(authentication.getName(), body != null ? body.preset() : null));
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        return ResponseEntity.ok(service.choosePreset(user.username(), body != null ? body.preset() : null));
     }
 
     @PutMapping(value = "/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AvatarGetDTO> uploadPhoto(Authentication authentication,
                                                     @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.ok(service.uploadPhoto(authentication.getName(), file));
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        return ResponseEntity.ok(service.uploadPhoto(user.username(), file));
     }
 
     @DeleteMapping
     public ResponseEntity<Void> removeAvatar(Authentication authentication) {
-        service.removeAvatar(authentication.getName());
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        service.removeAvatar(user.username());
         return ResponseEntity.noContent().build();
     }
 }

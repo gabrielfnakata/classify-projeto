@@ -19,4 +19,33 @@ export const NewStudentValidationSchema = yup.object({
     registrationDate: yup.date().required("A data de matrícula é obrigatória"),
     telephone1: yup.string().notRequired().matches(/^\(([0-9]{2})\) ([0-9]{5})-([0-9]{4})$/, { message: "Formato inválido.", excludeEmptyString: true }),
     telephone2: yup.string().notRequired().matches(/^\(([0-9]{2})\) ([0-9]{5})-([0-9]{4})$/, { message: "Formato inválido.", excludeEmptyString: true }),
-});
+    accountEmail: yup.string().email("Informe um e-mail de acesso válido.").notRequired(),
+    accountPassword: yup.string().notRequired(),
+}).test(
+    "account-credentials",
+    "Os dados de acesso são obrigatórios.",
+    function (values) {
+        const accountEmail = values?.accountEmail?.trim();
+        const accountPassword = values?.accountPassword;
+
+        if (!accountEmail && !accountPassword) {
+            return true;
+        }
+
+        if (!accountEmail) {
+            return this.createError({
+                path: "accountEmail",
+                message: "Informe o e-mail para criar a conta do aluno.",
+            });
+        }
+
+        if (!accountPassword?.trim()) {
+            return this.createError({
+                path: "accountPassword",
+                message: "Informe a senha para criar a conta do aluno.",
+            });
+        }
+
+        return true;
+    }
+);

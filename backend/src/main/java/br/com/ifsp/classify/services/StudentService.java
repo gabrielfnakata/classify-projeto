@@ -21,11 +21,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
+import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
+import br.com.ifsp.classify.dtos.update.TelephoneUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Address;
@@ -36,10 +38,6 @@ import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, Long> {
@@ -47,12 +45,16 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     private final TelephoneService telephoneService;
     private final AddressService addressService;
     private final AuditService auditService;
+    private final StudentRepository studentRepository;
+    private final UserService userService;
 
-    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService) {
+    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService) {
         super(repository);
+        this.studentRepository = repository;
         this.telephoneService = telephoneService;
         this.addressService = addressService;
         this.auditService = auditService;
+        this.userService = userService;
     }
 
     @Override
@@ -129,6 +131,11 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         newStudent.setCpf(Utils.removeAllNonDigits(studentDTO.cpf()));
         newStudent.setRegistrationDate(studentDTO.registrationDate());
 
+        StudentAccountCreateDTO account = studentDTO.account();
+        if (account != null) {
+            newStudent.setUser(userService.createUserForStudent(account));
+        }
+
         if (Utils.hasElements(studentDTO.guardians())) {
             for (GuardianCreateDTO guardian : studentDTO.guardians()) {
                 Guardian newGuardian = create(guardian);
@@ -153,6 +160,16 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         auditService.logInsert("STUDENT", newStudent.getId(), createdStudent);
 
         return createdStudent;
+    }
+
+    public StudentGetDTO getForUser(String email) {
+        return studentRepository.findByUserEmail(email)
+                .map(this::returnDTO)
+                .orElse(null);
+    }
+
+    public Student getEntityForUser(String email) {
+        return studentRepository.findByUserEmail(email).orElse(null);
     }
 
     @Override
@@ -182,6 +199,36 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         // if (Utils.hasElements(studentDTO.telephones())) {
             
         // }
+
+        //oiii eu fiz aqui a alteração do ngc do telefone, pra dar pra atualizar no meu modal, se nao funcionar avisa
+
+        if (studentDTO.telephones() != null) {
+            List<String> newNumbers = studentDTO.telephones()
+                .stream()
+                .map(TelephoneUpdateDTO::number)
+                .toList();
+
+            student.getTelephones().removeIf(telephone -> !newNumbers.contains(telephone.getNumber()));
+
+            List<String> existingNumbers = student.getTelephones()
+                .stream()
+                .map(Telephone::getNumber)
+                .toList();
+                
+            for (TelephoneUpdateDTO telephoneDTO : studentDTO.telephones()) {
+                if (!existingNumbers.contains(telephoneDTO.number())) {
+                    TelephoneCreateDTO createDTO = new TelephoneCreateDTO(
+                        telephoneDTO.country(),
+                        telephoneDTO.ddd(),
+                        telephoneDTO.number()
+                    );
+                    Telephone newTelephone = telephoneService.create(createDTO);
+
+                    if (newTelephone != null)
+                        student.addTelephone(newTelephone);
+                }
+            }
+        }
 
         repository.save(student);
         StudentGetDTO updatedStudent = returnDTO(student);
@@ -443,8 +490,9 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                             cpf,
                             registrationDate,
                             telephones,
-                            null
-                    );
+                                    null,
+                                    null
+                            );
 
                     StudentGetDTO created = create(studentDTO);
                     if (created != null) imported.add(created);

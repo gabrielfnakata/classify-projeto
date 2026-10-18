@@ -6,6 +6,7 @@ import br.com.ifsp.classify.dtos.get.ProfileGetDTO;
 import br.com.ifsp.classify.dtos.update.EmployeeUpdateDTO;
 import br.com.ifsp.classify.dtos.update.PasswordUpdateDTO;
 import br.com.ifsp.classify.dtos.update.ProfileUpdateDTO;
+import br.com.ifsp.classify.security.AuthenticatedUser;
 import br.com.ifsp.classify.services.EmployeeService;
 import br.com.ifsp.classify.services.UserService;
 import org.springframework.http.MediaType;
@@ -40,19 +41,22 @@ public class EmployeeController extends AbstractController<EmployeeCreateDTO, Em
 
     @GetMapping("/me")
     public ResponseEntity<ProfileGetDTO> getProfile(Authentication authentication) {
-        return ResponseEntity.ok(service.getProfile(authentication.getName()));
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        return ResponseEntity.ok(service.getProfile(user.username()));
     }
 
     @PutMapping(value = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProfileGetDTO> updateProfile(Authentication authentication,
                                                        @RequestBody ProfileUpdateDTO profile) {
-        return ResponseEntity.ok(service.updateProfile(authentication.getName(), profile));
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        return ResponseEntity.ok(service.updateProfile(user.username(), profile));
     }
 
     @PutMapping(value = "/me/password", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> changePassword(Authentication authentication,
                                                @RequestBody PasswordUpdateDTO password) {
-        userService.changePassword(authentication.getName(), password);
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        userService.changePassword(user.username(), password);
         return ResponseEntity.noContent().build();
     }
 

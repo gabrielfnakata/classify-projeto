@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import br.com.ifsp.classify.dtos.create.UserCreateDTO;
 import br.com.ifsp.classify.dtos.get.CurrentUserGetDTO;
+import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
 import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.dtos.get.UserGetDTO;
 import br.com.ifsp.classify.dtos.update.PasswordUpdateDTO;
@@ -20,6 +21,7 @@ import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.repositories.UserRepository;
+import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.specifications.UserSpecification;
 import br.com.ifsp.classify.utils.Utils;
@@ -80,6 +82,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
             if (role == null)
                 throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
         }
+        validateRole(role);
 
         Employee employee;
         if (Utils.isNullOrEmpty(userDTO.employeeUuid())) {
@@ -132,6 +135,8 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
         }
 
+        validateRole(role);
+
         User newUser = new User();
         newUser.setUuid(UuidUtils.generateUUID());
         newUser.setEmail(Utils.trimAndUpper(userDTO.email()));
@@ -180,6 +185,27 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         repository.save(user);
     }
 
+    public User createUserForStudent(StudentAccountCreateDTO accountDTO) {
+        if (Utils.isNullOrEmpty(accountDTO.email()))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail de acesso do aluno.");
+
+        if (Utils.isNullOrEmpty(accountDTO.password()))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha de acesso do aluno.");
+
+        Role role = roleRepository
+                .findById(UserRole.ESTUDANTE.name())
+                .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo ESTUDANTE não existe."));
+
+        User newUser = new User();
+        newUser.setUuid(UuidUtils.generateUUID());
+        newUser.setEmail(Utils.trimAndUpper(accountDTO.email()));
+        newUser.setPassword(passwordEncoder.encode(accountDTO.password()));
+        newUser.setRole(role);
+        newUser.setCreatedAt(LocalDateTime.now());
+
+        return newUser;
+    }
+
     @Override
     public UserGetDTO update(String userUuid, UserUpdateDTO userDTO) {
         User user = getEntityById(userUuid);
@@ -198,6 +224,8 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
 
             if (role == null)
                 throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
+
+            validateRole(role);
 
             user.setRole(role);
         }
@@ -227,6 +255,8 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
             if (role == null)
                 throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
 
+            validateRole(role);
+
             user.setRole(role);
         }
 
@@ -236,6 +266,14 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         }
 
         return user;
+    }
+
+    private void validateRole(Role role) {
+        if (UserRole.fromId(role.getId()).isEmpty())
+            throw new DtoException(ExceptionCode.INVALID_ROLE, "O identificador do cargo deve ser ADMIN, PROFESSOR ou ESTUDANTE.");
+
+        if (UserRole.ESTUDANTE.name().equals(role.getId()))
+            throw new DtoException(ExceptionCode.INVALID_ROLE, "O cargo ESTUDANTE deve ser vinculado a um cadastro de aluno.");
     }
 
     @Override

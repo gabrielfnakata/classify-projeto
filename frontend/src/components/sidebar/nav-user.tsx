@@ -27,18 +27,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "../theme-provider"
+import { Roles } from "@/shared/models/enums/roles"
+
+const roleLabels: Record<Roles, string> = {
+  [Roles.ADMIN]: "Administrador",
+  [Roles.PROFESSOR]: "Professor",
+  [Roles.ESTUDANTE]: "Estudante",
+}
 
 export function NavUser() {
-  const { isMobile, state } = useSidebar()
+  const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed"
-  const { userData, logout } = useAuth()
-  const navigate = useNavigate()
+  const { userData, logout } = useAuth();
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { user: currentUser, avatarSrc } = useCurrentUser();
 
+  console.log(avatarSrc);
+
   const user = {
-    name: currentUser?.name?.toLowerCase() ?? currentUser?.email ?? userData?.email ?? "",
-    cargo: currentUser?.role?.description ?? "",
+    name: currentUser?.name?.toLowerCase() ?? currentUser?.email ?? userData?.email ?? "Sem email",
+    cargo: currentUser?.role?.description ?? roleLabels[userData.role] ?? "Sem cargo",
     avatar: "usuario-logado",
   };
 
