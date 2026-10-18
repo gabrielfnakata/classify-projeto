@@ -19,6 +19,7 @@ import br.com.ifsp.classify.services.FileStorageService;
 import br.com.ifsp.classify.utils.UuidUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import br.com.ifsp.classify.security.UserRole;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -124,8 +125,8 @@ public class FormService {
     public List<FormGetDTO> getForms(AuthenticatedUser auth) {
         User user = userRepository.findByEmail(auth.username()).orElseThrow();
         return switch (auth.role()) {
-            case "PROFE", "ADMIN" -> getPostedForms(user.getEmployee());
-            // case "ALUNO" -> getAvailableForms(user.getStudent());
+            case "PROFESSOR", "ADMIN" -> getPostedForms(user.getEmployee());
+            case "ESTUDANTE" -> getAvailableForms(user.getStudent());
             default -> throw new IllegalStateException("Role não suportada: " + auth.role());
         };
     }
@@ -152,8 +153,7 @@ public class FormService {
         return formGetDTOs;
     }
 
-    public List<FormGetDTO> getAvailableForms() {
-        Student student = studentRepository.findById(1L).orElseThrow();
+    public List<FormGetDTO> getAvailableForms(Student student) {
         List<FormSubmission> availableSubmissions = student.getFormSubmissions();
         return availableSubmissions.stream().map(submission -> {
             Form form = submission.getForm();

@@ -24,7 +24,7 @@ export interface Field {
     key: string;
     name: string;
     label: string;
-    type: 'text' | 'number' | 'cpf' | 'date' | 'select' | 'phone';
+    type: 'text' | 'password' | 'number' | 'cpf' | 'date' | 'select' | 'phone';
     options?: {label: string, value: string}[];
     required: boolean;
 }
@@ -51,13 +51,15 @@ export default function NewEntityPage<T>({
                         initialValues={initialFormValue}
                         onSubmit={handleSubmit}
                         validationSchema={validationSchema}
+                        validateOnMount
                     >
-                        {({ isSubmitting }) => (
+                        {({ isSubmitting, isValid }) => (
                             <Form className="flex flex-col gap-[3vh]">
-                                <FormGrid>
+                                <FormGrid className="!gap-y-8">
                                     {fields.map(field => {
                                         switch(field.type) {
                                             case 'text':
+                                            case 'password':
                                             case 'number':
                                                 return <FormikInput
                                                     key={field.key} name={field.name} label={field.label} type={field.type} required={field.required}
@@ -85,7 +87,7 @@ export default function NewEntityPage<T>({
                                     <Button type="button" className="h-10 px-5 rounded-xl bg-red-400 text-sm font-semibold" onClick={() => {navigate(backRoute)}}>
                                         Voltar
                                     </Button>
-                                    <Button type="submit" disabled={isSubmitting} className="h-10 px-5 rounded-xl text-sm font-semibold">
+                                    <Button type="submit" disabled={isSubmitting || !isValid} className="h-10 px-5 rounded-xl text-sm font-semibold">
                                         Salvar
                                     </Button>
                                 </div>

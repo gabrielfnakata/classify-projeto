@@ -2,32 +2,32 @@ import * as yup from "yup"
 
 export const ScheduleFormSchema = () =>
   yup.object({
-    date: yup.string().required("Informe a data"),
-    startTime: yup.string().required("Informe o horário de início"),
+    date: yup.string().required("A data do agendamento é obrigatória"),
+    startTime: yup.string().required("O horário de início é obrigatório"),
     endTime: yup
       .string()
-      .required("Informe o horário de fim")
+      .required("O horário de fim é obrigatório")
       .test("after-start", "O fim deve ser depois do início", function (endTime) {
         const { startTime } = this.parent
         if (!startTime || !endTime) return true
         return endTime > startTime
       }),
-    teacherId: yup.string().required("Selecione o professor"),
-    subjectId: yup.string().required("Selecione a disciplina"),
-    classroomId: yup.string().required("Selecione a sala"),
+    teacherId: yup.string().required("É obrigatório selecionar um professor"),
+    subjectId: yup.string().required("É obrigatório selecionar uma disciplina"),
+    classroomId: yup.string().required("É obrigatório selecionar uma sala"),
     targetType: yup.string().oneOf(["student", "class"]).required(),
     studentIds: yup.array().when("targetType", {
       is: "student",
-      then: (schema) => schema.min(1, "Selecione ao menos um aluno"),
+      then: (schema) => schema.min(1, "É obrigatório selecionar ao menos um aluno"),
     }),
     classGroupId: yup.string().when("targetType", {
       is: "class",
-      then: (schema) => schema.required("Selecione a turma"),
+      then: (schema) => schema.required("É obrigatório selecionar uma turma"),
     }),
     isRecurring: yup.boolean(),
     recurringWeekdays: yup.array().when("isRecurring", {
       is: true,
-      then: (schema) => schema.min(1, "Selecione ao menos um dia da semana"),
+      then: (schema) => schema.min(1, "É obrigatório selecionar ao menos um dia da semana"),
     }),
     recurringUntil: yup
       .string()

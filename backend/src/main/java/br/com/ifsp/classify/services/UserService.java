@@ -2,20 +2,24 @@ package br.com.ifsp.classify.services;
 
 import java.time.LocalDateTime;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import br.com.ifsp.classify.dtos.create.UserCreateDTO;
+import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
 import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.dtos.get.UserGetDTO;
 import br.com.ifsp.classify.dtos.update.UserUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Employee;
 import br.com.ifsp.classify.models.Role;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.repositories.UserRepository;
+import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
@@ -26,12 +30,14 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmployeeRepository employeeRepository;
+    private final AuditService auditService;
 
-    public UserService(UserRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, EmployeeRepository employeeRepository) {
+    public UserService(UserRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, EmployeeRepository employeeRepository, AuditService auditService) {
         super(repository);
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.employeeRepository = employeeRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -56,14 +62,14 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
             return null;
 
         if (Utils.isNullOrEmpty(userDTO.email()))
-            throw new DtoException("É necessário informar o email do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail do usuário.");
 
         if (Utils.isNullOrEmpty(userDTO.password()))
-            throw new DtoException("É necessário informar a senha do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha do usuário.");
 
         Role role;
         if (Utils.isNullOrEmpty(userDTO.roleId())) {
-            throw new DtoException("É necessário informar o cargo do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o cargo do usuário.");
         }
         else {
             role = roleRepository
@@ -71,12 +77,13 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
 
             if (role == null)
-                throw new DtoException("O cargo informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
         }
+        validateRole(role);
 
         Employee employee;
         if (Utils.isNullOrEmpty(userDTO.employeeUuid())) {
-            throw new DtoException("É necessário informar um funcionário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar um funcionário.");
         }
         else {
             employee = employeeRepository
@@ -84,7 +91,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
             
             if (employee == null)
-                throw new DtoException("O funcionário informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O funcionário informado não existe.");
         }
 
         User newUser = new User();
@@ -96,8 +103,10 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         employee.setUser(newUser);
 
         repository.save(newUser);
+        UserGetDTO createdUser = returnDTO(newUser);
+        auditService.logInsert("USER", newUser.getId(), createdUser);
 
-        return returnDTO(newUser);
+        return createdUser;
     }
 
     public User createUserFromEmployee(UserCreateDTO userDTO) {
@@ -105,14 +114,14 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
             return null;
 
         if (Utils.isNullOrEmpty(userDTO.email()))
-            throw new DtoException("É necessário informar o email do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail do usuário.");
 
         if (Utils.isNullOrEmpty(userDTO.password()))
-            throw new DtoException("É necessário informar a senha do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha do usuário.");
 
         Role role;
         if (Utils.isNullOrEmpty(userDTO.roleId())) {
-            throw new DtoException("É necessário informar o cargo do usuário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o cargo do usuário.");
         }
         else {
             role = roleRepository
@@ -120,13 +129,36 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
 
             if (role == null)
-                throw new DtoException("O cargo informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
         }
+
+        validateRole(role);
 
         User newUser = new User();
         newUser.setUuid(UuidUtils.generateUUID());
         newUser.setEmail(Utils.trimAndUpper(userDTO.email()));
         newUser.setPassword(passwordEncoder.encode(userDTO.password()));
+        newUser.setRole(role);
+        newUser.setCreatedAt(LocalDateTime.now());
+
+        return newUser;
+    }
+
+    public User createUserForStudent(StudentAccountCreateDTO accountDTO) {
+        if (Utils.isNullOrEmpty(accountDTO.email()))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail de acesso do aluno.");
+
+        if (Utils.isNullOrEmpty(accountDTO.password()))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha de acesso do aluno.");
+
+        Role role = roleRepository
+                .findById(UserRole.ESTUDANTE.name())
+                .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo ESTUDANTE não existe."));
+
+        User newUser = new User();
+        newUser.setUuid(UuidUtils.generateUUID());
+        newUser.setEmail(Utils.trimAndUpper(accountDTO.email()));
+        newUser.setPassword(passwordEncoder.encode(accountDTO.password()));
         newUser.setRole(role);
         newUser.setCreatedAt(LocalDateTime.now());
 
@@ -139,6 +171,8 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         if (user == null || userDTO == null)
             return null;
 
+        UserGetDTO oldUser = returnDTO(user);
+
         if (!Utils.isNullOrEmpty(userDTO.email()))
             user.setEmail(Utils.trimAndUpper(userDTO.email()));
 
@@ -148,14 +182,18 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
 
             if (role == null)
-                throw new DtoException("O cargo informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
+
+            validateRole(role);
 
             user.setRole(role);
         }
 
         repository.save(user);
+        UserGetDTO updatedUser = returnDTO(user);
+        auditService.logUpdate("USER", user.getId(), oldUser, updatedUser);
 
-        return returnDTO(user);
+        return updatedUser;
     }
 
     public User updateUser(String userUuid, UserUpdateDTO userDTO) {
@@ -163,6 +201,8 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         if (user == null || userDTO == null)
             return null;
 
+        UserGetDTO oldUser = returnDTO(user);
+
         if (!Utils.isNullOrEmpty(userDTO.email()))
             user.setEmail(Utils.trimAndUpper(userDTO.email()));
 
@@ -172,11 +212,40 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
                 .orElse(null);
 
             if (role == null)
-                throw new DtoException("O cargo informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O cargo informado não existe.");
+
+            validateRole(role);
 
             user.setRole(role);
         }
 
+        UserGetDTO updatedUser = returnDTO(user);
+        if (user.getId() != null) {
+            auditService.logUpdate("USER", user.getId(), oldUser, updatedUser);
+        }
+
         return user;
+    }
+
+    private void validateRole(Role role) {
+        if (UserRole.fromId(role.getId()).isEmpty())
+            throw new DtoException(ExceptionCode.INVALID_ROLE, "O identificador do cargo deve ser ADMIN, PROFESSOR ou ESTUDANTE.");
+
+        if (UserRole.ESTUDANTE.name().equals(role.getId()))
+            throw new DtoException(ExceptionCode.INVALID_ROLE, "O cargo ESTUDANTE deve ser vinculado a um cadastro de aluno.");
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        User user = getEntityById(uuid);
+        if (user == null)
+            return ResponseEntity.badRequest().build();
+
+        UserGetDTO oldUser = returnDTO(user);
+        Long id = user.getId();
+        repository.delete(user);
+        auditService.logDelete("USER", id, oldUser);
+
+        return ResponseEntity.noContent().build();
     }
 }

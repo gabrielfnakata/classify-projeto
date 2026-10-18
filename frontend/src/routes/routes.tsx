@@ -13,6 +13,7 @@ import { PublicShell } from "@/components/layout/public-shell";
 import NewSubject from "@/pages/subjects/NewSubject";
 import NewStudent from "@/pages/students/NewStudent";
 import NewClassroom from "@/pages/classrooms/NewClassroom";
+import AuditLogs from "@/pages/audit/AuditLogs";
 import StudentForms from "@/pages/forms/StudentForms";
 import TeacherForms from "@/pages/forms/TeacherForms";
 import NewForm from "@/pages/forms/NewForm.tsx";
@@ -25,6 +26,12 @@ import NewClassGroup from "@/pages/class-groups/NewClassGroup";
 import ClassGroupDetail from "@/pages/class-groups/ClassGroupDetail";
 import FormAnswers from "@/pages/forms/FormAnswers.tsx";
 import FormCorrection from "@/pages/forms/FormCorrection";
+import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
+import { Roles } from "@/shared/models/enums/roles";
+
+const adminRoles = [Roles.ADMIN];
+const studentRoles = [Roles.ESTUDANTE];
+const teachingRoles = [Roles.ADMIN, Roles.PROFESSOR];
 
 export default function AppRoutes() {
     return (
@@ -40,7 +47,7 @@ export default function AppRoutes() {
 
             {/* Rotas protegidas */}
             <Route path="/classes" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<OnDevelopment />} />
             }/>
             <Route path="/account" element={
                 <ProtectedRoute children={<OnDevelopment />} />
@@ -49,82 +56,88 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<OnDevelopment />} />
             }/>
             <Route path="/components-demo" element={
-                <ProtectedRoute children={<Components />} />
+                <ProtectedRoute allowedRoles={adminRoles} children={<Components />} />
             }/>
             {/* <Route path="/schedule" element={
                 <ProtectedRoute children={<ClassRegistration />} />
             }/> */}
             <Route path="/home" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<OnDevelopment />} />
             }/>
             <Route path="/new-class-session" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<OnDevelopment />} />
             }/>
             <Route path="/students" element={
-                <ProtectedRoute children={<StudentRegistration />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<StudentRegistration />} />
             }/>
             <Route path="/new-student" element={
-                <ProtectedRoute children={<NewStudent />} />
+                <ProtectedRoute allowedRoles={adminRoles} children={<NewStudent />} />
             }/>
             <Route path="/employees" element={
-                <ProtectedRoute children={<EmployeeRegistration />} />
+                <ProtectedRoute allowedRoles={adminRoles} children={<EmployeeRegistration />} />
             }/>
             <Route path="/new-employee" element={
-                <ProtectedRoute children={<NewEmployee />} />
+                <ProtectedRoute allowedRoles={adminRoles} children={<NewEmployee />} />
             }/>
             <Route path="/subjects" element={
-                <ProtectedRoute children={<SubjectRegistration />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<SubjectRegistration />} />
             }/>
             <Route path="/new-subject" element={
-                <ProtectedRoute children={<NewSubject />} />
+                <ProtectedRoute allowedRoles={adminRoles} children={<NewSubject />} />
             }/>
             <Route path="/classrooms" element={
-                <ProtectedRoute children={<ClassroomRegistration />} />
+                <ProtectedRoute allowedRoles={adminRoles} children={<ClassroomRegistration />} />
             }/>
             <Route path="/new-classroom" element={
-                <ProtectedRoute children={<NewClassroom />} />
+                <ProtectedRoute allowedRoles={adminRoles} children={<NewClassroom />} />
             }/>
             <Route path="/schedule" element={
-                <ProtectedRoute children={<SchedulePage />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<SchedulePage />} />
             }/>
             <Route path="/attendance" element={
-                <ProtectedRoute children={<AttendanceOverview />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<AttendanceOverview />} />
             }/>
             <Route path="/attendance/series/:recurrenceUuid" element={
-                <ProtectedRoute children={<AttendanceSeriesPage />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<AttendanceSeriesPage />} />
             }/>
             <Route path="/attendance/:sessionUuid" element={
-                <ProtectedRoute children={<AttendancePage />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<AttendancePage />} />
             }/>
             <Route path="/class-groups" element={
-                <ProtectedRoute children={<ClassGroupRegistration />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<ClassGroupRegistration />} />
             }/>
             <Route path="/new-class-group" element={
-                <ProtectedRoute children={<NewClassGroup />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<NewClassGroup />} />
             }/>
             <Route path="/class-groups/:uuid" element={
-                <ProtectedRoute children={<ClassGroupDetail />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<ClassGroupDetail />} />
+            }/>
+            <Route path="/student-home-page" element={
+                <ProtectedRoute allowedRoles={studentRoles} children={<StudentHomePage />} />
+            }/>
+            <Route path="/audit-logs" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<AuditLogs />} />
             }/>
             <Route path="/pending-forms" element={
-                <ProtectedRoute children={<StudentForms />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<StudentForms />} />
             }/>
             <Route path="/posted-forms" element={
-                <ProtectedRoute children={<TeacherForms />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<TeacherForms />} />
             }/>
             <Route path="/new-form" element={
-                <ProtectedRoute children={<NewForm />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<NewForm />} />
             }/>
             <Route path="/form-preview" element={
-                <ProtectedRoute children={<PreviewForm />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<PreviewForm />} />
             }/>
             <Route path="/form-preview/:id" element={
-                <ProtectedRoute children={<PreviewForm />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<PreviewForm />} />
             }/>
             <Route path="/form-answers/:id" element={
-                <ProtectedRoute children={<FormAnswers />} />
+                <ProtectedRoute allowedRoles={teachingRoles} children={<FormAnswers />} />
             }/>
             <Route path="/form-answers/:id/:submissionId" element={
-               <ProtectedRoute children={<FormCorrection />} />
+               <ProtectedRoute allowedRoles={teachingRoles} children={<FormCorrection />} />
             }/>
         </Routes>
     )

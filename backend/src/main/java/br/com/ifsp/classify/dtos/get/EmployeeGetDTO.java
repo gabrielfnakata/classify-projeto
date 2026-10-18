@@ -9,6 +9,8 @@ public record EmployeeGetDTO(
         LocalDate birthDate,
         String cpf,
         LocalDate hireDate,
+        String email,
+        String roleId,
         List<TelephoneGetDTO> telephones,
         String userUuid
 ) {}

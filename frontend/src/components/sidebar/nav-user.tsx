@@ -26,6 +26,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "../theme-provider"
+import { Roles } from "@/shared/models/enums/roles"
+
+const roleLabels: Record<Roles, string> = {
+  [Roles.ADMIN]: "Administrador",
+  [Roles.PROFESSOR]: "Professor",
+  [Roles.ESTUDANTE]: "Estudante",
+}
 
 export function NavUser() {
   const { isMobile, state } = useSidebar()
@@ -36,7 +43,7 @@ export function NavUser() {
 
   const user = {
     name: userData?.email ?? "Placeholder",
-    cargo: userData?.role ?? "Placeholder",
+    cargo: userData?.role ? roleLabels[userData.role] : "Placeholder",
     avatar: "usuario-logado",
   };
 

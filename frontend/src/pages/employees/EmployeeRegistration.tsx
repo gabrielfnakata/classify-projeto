@@ -1,10 +1,14 @@
+import { useState } from "react";
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import useFetch from "@/hooks/useFetch";
 import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO";
+import type {RoleDTO} from "@/shared/dtos/role/RoleDTO.ts";
+import { Roles } from "@/shared/models/enums/roles";
 
 export default function EmployeeRegistration() {
+    const {data: roles} = useFetch<RoleDTO>('/role');
     const columns: DataTableColumn<EmployeeDTO>[] = [
         {key: 'name', header: 'Nome', cell: row => row.name},
         {key: 'cpf', header: 'CPF', cell: row => row.cpf}
@@ -14,13 +18,16 @@ export default function EmployeeRegistration() {
         {name: 'cpf', inputType: 'cpf', placeholder: 'CPF', width: 25},
         {name: 'email', inputType: 'text', placeholder: 'E-mail', width: 25},
         {name: 'position', inputType: 'select', placeholder: 'Cargo', width: 25,
-            options: [
-                {label: "Professor", value: "TEACHER"},
-                {label: "Administrador", value: "ADMIN"}
-            ]
+            options: roles?.filter(role => role.id !== Roles.ESTUDANTE).map(role => {
+                return {value: role.id, label: role.description}
+            }) ?? []
         }
     ];
-    const {data} = useFetch<EmployeeDTO[]>('/employee');
+    const [refreshKey, setRefreshKey] = useState(0);
+    const {data} = useFetch<EmployeeDTO>(`/employee?r=${refreshKey}`);
+
+    const handleRefresh = () => setRefreshKey(k => k + 1);
+
     return (
         <>
             <RegistrationPage
@@ -29,6 +36,7 @@ export default function EmployeeRegistration() {
                 filters={filters}
                 title="Funcionários"
                 registrationRoute="/new-employee"
+                onRefresh={handleRefresh}
             >
             </RegistrationPage>  
         </>

@@ -44,6 +44,9 @@ public class User implements Serializable {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Employee employee;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Student student;
+
     public Long getId() {
         return id;
     }
@@ -103,4 +106,8 @@ public class User implements Serializable {
     public Employee getEmployee() { return employee; }
 
     public void setEmployee(Employee employee) { this.employee = employee; }
+
+    public Student getStudent() { return student; }
+
+    public void setStudent(Student student) { this.student = student; }
 }

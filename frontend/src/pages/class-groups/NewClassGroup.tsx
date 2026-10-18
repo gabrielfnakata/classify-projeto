@@ -200,6 +200,7 @@ export default function NewClassGroup() {
                                         <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                                             Alunos
                                         </Label>
+                                        {/*TODO: ver combobox do shadcn*/}
                                         <Select
                                             value=""
                                             onValueChange={(v) => setFieldValue("studentIds", [...values.studentIds, v])}
