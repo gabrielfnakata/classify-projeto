@@ -16,7 +16,7 @@ public class ClassSessionSpecification {
 
     private static final String ID = "id";
     private static final String UUID = "uuid";
-    private static final String CLASS = "class";
+    private static final String CLASS = "classSessionClass";
     private static final String STUDENT = "student";
     private static final String START_TIME = "startTime";
 
@@ -25,7 +25,7 @@ public class ClassSessionSpecification {
     }
 
     public static Specification<ClassSession> getByClassId(List<Long> classId) {
-        return (root, query, cb) -> cb.equal(root.get(CLASS).in(ID), classId);
+        return (root, query, cb) -> root.get(CLASS).get(ID).in(classId);
     }
     
     public static Specification<ClassSession> getBySubjectTeacherId(Long subjectTeacherId) {
