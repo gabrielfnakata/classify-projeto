@@ -26,6 +26,18 @@ Por padrão, ao iniciar um novo projeto, um usuário de administrador é criado 
 - **Email**: admin@gmail.com
 - **Senha**: 123456aA
 
+## Perfis de acesso
+
+O sistema possui três perfis: `ADMIN`, `PROFESSOR` e `ESTUDANTE`.
+
+- `ADMIN` administra cadastros e configurações.
+- `PROFESSOR` gerencia turmas, aulas e chamadas, e pode consultar alunos.
+- `ESTUDANTE` acessa somente o próprio perfil em `/student/me`.
+
+Ao cadastrar um aluno, um administrador pode preencher e-mail e senha de acesso para criar uma conta `ESTUDANTE`. A autorização é aplicada pela API; esconder páginas no frontend não substitui as permissões do backend.
+
+Na atualização de bancos existentes, o papel antigo `PROFE` é convertido para `PROFESSOR`. Contas antigas `SECRE` permanecem sem permissões até que um administrador as atualize para um dos novos papéis pelo cadastro do funcionário.
+
 ## Observações
 - Na criação de entidades que exigem CPF, será necessário utilizar um gerador de CPF aleatório, pois ele só aceita sequências válidas.
 - No frontend, não é necessário utilizar a extensão **Dev Containers** para utilizar a modificação em tempo real. Já para o backend, ela é necessária.

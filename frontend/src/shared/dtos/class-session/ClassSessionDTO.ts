@@ -11,6 +11,8 @@ export interface ClassSessionReportDTO {
     content: string,
 };
 
+export type SessionStatus = "info" | "success";
+
 export interface ClassSessionDTO {
     uuid: string,
     subjectTeacher: ClassSessionSubjectTeacherDTO,
@@ -20,4 +22,5 @@ export interface ClassSessionDTO {
     report: ClassSessionReportDTO | null,
     classDTO: ClassSessionClassDTO | null,
     student: ClassSessionStudentDTO | null,
+    recurrenceGroupUuid: string | null,
 };

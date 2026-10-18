@@ -31,20 +31,20 @@ export function DataTable<T>({
   return (
     <div
       className={cn(
-        "overflow-hidden w-full h-full rounded-2xl border border-border bg-card text-card-foreground shadow-sm",
+        "overflow-hidden w-full h-full rounded-2xl border border-border bg-table text-card-foreground shadow-sm",
         className
       )}
     >
       {data.length > 0 ? (
-        <div className="overflow-x-auto">
+        <div className="h-full overflow-auto scrollbar-slim">
           <table className="w-full border-collapse text-sm">
-            <thead className="bg-panel-strong/70">
+            <thead className="sticky top-0 z-10 bg-table-foreground">
               <tr>
                 {columns.map((column) => (
                   <th
                     key={column.key}
                     className={cn(
-                      "px-4 py-3 text-left font-semibold text-muted-foreground",
+                      "px-4 py-3 text-left font-bold text-table-header",
                       column.className
                     )}
                   >
@@ -85,7 +85,7 @@ export function DataTable<T>({
           </table>
         </div>
         ) : (
-          <EmptyState 
+          <EmptyState
             className="w-full h-full"
             title={emptyTitle}
             description={emptyDescription}
