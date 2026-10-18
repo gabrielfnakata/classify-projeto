@@ -179,7 +179,8 @@ export default function QuestionAnswer({ type, options, onOptionsChange, mode }:
         const updated: FormQuestionOptionCreateDTO[] = options.map((option, i) => {
             return {
                 ...option,
-                correct: type === AnswerType.SELECT ? i === index : i === index ? !option.correct : false
+                correct: (type === AnswerType.SELECT) ? (i === index) :
+                    (i === index ? !option.correct : option.correct)
             }
         });
         onOptionsChange(updated);
