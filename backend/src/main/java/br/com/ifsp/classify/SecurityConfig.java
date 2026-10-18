@@ -56,8 +56,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/student/me", "/student/me/**").hasRole(ESTUDANTE)
                         .requestMatchers(HttpMethod.GET, "/student/**").hasAnyRole(ADMIN, PROFESSOR)
                         .requestMatchers("/student/**").hasRole(ADMIN)
-                        .requestMatchers("/class/**", "/classsession/**", "/attendance/**").hasAnyRole(ADMIN, PROFESSOR)
-                        .requestMatchers(HttpMethod.GET, "/subject/**", "/subjectteacher/**", "/classroom/**").hasAnyRole(ADMIN, PROFESSOR)
+                        // O que cada um pode fazer com as aulas (só as próprias, para professor e aluno)
+                        // é decidido no ClassSessionService; aqui só se libera o acesso ao recurso.
+                        .requestMatchers("/classsession/**").hasAnyRole(ADMIN, PROFESSOR, ESTUDANTE)
+                        .requestMatchers("/class/**", "/attendance/**").hasAnyRole(ADMIN, PROFESSOR)
+                        .requestMatchers(HttpMethod.GET, "/subjectteacher/**", "/classroom/**").hasAnyRole(ADMIN, PROFESSOR, ESTUDANTE)
+                        .requestMatchers(HttpMethod.GET, "/subject/**").hasAnyRole(ADMIN, PROFESSOR)
+                        .requestMatchers("/employee/me", "/employee/me/**").hasAnyRole(ADMIN, PROFESSOR)
+                        .requestMatchers(HttpMethod.GET, "/employee/*/availability").hasAnyRole(ADMIN, PROFESSOR, ESTUDANTE)
+                        .requestMatchers("/form/**").hasAnyRole(ADMIN, PROFESSOR, ESTUDANTE)
                         .anyRequest().hasRole(ADMIN)
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
