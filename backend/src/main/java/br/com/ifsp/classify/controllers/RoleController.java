@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/role", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/role", produces = MediaType.APPLICATION_JSON_VALUE)
 public class RoleController extends AbstractController<RoleCreateDTO, RoleGetDTO, RoleUpdateDTO> {
 
     public RoleController(RoleService service) {

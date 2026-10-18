@@ -1,5 +1,5 @@
 import InputMask from "@mona-health/react-input-mask";
-import { Field, FieldLabel } from "../ui/field";
+import {Field, FieldError, FieldLabel} from "../ui/field";
 import { useField } from "formik";
 import { InputGroup, InputGroupAddon } from "../ui/input-group";
 import { Search } from "lucide-react";
@@ -16,8 +16,9 @@ interface CpfInputProps {
 }
 
 export default function CpfInput({...props}: CpfInputProps) {
-  const [field] = useField(props.name);
+  const [field, meta] = useField(props.name);
   const [isFocused, setIsFocused] = useState(false);
+  const showError = meta.touched && !!meta.error;
 
   return props.isFilter ? (
     <InputGroup className={cn("w-full rounded-xl border border-border bg-filter-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground",
@@ -37,15 +38,25 @@ export default function CpfInput({...props}: CpfInputProps) {
       </InputGroupAddon>
     </InputGroup>
   ) : (
-    <Field>
+      <Field className="relative" data-invalid={showError}>
           {props.label ? <FieldLabel>CPF</FieldLabel> : null}
-          <InputMask 
+          <InputMask
             mask="999.999.999-99"
             {...field}
             placeholder={props.placeholder}
             label={props.label}
-            className="w-full h-8 rounded-xl border border-border bg-filter-surface px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
+            aria-invalid={showError}
+            className={cn(
+                "w-full h-8 rounded-xl border border-border bg-filter-surface px-3 py-2 text-sm text-foreground " +
+                "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20",
+                showError && "border-destructive focus:ring-destructive/20"
+            )}
           />
-    </Field>
+        {showError && (
+            <FieldError className="absolute top-full left-0 mt-1 text-xs leading-4">
+              {meta.error}
+            </FieldError>
+        )}
+      </Field>
   )
 };

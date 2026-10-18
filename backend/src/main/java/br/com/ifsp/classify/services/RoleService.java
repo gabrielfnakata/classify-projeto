@@ -4,10 +4,14 @@ import br.com.ifsp.classify.dtos.create.RoleCreateDTO;
 import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.dtos.update.RoleUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Role;
 import br.com.ifsp.classify.repositories.RoleRepository;
+import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.utils.Utils;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO, RoleUpdateDTO, String> {
@@ -28,6 +32,9 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
     }
 
     public RoleGetDTO getById(String id) {
+        if (UserRole.fromId(id).isEmpty())
+            return null;
+
         Role role = repository
             .findById(id)
             .orElse(null);
@@ -36,17 +43,26 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
     }
 
     @Override
+    public List<RoleGetDTO> findAll() {
+        return repository.findAll()
+                .stream()
+                .filter(role -> UserRole.fromId(role.getId()).isPresent())
+                .map(this::returnDTO)
+                .toList();
+    }
+
+    @Override
     public RoleGetDTO create(RoleCreateDTO roleDTO) {
         if (roleDTO == null)
             return null;
 
         if (Utils.isNullOrEmpty(roleDTO.id()))
-            throw new DtoException("É necessário informar um id");
-        else if (roleDTO.id().trim().length() != 5)
-            throw new DtoException("O id deve possuir 5 caracteres");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o identificador do cargo.");
+        else if (UserRole.fromId(Utils.trimAndUpper(roleDTO.id())).isEmpty())
+            throw new DtoException(ExceptionCode.INVALID_ROLE, "O identificador do cargo deve ser ADMIN, PROFESSOR ou ESTUDANTE.");
 
         if (Utils.isNullOrEmpty(roleDTO.description()))
-            throw new DtoException("A descrição do cargo não pode ser vazia");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "A descrição do cargo não pode ser vazia.");
 
         Role newRole = new Role();
         newRole.setId(Utils.trimAndUpper(roleDTO.id()));

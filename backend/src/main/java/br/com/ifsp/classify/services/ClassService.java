@@ -5,6 +5,7 @@ import br.com.ifsp.classify.dtos.get.ClassGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassStudentSummaryDTO;
 import br.com.ifsp.classify.dtos.update.ClassUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Class;
 import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.repositories.ClassRepository;
@@ -21,11 +22,13 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
 
     private final StudentService studentService;
     private final ClassSessionRepository classSessionRepository;
+    private final AuditService auditService;
 
-    public ClassService(ClassRepository repository, StudentService studentService, ClassSessionRepository classSessionRepository) {
+    public ClassService(ClassRepository repository, StudentService studentService, ClassSessionRepository classSessionRepository, AuditService auditService) {
         super(repository);
         this.studentService = studentService;
         this.classSessionRepository = classSessionRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -46,6 +49,7 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
 
         classModel.getStudents().clear();
         repository.save(classModel);
+        auditService.logDelete("CLASS", classModel.getId(), classModel);
 
         return super.delete(uuid);
     }
@@ -75,7 +79,7 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
             return null;
 
         if (Utils.isNullOrEmpty(classDTO.name()))
-            throw new DtoException("O nome da turma não pode ser nulo ou vazio");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "O nome da turma não pode ser nulo ou vazio");
 
         Class newClass = new Class();
         newClass.setUuid(UuidUtils.generateUUID());
@@ -83,6 +87,7 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
         newClass.setDescription(Utils.isNullOrEmpty(classDTO.description()) ? null : classDTO.description().trim());
 
         repository.save(newClass);
+        auditService.logInsert("CLASS", newClass.getId(), newClass);
 
         return returnDTO(newClass);
     }
@@ -99,9 +104,12 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
         if (classDTO.description() != null)
             classModel.setDescription(classDTO.description().isBlank() ? null : classDTO.description().trim());
 
+        ClassGetDTO oldClass = returnDTO(classModel);
         repository.save(classModel);
+        ClassGetDTO updatedClass = returnDTO(classModel);
 
-        return returnDTO(classModel);
+        auditService.logUpdate("CLASS", classModel.getId(), oldClass, updatedClass);
+        return updatedClass;
     }
 
     public List<ClassStudentSummaryDTO> addStudents(String classUuid, List<String> studentUuids) {
@@ -110,34 +118,41 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
 
         Class classModel = getEntityById(classUuid);
         if (classModel == null)
-            throw new DtoException("A turma informada não foi encontrada");
+            throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "A turma informada não foi encontrada");
 
+        ClassGetDTO oldClass = returnDTO(classModel);
         for (String studentUuid : studentUuids) {
             Student student = studentService.getEntityById(studentUuid);
             if (student == null)
-                throw new DtoException("O aluno informado não foi encontrado ou não foi registrado");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O aluno informado não foi encontrado ou não foi registrado");
 
             if (!classModel.getStudents().contains(student))
                 classModel.getStudents().add(student);
         }
 
         repository.save(classModel);
+        ClassGetDTO updatedClass = returnDTO(classModel);
 
-        return returnDTO(classModel).students();
+        auditService.logUpdate("CLASS", classModel.getId(), oldClass, updatedClass);
+        return updatedClass.students();
     }
 
     public List<ClassStudentSummaryDTO> removeStudent(String classUuid, String studentUuid) {
         Class classModel = getEntityById(classUuid);
         if (classModel == null)
-            throw new DtoException("A turma informada não foi encontrada");
+            throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "A turma informada não foi encontrada");
 
         Student student = studentService.getEntityById(studentUuid);
         if (student == null)
-            throw new DtoException("O aluno informado não foi encontrado ou não foi registrado");
+            throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O aluno informado não foi encontrado ou não foi registrado");
 
+        ClassGetDTO oldClass = returnDTO(classModel);
         classModel.getStudents().remove(student);
         repository.save(classModel);
 
-        return returnDTO(classModel).students();
+        ClassGetDTO updatedClass = returnDTO(classModel);
+
+        auditService.logUpdate("CLASS", classModel.getId(), oldClass, updatedClass);
+        return updatedClass.students();
     }
 }

@@ -14,7 +14,7 @@ import java.util.List;
 @Table(name = "STUDENT")
 public class Student implements Serializable {
 
-    @JdbcTypeCode(SqlTypes.TINYINT)
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -47,6 +47,9 @@ public class Student implements Serializable {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    private User user;
+
     @ManyToMany
     @JoinTable(
         name = "STUDENT_GUARDIAN",
@@ -63,7 +66,7 @@ public class Student implements Serializable {
     )
     private List<Class> classes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Telephone> telephones = new ArrayList<>();
     
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
@@ -131,6 +134,14 @@ public class Student implements Serializable {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public List<Guardian> getGuardians() {

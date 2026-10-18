@@ -27,6 +27,29 @@ CREATE TABLE IF NOT EXISTS guardian (
 	CONSTRAINT guardian_addressId_fk FOREIGN KEY (address_id) REFERENCES address (id)
 )$$
 
+CREATE TABLE IF NOT EXISTS role (
+    id CHAR(10) NOT NULL,
+    description VARCHAR(80) NOT NULL,
+
+    CONSTRAINT role_id_pk PRIMARY KEY (id)
+)$$
+
+CREATE TABLE IF NOT EXISTS user (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	uuid BINARY(16) NOT NULL,
+	email VARCHAR(320) NOT NULL,
+	password VARCHAR(100) NOT NULL,
+	refresh_token VARCHAR(255),
+	created_at DATETIME DEFAULT NOW(),
+	role_id CHAR(10) NOT NULL,
+
+	CONSTRAINT user_id_pk PRIMARY KEY (id),
+	CONSTRAINT user_uuid_uk UNIQUE (uuid),
+	CONSTRAINT user_email_uk UNIQUE (email),
+	CONSTRAINT user_refreshToken_uk UNIQUE (refresh_token),
+	CONSTRAINT user_roleId_fk FOREIGN KEY (role_id) REFERENCES role (id)
+)$$
+
 CREATE TABLE IF NOT EXISTS student (
 	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 	uuid BINARY(16) NOT NULL,
@@ -36,11 +59,13 @@ CREATE TABLE IF NOT EXISTS student (
 	cpf CHAR(11),
 	registration_date DATE NOT NULL,
 	is_deleted BOOLEAN NOT NULL DEFAULT 0,
+	user_id BIGINT UNSIGNED,
 
 	CONSTRAINT student_id_pk PRIMARY KEY (id),
 	CONSTRAINT student_uuid_uk UNIQUE (uuid),
 	CONSTRAINT student_email_uk UNIQUE (email),
-	CONSTRAINT student_cpf_uk UNIQUE (cpf)
+	CONSTRAINT student_cpf_uk UNIQUE (cpf),
+	CONSTRAINT student_userId_fk FOREIGN KEY (user_id) REFERENCES user (id)
 )$$
 
 CREATE TABLE IF NOT EXISTS student_guardian (
@@ -71,29 +96,6 @@ CREATE TABLE IF NOT EXISTS student_class (
 	CONSTRAINT studentclass_studentId_classId_pk PRIMARY KEY (student_id, class_id),
 	CONSTRAINT studentclass_studentId_fk FOREIGN KEY (student_id) REFERENCES student (id),
 	CONSTRAINT studentclass_classId_fk FOREIGN KEY (class_id) REFERENCES class (id)
-)$$
-
-CREATE TABLE IF NOT EXISTS role (
-    id CHAR(5) NOT NULL,
-    description VARCHAR(80) NOT NULL,
-
-    CONSTRAINT role_id_pk PRIMARY KEY (id)
-)$$
-
-CREATE TABLE IF NOT EXISTS user (
-	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-	uuid BINARY(16) NOT NULL,
-	email VARCHAR(320) NOT NULL,
-	password VARCHAR(100) NOT NULL,
-	refresh_token VARCHAR(255),
-	created_at DATETIME DEFAULT NOW(),
-	role_id CHAR(5) NOT NULL,
-
-	CONSTRAINT user_id_pk PRIMARY KEY (id),
-	CONSTRAINT user_uuid_uk UNIQUE (uuid),
-	CONSTRAINT user_email_uk UNIQUE (email),
-	CONSTRAINT user_refreshToken_uk UNIQUE (refresh_token),
-	CONSTRAINT user_roleId_fk FOREIGN KEY (role_id) REFERENCES role (id)
 )$$
 
 CREATE TABLE IF NOT EXISTS employee (
@@ -251,6 +253,19 @@ CREATE TABLE IF NOT EXISTS audit (
     CONSTRAINT audit_operation_ck CHECK (operation IN ('INSERT', 'DELETE', 'UPDATE')),
     CONSTRAINT audit_userId_fk FOREIGN KEY (user_id) REFERENCES user (id),
     CONSTRAINT audit_oldNewData_ck CHECK (old_data != new_data)
+)$$
+
+CREATE TABLE IF NOT EXISTS user_avatar (
+	id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+	user_id BIGINT UNSIGNED NOT NULL,
+	preset VARCHAR(30),
+	content_type VARCHAR(50),
+	data LONGBLOB,
+	updated_at DATETIME NOT NULL,
+
+	CONSTRAINT userAvatar_id_pk PRIMARY KEY (id),
+	CONSTRAINT userAvatar_userId_uk UNIQUE (user_id),
+	CONSTRAINT userAvatar_userId_fk FOREIGN KEY (user_id) REFERENCES user (id)
 )$$
 
 

@@ -39,6 +39,7 @@ public class FormQuestion {
     private Set<FormQuestionOption> formQuestionOptions;
 
     @JdbcTypeCode(SqlTypes.BIT)
+    @Column(name = "required", nullable = false)
     private Boolean isRequired;
 
     public Set<FormQuestionOption> getFormQuestionOptions() {

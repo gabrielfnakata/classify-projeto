@@ -6,6 +6,7 @@ import type { RoleDTO } from "@/shared/dtos/role/RoleDTO";
 import { parseTelephone } from "@/shared/utils/telephone-parser";
 import { NewEmployeeValidationSchema } from "@/validation/EmployeeSchema";
 import { useNavigate } from "react-router";
+import { Roles } from "@/shared/models/enums/roles";
 
 const DEFAULT_EMPLOYEE_PASSWORD = "Mudar@123";
 
@@ -16,12 +17,14 @@ export default function NewEmployee() {
     const fields = [
         { key: 'name', name: 'name', label: 'Nome', type: 'text' as const, required: true },
         { key: 'birthDate', name: 'birthDate', label: 'Data de nascimento', type: 'date' as const, required: true },
+        { key: 'email', name: 'email', label: 'E-mail', type: 'text' as const, required: true },
         { key: 'cpf', name: 'cpf', label: 'CPF', type: 'cpf' as const, required: true },
         { key: 'hireDate', name: 'hireDate', label: 'Data de contratação', type: 'date' as const, required: true },
-        { key: 'email', name: 'email', label: 'E-mail', type: 'text' as const, required: true },
         {
             key: 'roleId', name: 'roleId', label: 'Cargo', type: 'select' as const, required: true,
-            options: (roles ?? []).map(role => ({ label: role.description, value: role.id }))
+            options: (roles ?? [])
+                .filter(role => role.id !== Roles.ESTUDANTE)
+                .map(role => ({ label: role.description, value: role.id }))
         },
         { key: 'telephone1', name: 'telephone1', label: 'Telefone', type: 'phone' as const, required: true },
         { key: 'telephone2', name: 'telephone2', label: 'Telefone 2', type: 'phone' as const, required: false }

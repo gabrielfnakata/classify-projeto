@@ -49,6 +49,7 @@ interface ScheduleFormProps {
   editingSessions?: ClassSessionDTO[] | null
 }
 
+// TODO: Adicionar mensagens de erro
 export function ScheduleForm({ open, onClose, onSuccess, editingSessions }: ScheduleFormProps) {
   const [error, setError] = useState<string | null>(null)
 

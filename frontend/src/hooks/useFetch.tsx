@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "@/services/api";
 
 export default function useFetch<T>(url: string | null) {
@@ -6,17 +6,16 @@ export default function useFetch<T>(url: string | null) {
     const [loading, setLoading] = useState<boolean | null>(null);
     const [error, setError] = useState<Error | null>(null);
 
-    useEffect(() => {
+    const fetchData = useCallback(() => {
         if (!url) return;
 
         setLoading(true);
-        api.get(url, {data: {}})
+        return api.get(url, {data: {}})
         .then((response) => {
             if (response.status === 204) {
                 setData(null);
                 return;
             }
-            
             setData(response.data);
         })
         .catch((error) => {
@@ -27,5 +26,9 @@ export default function useFetch<T>(url: string | null) {
         })
     }, [url]);
 
-    return {data, loading, error};
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    return {data, loading, error, refetch: fetchData};
 }
