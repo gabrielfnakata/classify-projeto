@@ -22,6 +22,7 @@ export const mainNavigation: Group[] = [
     items: [
       { title: "Visão Geral (Admin)", url: "/dashboard/admin", allowedRoles: adminRoles },
       { title: "Painel do Professor", url: "/dashboard/teacher", allowedRoles: teachingRoles },
+      { title: "Painel do Aluno", url: "/dashboard/student", allowedRoles: adminRoles },
       { title: "Meu Desempenho", url: "/dashboard/student", allowedRoles: studentRoles },
     ],
   },

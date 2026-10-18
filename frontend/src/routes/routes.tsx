@@ -70,7 +70,7 @@ export default function AppRoutes() {
                 <ProtectedRoute allowedRoles={teachingRoles} children={<TeacherDashboard />} />
             }/>
             <Route path="/dashboard/student" element={
-                <ProtectedRoute allowedRoles={studentRoles} children={<StudentDashboard />} />
+                <ProtectedRoute allowedRoles={[Roles.ADMIN, Roles.ESTUDANTE]} children={<StudentDashboard />} />
             }/>
             <Route path="/components-demo" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<Components />} />
