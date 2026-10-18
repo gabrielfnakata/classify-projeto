@@ -9,6 +9,7 @@ import { FormikInput } from "@/components/formik-input/FormikInput";
 import { LoginValidationSchema } from "@/validation/LoginSchema";
 import { useEffect, useState } from "react";
 import { ContentCard } from "@/components/layout/content-card";
+import { Roles } from "@/shared/models/enums/roles";
 import type { LoginForm } from "@/shared/models/forms/loginForm";
 import type {AxiosError} from "axios";
 import type {ApiExceptionPayload} from "@/services/api.ts";
@@ -20,14 +21,21 @@ export default function Login() {
 
     const handleLogin = async (values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
         setErroLogin(null);
-        await login(values)
-        .then(() => navigate('/classes'))
-        .catch((error: AxiosError) => {
-            const data = error.response?.data as ApiExceptionPayload;
-            const message = data.message ?? "Ocorreu um erro. Tente novamente.";
-            setErroLogin(message);
-        })
-        .finally(() => helpers.setSubmitting(false));
+
+        try {
+            const authenticatedUser = await login(values);
+
+            if (authenticatedUser.role === Roles.ESTUDANTE) {
+                navigate('/student-home-page');
+            } else if (authenticatedUser.role === Roles.ADMIN || authenticatedUser.role === Roles.PROFESSOR) {
+                navigate('/classes');
+            }
+        } catch(error) {
+            const data = (error as AxiosError).response?.data as ApiExceptionPayload;
+            setErroLogin(data?.message ?? "Ocorreu um erro. Tente novamente.");
+        } finally {
+            helpers.setSubmitting(false);
+        }
     }
 
     useEffect(() => {

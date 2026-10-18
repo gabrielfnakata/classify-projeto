@@ -47,22 +47,15 @@ export default function AppRoutes() {
                 </PublicShell>
             } />
 
-            {/* Rotas protegidas */}
+            {/* Rotas protegidas para estudantes */}
+            <Route path="/student-home-page" element={
+                <ProtectedRoute allowedRoles={studentRoles} children={<StudentHomePage />} />
+            }/>
+
+            {/* Rotas protegidas para professores*/}
             <Route path="/classes" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<OnDevelopment />} />
             }/>
-            <Route path="/account" element={
-                <ProtectedRoute children={<ProfilePage />} />
-            }/>
-            <Route path="/settings" element={
-                <ProtectedRoute children={<OnDevelopment />} />
-            }/>
-            <Route path="/components-demo" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<Components />} />
-            }/>
-            {/* <Route path="/schedule" element={
-                <ProtectedRoute children={<ClassRegistration />} />
-            }/> */}
             <Route path="/home" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<OnDevelopment />} />
             }/>
@@ -72,26 +65,8 @@ export default function AppRoutes() {
             <Route path="/students" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<StudentRegistration />} />
             }/>
-            <Route path="/new-student" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<NewStudent />} />
-            }/>
-            <Route path="/employees" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<EmployeeRegistration />} />
-            }/>
-            <Route path="/new-employee" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<NewEmployee />} />
-            }/>
             <Route path="/subjects" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<SubjectRegistration />} />
-            }/>
-            <Route path="/new-subject" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<NewSubject />} />
-            }/>
-            <Route path="/classrooms" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<ClassroomRegistration />} />
-            }/>
-            <Route path="/new-classroom" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<NewClassroom />} />
             }/>
             <Route path="/schedule" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<SchedulePage />} />
@@ -114,12 +89,6 @@ export default function AppRoutes() {
             <Route path="/class-groups/:uuid" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<ClassGroupDetail />} />
             }/>
-            <Route path="/student-home-page" element={
-                <ProtectedRoute allowedRoles={studentRoles} children={<StudentHomePage />} />
-            }/>
-            <Route path="/audit-logs" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<AuditLogs />} />
-            }/>
             <Route path="/pending-forms" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<StudentForms />} />
             }/>
@@ -141,6 +110,43 @@ export default function AppRoutes() {
             <Route path="/form-answers/:id/:submissionId" element={
                <ProtectedRoute allowedRoles={teachingRoles} children={<FormCorrection />} />
             }/>
+
+            {/* Rotas protegidas para administradores */}
+            <Route path="/new-student" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<NewStudent />} />
+            }/>
+            <Route path="/employees" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<EmployeeRegistration />} />
+            }/>
+            <Route path="/new-employee" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<NewEmployee />} />
+            }/>
+            <Route path="/new-subject" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<NewSubject />} />
+            }/>
+            <Route path="/classrooms" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<ClassroomRegistration />} />
+            }/>
+            <Route path="/new-classroom" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<NewClassroom />} />
+            }/>
+            <Route path="/components-demo" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<Components />} />
+            }/>
+            <Route path="/audit-logs" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<AuditLogs />} />
+            }/>
+
+            {/* Rotas para todos os usuários autenticados */}
+            <Route path="/account" element={
+                <ProtectedRoute children={<ProfilePage />} />
+            }/>
+            <Route path="/settings" element={
+                <ProtectedRoute children={<OnDevelopment />} />
+            }/>
+            {/* <Route path="/schedule" element={
+                <ProtectedRoute children={<ClassRegistration />} />
+            }/> */}
             <Route path="/submission-form/:formUuid/:submissionUuid" element={
                 <ProtectedRoute children={<SubmissionForm />} />
             }/>

@@ -27,7 +27,6 @@ export default function QuestionAnswer({ type, options, onOptionsChange, mode }:
     const [files, setFiles] = useState<AnswerFileCreateDTO[]>([]);
 
     useEffect(() => {
-        console.log(files);
         files.forEach((file) => {
             api.post<FormAnswerFileUploadDTO>("/form/upload-url", {bucket: file.bucket, fileName: file.file.name})
                 .then((response) => {
