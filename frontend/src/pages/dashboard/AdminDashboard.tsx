@@ -14,8 +14,10 @@ import { MetricCard } from "@/components/features/metric-card"
 import { SectionTitle } from "@/components/features/section-title"
 import { EntityCard } from "@/components/features/entity-card"
 import { ChartCard } from "@/components/features/chart-card"
+import { ColumnChart } from "@/components/features/column-chart"
 import { TrendAreaChart } from "@/components/features/trend-area-chart"
 import { CategoryBarChart } from "@/components/features/category-bar-chart"
+import { CategoryDonutChart } from "@/components/features/category-donut-chart"
 import { PeriodFilter } from "@/components/features/period-filter"
 import { ShiftFilter } from "@/components/features/shift-filter"
 import { WeekdayFilter } from "@/components/features/weekday-filter"
@@ -35,8 +37,17 @@ import {
   filterSessionsByPeriod,
   filterSessionsByShift,
   filterSessionsByWeekdays,
+  SHIFT_LABEL_ORDER,
+  hasAnyValue,
 } from "@/shared/utils/session-analytics"
-import { classroomNameMap, resolveClassroomName, sessionStudents } from "@/shared/utils/class-session-helpers"
+import {
+  buildClassRosters,
+  isCanceled,
+  classroomNameMap,
+  resolveClassroomName,
+  sessionStudentUuids,
+} from "@/shared/utils/class-session-helpers"
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
 import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO"
 import type { SubjectDTO } from "@/shared/dtos/subject/SubjectDTO"
@@ -67,7 +78,11 @@ export default function AdminDashboard() {
   const { data: subjects } = useFetch<SubjectDTO>("/subject")
   const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
   const { data: subjectTeachers } = useFetch<SubjectTeacherDTO>("/subjectteacher")
-  const { data: sessions } = useFetch<ClassSessionDTO>("/classsession")
+  const { data: rawSessions } = useFetch<ClassSessionDTO>("/classsession")
+  // Aula cancelada não aconteceu: fica fora de contagens, gráficos e próximas aulas.
+  const sessions = useMemo(() => (rawSessions ?? []).filter((s) => !isCanceled(s)), [rawSessions])
+  const { data: classGroups } = useFetch<ClassGroupDTO>("/class")
+  const rosters = useMemo(() => buildClassRosters(classGroups ?? []), [classGroups])
 
   const [period, setPeriod] = useState<PeriodValue>("30")
   const [shift, setShift] = useState<ShiftValue>("all")
@@ -100,18 +115,23 @@ export default function AdminDashboard() {
   const kpis = useMemo(() => {
     return {
       sessionsInPeriod: scopedSessions.length,
-      studentsReached: new Set(scopedSessions.flatMap((s) => sessionStudents(s).map((st) => st.uuid))).size,
+      studentsReached: new Set(scopedSessions.flatMap((s) => sessionStudentUuids(s, rosters))).size,
     }
-  }, [scopedSessions])
+  }, [scopedSessions, rosters])
 
   const dailyTrend = useMemo(
     () => buildDailyTrend(scopedSessions, periodDays(period)),
     [scopedSessions, period]
   )
 
+  // Sem limite: a rosca é parte-do-todo e ela mesma agrupa o excedente em "Outras".
   const sessionsBySubject = useMemo(
-    () => buildCategoryBreakdown(scopedSessions, (s) => s.subjectTeacher.subject.description),
+    () => buildCategoryBreakdown(scopedSessions, (s) => s.subjectTeacher.subject.description, Infinity),
     [scopedSessions]
+  )
+  const subjectColorOrder = useMemo(
+    () => (subjects ?? []).map((s) => s.description).sort((a, b) => a.localeCompare(b)),
+    [subjects]
   )
 
   const sessionsByClassroom = useMemo(
@@ -208,12 +228,7 @@ export default function AdminDashboard() {
       <ChartCard
         title="Aulas por Dia"
         description="Volume de agendamentos no período selecionado."
-        data={dailyTrend}
-        columns={[
-          { key: "label", header: "Data", cell: (row) => row.fullLabel },
-          { key: "value", header: "Aulas", cell: (row) => row.value },
-        ]}
-        rowKey={(row, index) => `${row.label}-${index}`}
+        data={hasAnyValue(dailyTrend) ? dailyTrend : []}
       >
         <TrendAreaChart data={dailyTrend} seriesName="Aulas" />
       </ChartCard>
@@ -221,26 +236,21 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartCard
           title="Aulas por Disciplina"
-          description="Top disciplinas por volume de aulas no período."
+          description="Distribuição das aulas no período."
           data={sessionsBySubject}
-          columns={[
-            { key: "label", header: "Disciplina", cell: (row) => row.label },
-            { key: "value", header: "Aulas", cell: (row) => row.value },
-          ]}
-          rowKey={(row) => row.label}
         >
-          <CategoryBarChart data={sessionsBySubject} seriesName="Aulas" />
+          <CategoryDonutChart
+            data={sessionsBySubject}
+            colorOrder={subjectColorOrder}
+            seriesName="Aulas"
+            centerLabel="aulas"
+          />
         </ChartCard>
 
         <ChartCard
           title="Ocupação de Salas"
           description="Salas mais utilizadas no período."
           data={sessionsByClassroom}
-          columns={[
-            { key: "label", header: "Sala", cell: (row) => row.label },
-            { key: "value", header: "Aulas", cell: (row) => row.value },
-          ]}
-          rowKey={(row) => row.label}
         >
           <CategoryBarChart data={sessionsByClassroom} seriesName="Aulas" />
         </ChartCard>
@@ -250,56 +260,41 @@ export default function AdminDashboard() {
         <ChartCard
           title="Aulas por Dia da Semana"
           description="Em qual dia da semana a escola tem mais aulas."
-          data={weekdayBreakdown}
-          columns={[
-            { key: "label", header: "Dia", cell: (row) => row.label },
-            { key: "value", header: "Aulas", cell: (row) => row.value },
-          ]}
-          rowKey={(row) => row.label}
+          data={hasAnyValue(weekdayBreakdown) ? weekdayBreakdown : []}
         >
-          <CategoryBarChart data={weekdayBreakdown} seriesName="Aulas" height={224} />
+          <ColumnChart data={weekdayBreakdown} seriesName="Aulas" height={224} />
         </ChartCard>
 
         <ChartCard
           title="Aulas por Turno"
           description="Distribuição das aulas entre manhã, tarde e noite."
-          data={shiftBreakdown}
-          columns={[
-            { key: "label", header: "Turno", cell: (row) => row.label },
-            { key: "value", header: "Aulas", cell: (row) => row.value },
-          ]}
-          rowKey={(row) => row.label}
+          data={hasAnyValue(shiftBreakdown) ? shiftBreakdown : []}
         >
-          <CategoryBarChart data={shiftBreakdown} seriesName="Aulas" height={224} />
+          <CategoryDonutChart
+            data={shiftBreakdown}
+            colorOrder={SHIFT_LABEL_ORDER}
+            seriesName="Aulas"
+            centerLabel="aulas"
+          />
         </ChartCard>
       </div>
 
       <ChartCard
         title="Novos Alunos por Período"
         description="Matrículas registradas no período selecionado (não é afetado pelos filtros de turno/dia/aula)."
-        data={studentRegistrationTrend}
-        columns={[
-          { key: "label", header: "Data", cell: (row) => row.fullLabel },
-          { key: "value", header: "Matrículas", cell: (row) => row.value },
-        ]}
-        rowKey={(row, index) => `${row.label}-${index}`}
+        data={hasAnyValue(studentRegistrationTrend) ? studentRegistrationTrend : []}
       >
-        <TrendAreaChart data={studentRegistrationTrend} seriesName="Matrículas" />
+        <ColumnChart data={studentRegistrationTrend} seriesName="Matrículas" />
       </ChartCard>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartCard
           title="Distribuição de Idade dos Alunos"
           description="Quantidade de alunos por faixa etária."
-          data={ageBreakdown}
-          columns={[
-            { key: "label", header: "Faixa Etária", cell: (row) => row.label },
-            { key: "value", header: "Alunos", cell: (row) => row.value },
-          ]}
-          rowKey={(row) => row.label}
+          data={hasAnyValue(ageBreakdown) ? ageBreakdown : []}
           emptyTitle="Nenhum aluno cadastrado"
         >
-          <CategoryBarChart data={ageBreakdown} seriesName="Alunos" height={180} />
+          <ColumnChart data={ageBreakdown} seriesName="Alunos" height={200} />
         </ChartCard>
 
         <ContentCard>

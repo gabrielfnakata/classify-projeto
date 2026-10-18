@@ -1,12 +1,15 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { BookOpen, CalendarClock, GraduationCap } from "lucide-react"
 
 import useFetch from "@/hooks/useFetch"
+import api from "@/services/api"
 import { MetricCard } from "@/components/features/metric-card"
 import { SectionTitle } from "@/components/features/section-title"
 import { ChartCard } from "@/components/features/chart-card"
-import { TrendAreaChart } from "@/components/features/trend-area-chart"
+import { ColumnChart } from "@/components/features/column-chart"
+import { ScoreLineChart } from "@/components/features/score-line-chart"
 import { CategoryBarChart } from "@/components/features/category-bar-chart"
+import { CategoryDonutChart } from "@/components/features/category-donut-chart"
 import { PeriodFilter } from "@/components/features/period-filter"
 import { ShiftFilter } from "@/components/features/shift-filter"
 import { WeekdayFilter } from "@/components/features/weekday-filter"
@@ -19,6 +22,8 @@ import { SelectField } from "@/components/common/select-field"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import type { AttendanceGetDTO } from "@/shared/dtos/attendance/AttendanceGetDTO"
+import type { FormDTO } from "@/shared/dtos/form/FormDTO"
 import { formatYMD } from "@/shared/utils/date-formatter"
 import {
   buildCategoryBreakdown,
@@ -28,46 +33,104 @@ import {
   filterSessionsByPeriod,
   filterSessionsByShift,
   filterSessionsByWeekdays,
+  SHIFT_LABEL_ORDER,
+  hasAnyValue,
 } from "@/shared/utils/session-analytics"
-import { classroomNameMap, resolveClassroomName, sessionStudents } from "@/shared/utils/class-session-helpers"
-import { mockAttendance, mockGrade, mockGradeEvolution } from "@/shared/utils/mock-performance"
+import { classroomNameMap, isCanceled, type ScopeOption } from "@/shared/utils/class-session-helpers"
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO"
+import { SegmentedTabs } from "@/components/features/segmented-tabs"
+import { ClassStudentsTable } from "./ClassStudentsTable"
+import { ClassTrendCharts } from "./ClassTrendCharts"
+import { TrendAreaChart } from "@/components/features/trend-area-chart"
+import { useClassPerformance } from "@/hooks/useClassPerformance"
+import { useAuth } from "@/hooks/useAuth"
+import { Roles } from "@/shared/models/enums/roles"
+import {
+  averageScore,
+  buildAttendanceBySubject,
+  buildGradeEvolution,
+  getGradedForms,
+  overallAttendanceRate,
+} from "@/shared/utils/performance-metrics"
 
 export default function StudentDashboard() {
-  const { data: students } = useFetch<StudentDTO>("/student")
-  const { data: sessions } = useFetch<ClassSessionDTO>("/classsession")
-  const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
+  const { userData } = useAuth()
+  // Aluno: só os próprios dados (/student/me). Admin: qualquer aluno ou turma.
+  // O professor não usa este painel: o desempenho dos alunos dele fica no Painel do Professor.
+  const isAdmin = userData?.role === Roles.ADMIN
 
-  const [selectedUuid, setSelectedUuid] = useState<string>("")
+  const { data: rawAllSessions } = useFetch<ClassSessionDTO>(isAdmin ? "/classsession" : null)
+  // Aula cancelada não aconteceu: fica fora de contagens, gráficos e próximas aulas.
+  const allSessions = useMemo(() => (rawAllSessions ?? []).filter((s) => !isCanceled(s)), [rawAllSessions])
+  const { data: classGroups } = useFetch<ClassGroupDTO>(isAdmin ? "/class" : null)
+  const { data: allStudents } = useFetch<StudentDTO>(isAdmin ? "/student" : null)
+
+  const scope = useMemo<{ students: ScopeOption[]; classes: ScopeOption[] }>(
+    () => ({
+      students: (allStudents ?? []).map((s) => ({ uuid: s.uuid, name: s.name })),
+      classes: (classGroups ?? []).map((c) => ({ uuid: c.uuid, name: c.name })),
+    }),
+    [allStudents, classGroups]
+  )
+
+  const [viewMode, setViewMode] = useState<"student" | "class">("student")
+  const [selectedStudentUuid, setSelectedStudentUuid] = useState("")
+  const [selectedClassUuid, setSelectedClassUuid] = useState("")
+  const [ownStudent, setOwnStudent] = useState<StudentDTO | null>(null)
+
+  useEffect(() => {
+    if (isAdmin || !userData) return
+    api.get<StudentDTO>("/student/me").then((response) => setOwnStudent(response.data))
+  }, [isAdmin, userData])
+
+  const isClassView = isAdmin && viewMode === "class"
+  const selectedClass = scope.classes.find((c) => c.uuid === selectedClassUuid) ?? scope.classes[0] ?? null
+  const student: ScopeOption | null = isAdmin
+    ? scope.students.find((s) => s.uuid === selectedStudentUuid) ?? scope.students[0] ?? null
+    : ownStudent
+  const target = isClassView ? selectedClass : student
+  const classPerformance = useClassPerformance(isClassView ? selectedClass?.uuid ?? null : null)
+
+  const studentBaseUrl = isClassView ? null : isAdmin ? (student ? `/student/${student.uuid}` : null) : "/student/me"
+
+  const { data: rawStudentSessions } = useFetch<ClassSessionDTO>(studentBaseUrl && `${studentBaseUrl}/schedule`)
+  const studentSessions = useMemo(() => (rawStudentSessions ?? []).filter((s) => !isCanceled(s)), [rawStudentSessions])
+  const { data: attendance } = useFetch<AttendanceGetDTO>(studentBaseUrl && `${studentBaseUrl}/attendance`)
+  const { data: forms } = useFetch<FormDTO>(isAdmin ? studentBaseUrl && `${studentBaseUrl}/forms` : "/form")
+  // /classroom é restrito a admin/professor; para o aluno a sala simplesmente não é exibida.
+  const { data: classrooms } = useFetch<ClassroomDTO>(isAdmin ? "/classroom" : null)
+
+  const allMySessions = useMemo(
+    () =>
+      isClassView
+        ? (allSessions ?? []).filter((s) => s.classDTO?.uuid === selectedClass?.uuid)
+        : studentSessions ?? [],
+    [isClassView, allSessions, selectedClass, studentSessions]
+  )
+
   const [period, setPeriod] = useState<PeriodValue>("30")
   const [shift, setShift] = useState<ShiftValue>("all")
   const [weekdays, setWeekdays] = useState<number[]>([])
   const [subjectFilter, setSubjectFilter] = useState("")
   const [teacherFilter, setTeacherFilter] = useState("")
-  const activeStudent = (students ?? []).find((s) => s.uuid === selectedUuid) ?? (students ?? [])[0]
 
   const classroomNames = useMemo(() => classroomNameMap(classrooms ?? []), [classrooms])
 
-  // Todas as aulas do aluno, usadas só para popular as disciplinas e professores dele.
-  const allMySessions = useMemo(() => {
-    if (!activeStudent) return []
-    return (sessions ?? []).filter((s) => sessionStudents(s).some((st) => st.uuid === activeStudent.uuid))
-  }, [sessions, activeStudent])
-
   const subjectOptions = useMemo(() => {
     const map = new Map<string, string>()
-    allMySessions.forEach((s) => map.set(s.subjectTeacher.subject.uuid, s.subjectTeacher.subject.description))
+    ;(allMySessions ?? []).forEach((s) => map.set(s.subjectTeacher.subject.uuid, s.subjectTeacher.subject.description))
     return Array.from(map.entries()).map(([value, label]) => ({ label, value }))
   }, [allMySessions])
 
   const teacherOptions = useMemo(() => {
     const map = new Map<string, string>()
-    allMySessions.forEach((s) => map.set(s.subjectTeacher.employee.uuid, s.subjectTeacher.employee.name))
+    ;(allMySessions ?? []).forEach((s) => map.set(s.subjectTeacher.employee.uuid, s.subjectTeacher.employee.name))
     return Array.from(map.entries()).map(([value, label]) => ({ label, value }))
   }, [allMySessions])
 
-  // Aulas do aluno já filtradas por disciplina ou professor, todo o resto do painel deriva daqui.
+  // Aulas já filtradas por disciplina ou professor, todo o resto do painel deriva daqui.
   const mySessions = useMemo(() => {
-    return allMySessions.filter((s) => {
+    return (allMySessions ?? []).filter((s) => {
       const matchesSubject = !subjectFilter || s.subjectTeacher.subject.uuid === subjectFilter
       const matchesTeacher = !teacherFilter || s.subjectTeacher.employee.uuid === teacherFilter
       return matchesSubject && matchesTeacher
@@ -105,9 +168,14 @@ export default function StudentDashboard() {
     [periodSessions, period]
   )
 
+  // Sem limite: a rosca é parte-do-todo e ela mesma agrupa o excedente em "Outras".
   const sessionsBySubject = useMemo(
-    () => buildCategoryBreakdown(periodSessions, (s) => s.subjectTeacher.subject.description),
+    () => buildCategoryBreakdown(periodSessions, (s) => s.subjectTeacher.subject.description, Infinity),
     [periodSessions]
+  )
+  const subjectColorOrder = useMemo(
+    () => subjectOptions.map((o) => o.label).sort((a, b) => a.localeCompare(b)),
+    [subjectOptions]
   )
 
   const sessionsByTeacher = useMemo(
@@ -118,29 +186,15 @@ export default function StudentDashboard() {
   const weekdayBreakdown = useMemo(() => buildWeekdayBreakdown(periodSessions), [periodSessions])
   const shiftBreakdown = useMemo(() => buildShiftBreakdown(periodSessions), [periodSessions])
 
-  const gradesBySubject = useMemo(
-    () => mySubjects.map((s) => ({ label: s.subject, value: mockGrade(s.subject) })),
-    [mySubjects]
-  )
+  const gradedForms = useMemo(() => getGradedForms(forms ?? []), [forms])
+  const averageGrade = useMemo(() => averageScore(gradedForms), [gradedForms])
+  const gradeEvolution = useMemo(() => buildGradeEvolution(gradedForms), [gradedForms])
 
   const attendanceBySubject = useMemo(
-    () => mySubjects.map((s) => ({ label: s.subject, value: mockAttendance(s.subject) })),
-    [mySubjects]
+    () => buildAttendanceBySubject(attendance ?? [], mySessions),
+    [attendance, mySessions]
   )
-
-  // Evolução das notas
-  const gradeEvolution = useMemo(() => {
-    if (mySubjects.length === 0) return []
-
-    const series = mySubjects.map((s) => mockGradeEvolution(s.subject, periodDays(period)))
-    const pointCount = series[0]?.length ?? 0
-
-    return Array.from({ length: pointCount }, (_, i) => ({
-      label: series[0][i].label,
-      fullLabel: series[0][i].fullLabel,
-      value: Math.round((series.reduce((sum, points) => sum + points[i].value, 0) / series.length) * 10) / 10,
-    }))
-  }, [mySubjects, period])
+  const attendanceRate = useMemo(() => overallAttendanceRate(attendance ?? []), [attendance])
 
   const metrics = useMemo(() => {
     const todayStr = formatYMD(new Date())
@@ -159,42 +213,107 @@ export default function StudentDashboard() {
     return {
       classesToday: mySessions.filter((s) => formatYMD(new Date(s.startTime as unknown as string)) === todayStr).length,
       classesThisWeek: thisWeek.length,
-      subjectsCount: mySubjects.length,
-      teachersCount: new Set(mySubjects.map((s) => s.teacher)).size,
     }
-  }, [mySessions, mySubjects])
+  }, [mySessions])
 
   return (
     <div className="animate-in fade-in space-y-6 p-6 duration-500 md:p-8">
       <SectionTitle
-        title="Painel do Aluno"
-        description="Suas aulas e disciplinas."
+        title={isAdmin ? "Painel do Aluno" : "Meu Desempenho"}
+        description={
+          target
+            ? `Aulas, notas e frequência ${isClassView ? "da turma" : "de"} ${target.name}.`
+            : "Aulas, notas e frequência do aluno."
+        }
         action={
-          (students ?? []).length > 0 ? (
-            <SelectField
-              value={activeStudent?.uuid ?? ""}
-              onChange={setSelectedUuid}
-              placeholder="Selecione um aluno"
-              options={(students ?? []).map((s) => ({ label: s.name, value: s.uuid }))}
-              className="w-64"
-            />
+          isAdmin ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <SegmentedTabs
+                size="sm"
+                className="w-40"
+                value={viewMode}
+                onChange={(value) => {
+                  setViewMode(value as "student" | "class")
+                  setSubjectFilter("")
+                  setTeacherFilter("")
+                }}
+                options={[
+                  { label: "Aluno", value: "student" },
+                  { label: "Turma", value: "class" },
+                ]}
+              />
+              <SelectField
+                value={target?.uuid ?? ""}
+                onChange={(value) => {
+                  if (isClassView) setSelectedClassUuid(value)
+                  else setSelectedStudentUuid(value)
+                  setSubjectFilter("")
+                  setTeacherFilter("")
+                }}
+                placeholder={isClassView ? "Selecione uma turma" : "Selecione um aluno"}
+                options={(isClassView ? scope.classes : scope.students).map((o) => ({ label: o.name, value: o.uuid }))}
+                className="w-64"
+              />
+            </div>
           ) : null
         }
       />
 
-      {!activeStudent ? (
+      {!target ? (
         <EmptyState
           icon={GraduationCap}
-          title="Nenhum aluno cadastrado"
-          description="Cadastre um aluno para visualizar este painel."
+          title={
+            !isAdmin ? "Carregando..." : isClassView ? "Nenhuma turma disponível" : "Nenhum aluno disponível"
+          }
+          description={
+            !isAdmin
+              ? "Buscando suas informações de aluno."
+              : `Cadastre ${isClassView ? "uma turma" : "um aluno"} para visualizar este painel.`
+          }
         />
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <MetricCard variant="summary" value={String(metrics.classesToday)} subtitle="Aulas Hoje" tone="info" />
-            <MetricCard variant="summary" value={String(metrics.classesThisWeek)} subtitle="Aulas na Semana" tone="success" />
-            <MetricCard variant="summary" value={String(metrics.subjectsCount)} subtitle="Disciplinas" tone="neutral" />
-            <MetricCard variant="summary" value={String(metrics.teachersCount)} subtitle="Professores" tone="warning" />
+            {isClassView ? (
+              <>
+                <MetricCard
+                  variant="summary"
+                  value={classPerformance.averageGrade != null ? classPerformance.averageGrade.toFixed(1) : "—"}
+                  subtitle="Nota Média da Turma"
+                  tone="neutral"
+                />
+                <MetricCard
+                  variant="summary"
+                  value={classPerformance.averageAttendance != null ? `${classPerformance.averageAttendance}%` : "—"}
+                  subtitle="Frequência Média"
+                  tone="warning"
+                />
+                <MetricCard
+                  variant="summary"
+                  value={String(classPerformance.rows?.length ?? 0)}
+                  subtitle="Alunos"
+                  tone="info"
+                />
+                <MetricCard variant="summary" value={String(metrics.classesThisWeek)} subtitle="Aulas na Semana" tone="success" />
+              </>
+            ) : (
+              <>
+                <MetricCard variant="summary" value={String(metrics.classesToday)} subtitle="Aulas Hoje" tone="info" />
+                <MetricCard variant="summary" value={String(metrics.classesThisWeek)} subtitle="Aulas na Semana" tone="success" />
+                <MetricCard
+                  variant="summary"
+                  value={averageGrade != null ? averageGrade.toFixed(1) : "—"}
+                  subtitle="Nota Média"
+                  tone="neutral"
+                />
+                <MetricCard
+                  variant="summary"
+                  value={attendanceRate != null ? `${attendanceRate}%` : "—"}
+                  subtitle="Frequência Geral"
+                  tone="warning"
+                />
+              </>
+            )}
           </div>
 
           <ContentCard>
@@ -229,83 +348,96 @@ export default function StudentDashboard() {
             </div>
           </ContentCard>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className={`grid grid-cols-1 gap-6 ${isClassView ? "" : "lg:grid-cols-2"}`}>
             <ChartCard
-              title="Minhas Aulas por Dia"
+              title={isAdmin ? "Aulas por Dia" : "Minhas Aulas por Dia"}
               description="Volume de aulas no período selecionado."
-              data={dailyTrend}
-              columns={[
-                { key: "label", header: "Data", cell: (row) => row.fullLabel },
-                { key: "value", header: "Aulas", cell: (row) => row.value },
-              ]}
-              rowKey={(row, index) => `${row.label}-${index}`}
+              data={hasAnyValue(dailyTrend) ? dailyTrend : []}
             >
               <TrendAreaChart data={dailyTrend} seriesName="Aulas" />
             </ChartCard>
 
-            <ChartCard
-              title="Evolução das Notas"
-              description="Tendência de notas ao longo do período selecionado."
-              data={gradeEvolution}
-              columns={[
-                { key: "label", header: "Data", cell: (row) => row.fullLabel },
-                { key: "value", header: "Nota", cell: (row) => row.value.toFixed(1) },
-              ]}
-              rowKey={(row, index) => `${row.label}-${index}`}
-              emptyTitle="Sem disciplinas ainda"
-              emptyDescription="A evolução aparecerá aqui assim que o aluno tiver aulas registradas."
-            >
-              <TrendAreaChart data={gradeEvolution} seriesName="Nota" valueFormatter={(v) => v.toFixed(1)} />
-            </ChartCard>
+            {!isClassView && (
+              <ChartCard
+                title="Evolução das Notas"
+                description="Notas dos formulários corrigidos, em ordem cronológica."
+                data={gradeEvolution}
+                emptyTitle="Sem notas ainda"
+                emptyDescription="As notas aparecerão aqui assim que os formulários forem corrigidos."
+              >
+                <ScoreLineChart data={gradeEvolution} seriesName="Nota" />
+              </ChartCard>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <ChartCard
-              title="Notas por Disciplina"
-              description="Média de notas em cada disciplina."
-              data={gradesBySubject}
-              columns={[
-                { key: "label", header: "Disciplina", cell: (row) => row.label },
-                { key: "value", header: "Nota", cell: (row) => row.value.toFixed(1) },
-              ]}
-              rowKey={(row) => row.label}
-              emptyTitle="Sem disciplinas ainda"
-              emptyDescription="As notas aparecerão aqui assim que o aluno tiver aulas registradas."
-            >
-              <CategoryBarChart data={gradesBySubject} seriesName="Nota" valueFormatter={(v) => v.toFixed(1)} />
-            </ChartCard>
+          {isClassView && (
+            <ClassTrendCharts
+              gradeTrend={classPerformance.gradeTrend}
+              studentCountTrend={classPerformance.studentCountTrend}
+            />
+          )}
 
-            <ChartCard
-              title="Frequência por Disciplina"
-              description="Percentual de presença em cada disciplina."
-              data={attendanceBySubject}
-              columns={[
-                { key: "label", header: "Disciplina", cell: (row) => row.label },
-                { key: "value", header: "Frequência", cell: (row) => `${row.value}%` },
-              ]}
-              rowKey={(row) => row.label}
-              emptyTitle="Sem disciplinas ainda"
-              emptyDescription="A frequência aparecerá aqui assim que o aluno tiver aulas registradas."
-            >
-              <CategoryBarChart data={attendanceBySubject} seriesName="Frequência" valueFormatter={(v) => `${v}%`} />
-            </ChartCard>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {isClassView ? (
+              <ClassStudentsTable rows={classPerformance.rows} />
+            ) : (
+              <ChartCard
+                title="Frequência por Disciplina"
+                description="Percentual de presença em cada disciplina."
+                data={attendanceBySubject}
+                emptyTitle="Sem frequência registrada"
+                emptyDescription="A frequência aparecerá aqui assim que as aulas tiverem chamada registrada."
+              >
+                <CategoryBarChart
+                  data={attendanceBySubject}
+                  seriesName="Frequência"
+                  valueFormatter={(v) => `${v}%`}
+                  domainMax={100}
+                />
+              </ChartCard>
+            )}
 
             <ChartCard
               title="Aulas por Disciplina"
               description="Distribuição das aulas no período."
               data={sessionsBySubject}
-              columns={[
-                { key: "label", header: "Disciplina", cell: (row) => row.label },
-                { key: "value", header: "Aulas", cell: (row) => row.value },
-              ]}
-              rowKey={(row) => row.label}
             >
-              <CategoryBarChart data={sessionsBySubject} seriesName="Aulas" />
+              <CategoryDonutChart
+                data={sessionsBySubject}
+                colorOrder={subjectColorOrder}
+                seriesName="Aulas"
+                centerLabel="aulas"
+              />
             </ChartCard>
           </div>
 
+          {!isClassView && (
+            <ContentCard>
+              <SectionTitle title={isAdmin ? "Notas" : "Minhas Notas"} className="mb-5" />
+
+              {gradedForms.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum formulário corrigido ainda.</p>
+              ) : (
+                <div className="space-y-2">
+                  {gradedForms.map((form) => (
+                    <div
+                      key={form.uuid}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-panel-soft px-4 py-3 text-sm"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground">{form.title}</p>
+                        <p className="text-xs text-muted-foreground">Prof. {form.teacherName}</p>
+                      </div>
+                      <span className="text-base font-semibold text-foreground">{form.score?.toFixed(1)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ContentCard>
+          )}
+
           <ContentCard>
-            <SectionTitle title="Minhas Disciplinas" className="mb-5" />
+            <SectionTitle title={isAdmin ? "Disciplinas" : "Minhas Disciplinas"} className="mb-5" />
 
             {mySubjects.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhuma disciplina vinculada.</p>
@@ -330,39 +462,29 @@ export default function StudentDashboard() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <ChartCard
               title="Aulas por Dia da Semana"
-              description="Em quais dias da semana você mais tem aula."
-              data={weekdayBreakdown}
-              columns={[
-                { key: "label", header: "Dia", cell: (row) => row.label },
-                { key: "value", header: "Aulas", cell: (row) => row.value },
-              ]}
-              rowKey={(row) => row.label}
+              description={isAdmin ? "Em quais dias da semana há mais aulas." : "Em quais dias da semana você mais tem aula."}
+              data={hasAnyValue(weekdayBreakdown) ? weekdayBreakdown : []}
             >
-              <CategoryBarChart data={weekdayBreakdown} seriesName="Aulas" height={224} />
+              <ColumnChart data={weekdayBreakdown} seriesName="Aulas" height={224} />
             </ChartCard>
 
             <ChartCard
               title="Aulas por Turno"
               description="Distribuição das aulas entre manhã, tarde e noite."
-              data={shiftBreakdown}
-              columns={[
-                { key: "label", header: "Turno", cell: (row) => row.label },
-                { key: "value", header: "Aulas", cell: (row) => row.value },
-              ]}
-              rowKey={(row) => row.label}
+              data={hasAnyValue(shiftBreakdown) ? shiftBreakdown : []}
             >
-              <CategoryBarChart data={shiftBreakdown} seriesName="Aulas" height={224} />
+              <CategoryDonutChart
+                data={shiftBreakdown}
+                colorOrder={SHIFT_LABEL_ORDER}
+                seriesName="Aulas"
+                centerLabel="aulas"
+              />
             </ChartCard>
 
             <ChartCard
               title="Aulas por Professor"
               description="Quantidade de aulas com cada professor."
               data={sessionsByTeacher}
-              columns={[
-                { key: "label", header: "Professor", cell: (row) => row.label },
-                { key: "value", header: "Aulas", cell: (row) => row.value },
-              ]}
-              rowKey={(row) => row.label}
             >
               <CategoryBarChart data={sessionsByTeacher} seriesName="Aulas" height={224} />
             </ChartCard>
@@ -375,7 +497,7 @@ export default function StudentDashboard() {
               <EmptyState
                 icon={CalendarClock}
                 title="Sem aulas futuras"
-                description="Não há aulas agendadas para este aluno."
+                description="Não há aulas futuras agendadas."
               />
             ) : (
               <div className="space-y-3">
@@ -387,8 +509,9 @@ export default function StudentDashboard() {
                     <div>
                       <p className="font-semibold text-foreground">{session.subjectTeacher.subject.description}</p>
                       <p className="text-sm text-muted-foreground">
-                        Prof. {session.subjectTeacher.employee.name} ·{" "}
-                        {resolveClassroomName(classroomNames, session.classroomUuid)}
+                        Prof. {session.subjectTeacher.employee.name}
+                        {classroomNames.has(session.classroomUuid) &&
+                          ` · ${classroomNames.get(session.classroomUuid)}`}
                       </p>
                     </div>
                     <span className="text-sm text-muted-foreground">

@@ -2,12 +2,19 @@ import { useMemo, useState } from "react"
 import { BookOpen, CalendarClock, DoorOpen, Users } from "lucide-react"
 
 import useFetch from "@/hooks/useFetch"
+import { useAuth } from "@/hooks/useAuth"
+import { useOwnEmployeeUuid } from "@/hooks/useOwnEmployeeUuid"
+import { Roles } from "@/shared/models/enums/roles"
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO"
+import { StudentPerformanceSummary } from "./StudentPerformanceSummary"
+import { ClassPerformanceSummary } from "./ClassPerformanceSummary"
 import { MetricCard } from "@/components/features/metric-card"
 import { SectionTitle } from "@/components/features/section-title"
 import { StatusBadge } from "@/components/features/status-badge"
 import { ChartCard } from "@/components/features/chart-card"
+import { ColumnChart } from "@/components/features/column-chart"
 import { TrendAreaChart } from "@/components/features/trend-area-chart"
-import { CategoryBarChart } from "@/components/features/category-bar-chart"
+import { CategoryDonutChart } from "@/components/features/category-donut-chart"
 import { PeriodFilter } from "@/components/features/period-filter"
 import { ShiftFilter } from "@/components/features/shift-filter"
 import { WeekdayFilter } from "@/components/features/weekday-filter"
@@ -29,8 +36,17 @@ import {
   filterSessionsByPeriod,
   filterSessionsByShift,
   filterSessionsByWeekdays,
+  SHIFT_LABEL_ORDER,
+  hasAnyValue,
 } from "@/shared/utils/session-analytics"
-import { classroomNameMap, resolveClassroomName, sessionStudents } from "@/shared/utils/class-session-helpers"
+import {
+  buildTeachingScope,
+  classroomNameMap,
+  resolveClassroomName,
+  buildClassRosters,
+  isCanceled,
+  sessionStudentUuids,
+} from "@/shared/utils/class-session-helpers"
 
 function sessionDate(dto: ClassSessionDTO): string {
   return formatYMD(new Date(dto.startTime as unknown as string))
@@ -44,9 +60,16 @@ function formatTime(value: unknown): string {
 }
 
 export default function TeacherDashboard() {
+  const { userData } = useAuth()
+  const isProfessor = userData?.role === Roles.PROFESSOR
+
   const { data: subjectTeachers } = useFetch<SubjectTeacherDTO>("/subjectteacher")
-  const { data: sessions } = useFetch<ClassSessionDTO>("/classsession")
+  const { data: rawSessions } = useFetch<ClassSessionDTO>("/classsession")
+  // Aula cancelada não aconteceu: fica fora de contagens, gráficos e próximas aulas.
+  const sessions = useMemo(() => (rawSessions ?? []).filter((s) => !isCanceled(s)), [rawSessions])
   const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
+  const { data: classGroups } = useFetch<ClassGroupDTO>("/class")
+  const rosters = useMemo(() => buildClassRosters(classGroups ?? []), [classGroups])
 
   const teachers = useMemo(() => {
     const map = new Map<string, { uuid: string; name: string }>()
@@ -56,11 +79,25 @@ export default function TeacherDashboard() {
 
   const classroomNames = useMemo(() => classroomNameMap(classrooms ?? []), [classrooms])
 
+  // Um professor só pode ver o próprio painel; só o admin pode trocar entre professores.
+  const ownEmployeeUuid = useOwnEmployeeUuid(isProfessor)
+
   const [selectedUuid, setSelectedUuid] = useState<string>("")
   const [period, setPeriod] = useState<PeriodValue>("30")
   const [shift, setShift] = useState<ShiftValue>("all")
   const [weekdays, setWeekdays] = useState<number[]>([])
-  const activeTeacher = teachers.find((t) => t.uuid === selectedUuid) ?? teachers[0]
+  const activeTeacher = isProfessor
+    ? teachers.find((t) => t.uuid === ownEmployeeUuid)
+    : teachers.find((t) => t.uuid === selectedUuid) ?? teachers[0]
+
+  // Alunos e turmas que esse professor leciona, para o drill-down de desempenho.
+  const { students: myStudents, classes: myClasses } = useMemo(
+    () => buildTeachingScope(sessions ?? [], classGroups ?? [], activeTeacher?.uuid ?? ""),
+    [sessions, classGroups, activeTeacher]
+  )
+
+  const [drillStudentUuid, setDrillStudentUuid] = useState("")
+  const [drillClassUuid, setDrillClassUuid] = useState("")
 
   const mySubjects = useMemo(() => {
     if (!activeTeacher) return []
@@ -82,7 +119,7 @@ export default function TeacherDashboard() {
   const metrics = useMemo(() => {
     const todayStr = formatYMD(new Date())
     const today = mySessions.filter((s) => sessionDate(s) === todayStr)
-    const studentsToday = new Set(today.flatMap((s) => sessionStudents(s).map((st) => st.uuid))).size
+    const studentsToday = new Set(today.flatMap((s) => sessionStudentUuids(s, rosters))).size
 
     return {
       classesToday: today.length,
@@ -90,16 +127,21 @@ export default function TeacherDashboard() {
       subjectsCount: mySubjects.length,
       roomsToday: new Set(today.map((s) => s.classroomUuid)).size,
     }
-  }, [mySessions, mySubjects])
+  }, [mySessions, mySubjects, rosters])
 
   const dailyTrend = useMemo(
     () => buildDailyTrend(periodSessions, periodDays(period)),
     [periodSessions, period]
   )
 
+  // Sem limite: a rosca é parte-do-todo e ela mesma agrupa o excedente em "Outras".
   const sessionsBySubject = useMemo(
-    () => buildCategoryBreakdown(periodSessions, (s) => s.subjectTeacher.subject.description),
+    () => buildCategoryBreakdown(periodSessions, (s) => s.subjectTeacher.subject.description, Infinity),
     [periodSessions]
+  )
+  const subjectColorOrder = useMemo(
+    () => mySubjects.map((st) => st.subject.description).sort((a, b) => a.localeCompare(b)),
+    [mySubjects]
   )
 
   const weekdayBreakdown = useMemo(() => buildWeekdayBreakdown(periodSessions), [periodSessions])
@@ -126,7 +168,7 @@ export default function TeacherDashboard() {
         title="Painel do Professor"
         description="Suas aulas, disciplinas e turmas em um só lugar."
         action={
-          teachers.length > 0 ? (
+          !isProfessor && teachers.length > 0 ? (
             <SelectField
               value={activeTeacher?.uuid ?? ""}
               onChange={setSelectedUuid}
@@ -170,12 +212,7 @@ export default function TeacherDashboard() {
           <ChartCard
             title="Minhas Aulas por Dia"
             description="Volume de aulas no período selecionado."
-            data={dailyTrend}
-            columns={[
-              { key: "label", header: "Data", cell: (row) => row.fullLabel },
-              { key: "value", header: "Aulas", cell: (row) => row.value },
-            ]}
-            rowKey={(row, index) => `${row.label}-${index}`}
+            data={hasAnyValue(dailyTrend) ? dailyTrend : []}
           >
             <TrendAreaChart data={dailyTrend} seriesName="Aulas" />
           </ChartCard>
@@ -185,14 +222,14 @@ export default function TeacherDashboard() {
               title="Aulas por Disciplina"
               description="Distribuição das aulas no período."
               data={sessionsBySubject}
-              columns={[
-                { key: "label", header: "Disciplina", cell: (row) => row.label },
-                { key: "value", header: "Aulas", cell: (row) => row.value },
-              ]}
-              rowKey={(row) => row.label}
               className="lg:col-span-2"
             >
-              <CategoryBarChart data={sessionsBySubject} seriesName="Aulas" />
+              <CategoryDonutChart
+                data={sessionsBySubject}
+                colorOrder={subjectColorOrder}
+                seriesName="Aulas"
+                centerLabel="aulas"
+              />
             </ChartCard>
 
             <ContentCard>
@@ -220,27 +257,22 @@ export default function TeacherDashboard() {
             <ChartCard
               title="Aulas por Dia da Semana"
               description="Em quais dias você mais costuma dar aula."
-              data={weekdayBreakdown}
-              columns={[
-                { key: "label", header: "Dia", cell: (row) => row.label },
-                { key: "value", header: "Aulas", cell: (row) => row.value },
-              ]}
-              rowKey={(row) => row.label}
+              data={hasAnyValue(weekdayBreakdown) ? weekdayBreakdown : []}
             >
-              <CategoryBarChart data={weekdayBreakdown} seriesName="Aulas" height={224} />
+              <ColumnChart data={weekdayBreakdown} seriesName="Aulas" height={224} />
             </ChartCard>
 
             <ChartCard
               title="Aulas por Turno"
               description="Distribuição das aulas entre manhã, tarde e noite."
-              data={shiftBreakdown}
-              columns={[
-                { key: "label", header: "Turno", cell: (row) => row.label },
-                { key: "value", header: "Aulas", cell: (row) => row.value },
-              ]}
-              rowKey={(row) => row.label}
+              data={hasAnyValue(shiftBreakdown) ? shiftBreakdown : []}
             >
-              <CategoryBarChart data={shiftBreakdown} seriesName="Aulas" height={224} />
+              <CategoryDonutChart
+                data={shiftBreakdown}
+                colorOrder={SHIFT_LABEL_ORDER}
+                seriesName="Aulas"
+                centerLabel="aulas"
+              />
             </ChartCard>
           </div>
 
@@ -267,7 +299,7 @@ export default function TeacherDashboard() {
                         {resolveClassroomName(classroomNames, session.classroomUuid)}
                       </p>
                     </div>
-                    <StatusBadge variant="info">{sessionStudents(session).length} aluno(s)</StatusBadge>
+                    <StatusBadge variant="info">{sessionStudentUuids(session, rosters).length} aluno(s)</StatusBadge>
                   </div>
                 ))}
               </div>
@@ -304,6 +336,52 @@ export default function TeacherDashboard() {
               </div>
             )}
           </ContentCard>
+
+          <ContentCard>
+            <SectionTitle
+              title="Desempenho de Aluno ou Turma"
+              description="Veja as notas e a frequência de um aluno ou turma que você leciona."
+              className="mb-5"
+            />
+
+            <div className="flex flex-wrap items-end gap-4">
+              <FilterGroup label="Aluno">
+                <SelectField
+                  value={drillStudentUuid}
+                  onChange={(value) => {
+                    setDrillStudentUuid(value)
+                    setDrillClassUuid("")
+                  }}
+                  placeholder="Selecione um aluno"
+                  options={myStudents.map((s) => ({ label: s.name, value: s.uuid }))}
+                  className="w-56"
+                />
+              </FilterGroup>
+              <FilterGroup label="Turma">
+                <SelectField
+                  value={drillClassUuid}
+                  onChange={(value) => {
+                    setDrillClassUuid(value)
+                    setDrillStudentUuid("")
+                  }}
+                  placeholder="Selecione uma turma"
+                  options={myClasses.map((c) => ({ label: c.name, value: c.uuid }))}
+                  className="w-56"
+                />
+              </FilterGroup>
+            </div>
+          </ContentCard>
+
+          {drillStudentUuid && (
+            <StudentPerformanceSummary
+              studentUuid={drillStudentUuid}
+              studentName={myStudents.find((s) => s.uuid === drillStudentUuid)?.name ?? ""}
+            />
+          )}
+
+          {drillClassUuid && (
+            <ClassPerformanceSummary classUuid={drillClassUuid} />
+          )}
         </>
       )}
     </div>
