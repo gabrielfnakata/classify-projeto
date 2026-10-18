@@ -35,10 +35,12 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
     private final ClassSessionService classSessionService;
     private final ClassSessionRepository classSessionRepository;
     private final StudentService studentService;
+    private final AccessScopeService accessScope;
 
     public AttendanceService(AttendanceRepository repository, ClassSessionService classSessionService,
-            ClassSessionRepository classSessionRepository, StudentService studentService) {
+            ClassSessionRepository classSessionRepository, StudentService studentService, AccessScopeService accessScope) {
         super(repository);
+        this.accessScope = accessScope;
         this.classSessionService = classSessionService;
         this.classSessionRepository = classSessionRepository;
         this.studentService = studentService;
@@ -69,6 +71,8 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
         if (session == null)
             throw new DtoException("A aula informada não foi encontrada");
 
+        accessScope.requireOwnsSession(session);
+
         Student student = studentService.getEntityById(attendanceDTO.studentUuid());
         if (student == null)
             throw new DtoException("O aluno informado não foi encontrado ou não foi registrado");
@@ -96,6 +100,8 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
         if (attendance == null || attendanceDTO == null)
             return null;
 
+        accessScope.requireOwnsSession(attendance.getClassSession());
+
         applyStatusAndJustification(attendance, attendanceDTO.status(), attendanceDTO.justificationReason(), attendanceDTO.justificationNote());
 
         repository.save(attendance);
@@ -103,10 +109,31 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
         return returnDTO(attendance);
     }
 
+    @Override
+    public List<AttendanceGetDTO> findAll() {
+        java.util.function.Predicate<ClassSession> visible = accessScope.sessionVisibility();
+        return repository.findAll().stream()
+                .filter(attendance -> visible.test(attendance.getClassSession()))
+                .map(this::returnDTO)
+                .toList();
+    }
+
+    @Override
+    public AttendanceGetDTO getById(String uuid) {
+        Attendance attendance = Utils.isNullOrEmpty(uuid) ? null : getEntityById(uuid);
+        if (attendance == null)
+            return null;
+
+        accessScope.requireCanViewSession(attendance.getClassSession());
+        return returnDTO(attendance);
+    }
+
     public List<AttendanceRosterEntryDTO> getRosterForSession(String sessionUuid) {
         ClassSession session = classSessionService.getEntityById(sessionUuid);
         if (session == null)
             return null;
+
+        accessScope.requireOwnsSession(session);
 
         List<Student> rosterStudents = resolveRosterStudents(session);
 
@@ -141,8 +168,23 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
                 .toList();
     }
 
+    public List<AttendanceGetDTO> getForStudent(String studentUuid) {
+        Student student = studentService.getEntityById(studentUuid);
+        if (student == null)
+            return null;
+
+        accessScope.requireCanViewStudent(student);
+
+        return repository.findAll(AttendanceSpecification.getByStudentId(student.getId()))
+                .stream()
+                .map(this::returnDTO)
+                .toList();
+    }
+
     public List<AttendanceSessionStatusDTO> getStatusForAllSessions() {
-        List<ClassSession> sessions = classSessionRepository.findAll();
+        List<ClassSession> sessions = classSessionRepository.findAll().stream()
+                .filter(accessScope.sessionVisibility())
+                .toList();
 
         Map<Long, Long> markedCountBySessionId = repository.findAll()
                 .stream()
@@ -165,6 +207,8 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
         ClassSession session = classSessionService.getEntityById(sessionUuid);
         if (session == null)
             throw new DtoException("A aula informada não foi encontrada");
+
+        accessScope.requireOwnsSession(session);
 
         if (session.isCanceled())
             throw new DtoException("Não é possível fazer a chamada de uma aula cancelada");

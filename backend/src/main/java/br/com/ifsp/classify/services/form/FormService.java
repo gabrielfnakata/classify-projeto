@@ -15,6 +15,7 @@ import br.com.ifsp.classify.repositories.form.FormQuestionRepository;
 import br.com.ifsp.classify.repositories.form.FormRepository;
 import br.com.ifsp.classify.repositories.form.FormSubmissionRepository;
 import br.com.ifsp.classify.security.AuthenticatedUser;
+import br.com.ifsp.classify.services.AccessScopeService;
 import br.com.ifsp.classify.services.FileStorageService;
 import br.com.ifsp.classify.utils.UuidUtils;
 import jakarta.persistence.EntityNotFoundException;
@@ -43,6 +44,7 @@ public class FormService {
     public FormSubmissionRepository formSubmissionRepository;
     public ClassRepository classRepository;
     public FileStorageService fileStorageService;
+    private final AccessScopeService accessScope;
 
     public FormService(
             UserRepository userRepository,
@@ -52,8 +54,10 @@ public class FormService {
             FormQuestionOptionRepository formQuestionOptionRepository,
             FormSubmissionRepository formSubmissionRepository,
             ClassRepository classRepository,
-            FileStorageService fileStorageService
+            FileStorageService fileStorageService,
+            AccessScopeService accessScope
     ) {
+        this.accessScope = accessScope;
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
         this.formQuestionRepository = formQuestionRepository;
@@ -166,10 +170,22 @@ public class FormService {
                     form.getCreatedAt().toLocalDate(),
                     form.getLimitDate().toLocalDate(),
                     form.getHasScore(),
-                    0.0f,
+                    submission.getScore() != null ? submission.getScore().floatValue() : null,
                     submission.getStatus()
             );
         }).toList();
+    }
+
+    public List<FormGetDTO> getFormsForStudent(String studentUuid) {
+        Student student = studentRepository.findOne((root, query, cb) ->
+                cb.equal(root.get("uuid"), UuidUtils.convertUUIDToBytes(studentUuid))
+        ).orElse(null);
+
+        if (student == null)
+            return null;
+
+        accessScope.requireCanViewStudent(student);
+        return getAvailableForms(student);
     }
 
     public FormInfoGetDTO getFormInfo(String uuid) {

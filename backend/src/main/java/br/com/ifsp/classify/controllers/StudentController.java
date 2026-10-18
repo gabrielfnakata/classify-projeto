@@ -6,7 +6,10 @@ import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
 import br.com.ifsp.classify.dtos.get.AttendanceGetDTO;
+import br.com.ifsp.classify.dtos.get.FormGetDTO;
+import br.com.ifsp.classify.dtos.get.OptionGetDTO;
 import br.com.ifsp.classify.services.AttendanceService;
+import br.com.ifsp.classify.services.form.FormService;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
 import br.com.ifsp.classify.security.AuthenticatedUser;
@@ -29,12 +32,14 @@ public class StudentController extends AbstractController<StudentCreateDTO, Stud
     private final StudentService service;
     private final ClassSessionService classSessionService;
     private final AttendanceService attendanceService;
+    private final FormService formService;
 
-    public StudentController(StudentService service, ClassSessionService classSessionService, AttendanceService attendanceService) {
+    public StudentController(StudentService service, ClassSessionService classSessionService, AttendanceService attendanceService, FormService formService) {
         super(service);
         this.service = service;
         this.classSessionService = classSessionService;
         this.attendanceService = attendanceService;
+        this.formService = formService;
     }
 
     @GetMapping("/me")
@@ -61,6 +66,35 @@ public class StudentController extends AbstractController<StudentCreateDTO, Stud
         List<AttendanceGetDTO> attendance = attendanceService.getForStudentAccount(user.username());
         return (attendance != null)
                 ? ResponseEntity.ok(attendance)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @GetMapping("/options")
+    public ResponseEntity<List<OptionGetDTO>> getOptions() {
+        return ResponseEntity.ok(service.findOptions());
+    }
+
+    @GetMapping("/{uuid}/schedule")
+    public ResponseEntity<List<ClassSessionGetDTO>> getStudentSchedule(@PathVariable String uuid) {
+        List<ClassSessionGetDTO> schedule = classSessionService.getScheduleForStudentUuid(uuid);
+        return (schedule != null)
+                ? ResponseEntity.ok(schedule)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @GetMapping("/{uuid}/attendance")
+    public ResponseEntity<List<AttendanceGetDTO>> getStudentAttendance(@PathVariable String uuid) {
+        List<AttendanceGetDTO> attendance = attendanceService.getForStudent(uuid);
+        return (attendance != null)
+                ? ResponseEntity.ok(attendance)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @GetMapping("/{uuid}/forms")
+    public ResponseEntity<List<FormGetDTO>> getStudentForms(@PathVariable String uuid) {
+        List<FormGetDTO> forms = formService.getFormsForStudent(uuid);
+        return (forms != null)
+                ? ResponseEntity.ok(forms)
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 

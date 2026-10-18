@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -24,6 +25,7 @@ import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
+import br.com.ifsp.classify.dtos.get.OptionGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
@@ -47,9 +49,11 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     private final AuditService auditService;
     private final StudentRepository studentRepository;
     private final UserService userService;
+    private final AccessScopeService accessScope;
 
-    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService) {
+    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService, AccessScopeService accessScope) {
         super(repository);
+        this.accessScope = accessScope;
         this.studentRepository = repository;
         this.telephoneService = telephoneService;
         this.addressService = addressService;
@@ -593,6 +597,37 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         } catch (Exception ex) {
             throw new RuntimeException("Erro ao exportar alunos para planilha", ex);
         }
+    }
+
+    /** Professor só lista os alunos com quem tem vínculo (aula individual ou turma dele). */
+    @Override
+    public List<StudentGetDTO> findAll() {
+        if (!accessScope.isProfessor())
+            return super.findAll();
+
+        Set<Long> linked = accessScope.linkedStudentIds(accessScope.currentEmployee());
+        return studentRepository.findAll().stream()
+            .filter(student -> linked.contains(student.getId()))
+            .map(this::returnDTO)
+            .toList();
+    }
+
+    @Override
+    public StudentGetDTO getById(String uuid) {
+        Student student = Utils.isNullOrEmpty(uuid) ? null : getEntityById(uuid);
+        if (student == null)
+            return null;
+
+        accessScope.requireCanViewStudent(student);
+        return returnDTO(student);
+    }
+
+    /** Todos os alunos, só com nome: é o que o agendamento precisa para criar um vínculo novo. */
+    public List<OptionGetDTO> findOptions() {
+        return studentRepository.findAll().stream()
+            .map(student -> new OptionGetDTO(UuidUtils.convertBytesToString(student.getUuid()), student.getName()))
+            .sorted(java.util.Comparator.comparing(OptionGetDTO::name))
+            .toList();
     }
 
     public List<StudentGetDTO> findAllFiltered(Map<String,String> filters) {
