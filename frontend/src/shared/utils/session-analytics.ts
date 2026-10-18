@@ -63,7 +63,12 @@ export function buildDailyTrend(sessions: ClassSessionDTO[], days: number): Tren
   return buildDailyTrendFromDates(sessions.map(sessionStart), days)
 }
 
-//Breakdown por categoria (ordenado por valor, com teto) 
+// Série com todos os valores zerados conta como vazia: o card mostra o estado vazio, não um eixo sem nada.
+export function hasAnyValue(data: { value: number }[]): boolean {
+  return data.some((d) => d.value > 0)
+}
+
+//Breakdown por categoria (ordenado por valor, com teto)
 
 export interface CategoryDatum {
   label: string
@@ -125,6 +130,8 @@ const SHIFT_LABELS: Record<Exclude<ShiftValue, "all">, string> = {
 }
 
 const SHIFT_ORDER: Exclude<ShiftValue, "all">[] = ["morning", "afternoon", "night"]
+
+export const SHIFT_LABEL_ORDER = SHIFT_ORDER.map((shift) => SHIFT_LABELS[shift])
 
 function sessionShift(session: ClassSessionDTO): Exclude<ShiftValue, "all"> {
   const hour = sessionStart(session).getHours()
