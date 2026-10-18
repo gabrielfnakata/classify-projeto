@@ -50,7 +50,7 @@ public class Student implements Serializable {
     @OneToOne(cascade = CascadeType.ALL)
     private User user;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
         name = "STUDENT_GUARDIAN",
         joinColumns = @JoinColumn(name = "student_id"),
@@ -177,7 +177,9 @@ public class Student implements Serializable {
     }
 
     public void addGuardian(Guardian guardian) {
-        if (guardians.add(guardian)) {
+        // List.add sempre devolve true; sem o contains os dois lados se chamavam para sempre (StackOverflow).
+        if (!guardians.contains(guardian)) {
+            guardians.add(guardian);
             guardian.addStudent(this);
         }
     }

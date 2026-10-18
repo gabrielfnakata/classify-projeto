@@ -1,4 +1,4 @@
-import type { AttendanceStatus, JustificationReason } from "./AttendanceRosterEntryDTO"
+import type { AttendanceStatus, JustificationReason } from "./AttendanceRosterEntryDTO";
 
 export interface AttendanceGetDTO {
     uuid: string,

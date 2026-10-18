@@ -1,7 +1,12 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.ClassSessionCreateDTO;
+import br.com.ifsp.classify.dtos.get.BatchResultDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
+import br.com.ifsp.classify.dtos.get.ClassSessionSummaryDTO;
+import br.com.ifsp.classify.dtos.update.ClassSessionBatchDeleteDTO;
+import br.com.ifsp.classify.dtos.update.ClassSessionBatchStatusDTO;
+import br.com.ifsp.classify.dtos.update.ClassSessionStatusUpdateDTO;
 import br.com.ifsp.classify.dtos.update.ClassSessionUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.models.Attendance;
@@ -12,9 +17,11 @@ import br.com.ifsp.classify.models.Classroom;
 import br.com.ifsp.classify.models.Report;
 import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.models.SubjectTeacher;
+import br.com.ifsp.classify.models.enums.ClassSessionStatus;
 import br.com.ifsp.classify.repositories.AttendanceRepository;
 import br.com.ifsp.classify.repositories.ClassRepository;
 import br.com.ifsp.classify.repositories.ClassSessionRepository;
+import br.com.ifsp.classify.repositories.projections.SessionCountProjection;
 import br.com.ifsp.classify.repositories.ClassroomRepository;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.repositories.SubjectTeacherRepository;
@@ -24,6 +31,7 @@ import br.com.ifsp.classify.specifications.ClassSpecification;
 import br.com.ifsp.classify.specifications.ClassroomSpecification;
 import br.com.ifsp.classify.specifications.StudentSpecification;
 import br.com.ifsp.classify.specifications.SubjectTeacherSpecification;
+import br.com.ifsp.classify.utils.ApplicationClock;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -32,7 +40,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,6 +50,7 @@ import java.util.stream.Collectors;
 @Service
 public class ClassSessionService extends AbstractService<ClassSession, ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, Long> {
 
+    private final ClassSessionRepository repository;
     private final SubjectTeacherRepository subjectTeacherRepository;
     private final ClassroomRepository classroomRepository;
     private final StudentRepository studentRepository;
@@ -50,6 +61,8 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
     private final StudentService studentService;
     private final ReportService reportService;
     private final ClassService classService;
+    private final TeacherAvailabilityService availabilityService;
+    private final ApplicationClock clock;
 
     private final String START_GREATER_END_MESSAGE = "O horário de início da aula deve ser antes que o horário de encerramento";
     private final String START_EQUALS_END_MESSAGE = "O horário do final da aula não pode ser o mesmo do início";
@@ -58,8 +71,10 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
 
     public ClassSessionService(ClassSessionRepository repository, SubjectTeacherRepository subjectTeacherRepository, SubjectTeacherService subjectTeacherService,
         ClassroomRepository classroomRepository, StudentRepository studentRepository, ClassRepository classRepository, AttendanceRepository attendanceRepository,
-        StudentService studentService, ReportService reportService, ClassService classService) {
+        StudentService studentService, ReportService reportService, ClassService classService,
+        TeacherAvailabilityService availabilityService, ApplicationClock clock) {
         super(repository);
+        this.repository = repository;
         this.subjectTeacherRepository = subjectTeacherRepository;
         this.subjectTeacherService = subjectTeacherService;
         this.classroomRepository = classroomRepository;
@@ -69,6 +84,8 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         this.studentService = studentService;
         this.reportService = reportService;
         this.classService = classService;
+        this.availabilityService = availabilityService;
+        this.clock = clock;
     }
 
     @Override
@@ -87,6 +104,118 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         return super.delete(uuid);
     }
 
+    /**
+      * Cancela (mantendo o registro) ou reativa uma aula. Reativar refaz as checagens de conflito
+      * e de disponibilidade, porque o horário pode ter sido ocupado nesse meio tempo.
+      */
+    public ClassSessionGetDTO changeStatus(String uuid, ClassSessionStatusUpdateDTO statusDTO) {
+        ClassSession classSession = getEntityById(uuid);
+        if (classSession == null || statusDTO == null)
+            return null;
+
+        ClassSessionStatus status = ClassSessionStatus.fromString(statusDTO.status());
+        if (status == null)
+            throw new DtoException("A situação da aula deve ser SCHEDULED ou CANCELED");
+
+        if (status == ClassSessionStatus.CANCELED) {
+            classSession.setStatus(ClassSessionStatus.CANCELED);
+            classSession.setCancellationReason(
+                Utils.isNullOrEmpty(statusDTO.cancellationReason()) ? null : statusDTO.cancellationReason().trim());
+        }
+        else {
+            classSession.setStatus(ClassSessionStatus.SCHEDULED);
+            classSession.setCancellationReason(null);
+            availabilityService.assertAvailable(classSession.getSubjectTeacher().getEmployee(),
+                classSession.getStartTime(), classSession.getEndTime());
+            checkForConflicts(classSession, classSession.getId());
+        }
+
+        repository.save(classSession);
+
+        return returnDTO(classSession);
+    }
+
+    /** Aplica a mesma mudança de situação a várias aulas; uma falha não impede as outras. */
+    public BatchResultDTO changeStatusBatch(ClassSessionBatchStatusDTO batchDTO) {
+        if (batchDTO == null || !Utils.hasElements(batchDTO.uuids()))
+            return null;
+
+        List<BatchResultDTO.BatchFailureDTO> failures = new ArrayList<>();
+        int applied = 0;
+
+        for (String uuid : batchDTO.uuids()) {
+            try {
+                ClassSessionGetDTO updated = changeStatus(uuid,
+                    new ClassSessionStatusUpdateDTO(batchDTO.status(), batchDTO.cancellationReason()));
+
+                if (updated == null)
+                    failures.add(new BatchResultDTO.BatchFailureDTO(uuid, "A aula informada não foi encontrada"));
+                else
+                    applied++;
+            } catch (DtoException e) {
+                failures.add(new BatchResultDTO.BatchFailureDTO(uuid, e.getMessage()));
+            }
+        }
+
+        return new BatchResultDTO(applied, failures);
+    }
+
+    /** Exclui várias aulas de uma vez, com o mesmo tratamento de falha parcial. */
+    public BatchResultDTO deleteBatch(ClassSessionBatchDeleteDTO batchDTO) {
+        if (batchDTO == null || !Utils.hasElements(batchDTO.uuids()))
+            return null;
+
+        List<BatchResultDTO.BatchFailureDTO> failures = new ArrayList<>();
+        int applied = 0;
+
+        for (String uuid : batchDTO.uuids()) {
+            try {
+                ResponseEntity<Void> response = delete(uuid);
+
+                if (response.getStatusCode().is2xxSuccessful())
+                    applied++;
+                else
+                    failures.add(new BatchResultDTO.BatchFailureDTO(uuid, "A aula informada não foi encontrada"));
+            } catch (DtoException e) {
+                failures.add(new BatchResultDTO.BatchFailureDTO(uuid, e.getMessage()));
+            }
+        }
+
+        return new BatchResultDTO(applied, failures);
+    }
+
+    public List<ClassSessionGetDTO> filter(String studentUuid, String employeeUuid, String classroomUuid,
+            String subjectUuid, String classUuid, LocalDateTime from, LocalDateTime to) {
+        return repository
+                .findAll(ClassSessionSpecification.filter(studentUuid, employeeUuid, classroomUuid, subjectUuid, classUuid, from, to))
+                .stream()
+                .map(this::returnDTO)
+                .toList();
+    }
+
+    /** Contagem de aulas futuras e de hoje por disciplina, professor, sala ou turma. */
+    public List<ClassSessionSummaryDTO> summary(String groupBy) {
+        LocalDateTime now = clock.now();
+        LocalDateTime dayStart = clock.today().atStartOfDay();
+        LocalDateTime dayEnd = dayStart.plusDays(1);
+
+        List<SessionCountProjection> rows = switch (Utils.trimAndUpper(groupBy) == null ? "" : Utils.trimAndUpper(groupBy)) {
+            case "SUBJECT" -> repository.countBySubject(now, dayStart, dayEnd);
+            case "EMPLOYEE" -> repository.countByEmployee(now, dayStart, dayEnd);
+            case "CLASSROOM" -> repository.countByClassroom(now, dayStart, dayEnd);
+            case "CLASS" -> repository.countByClass(now, dayStart, dayEnd);
+            default -> throw new DtoException("Agrupamento inválido: use SUBJECT, EMPLOYEE, CLASSROOM ou CLASS");
+        };
+
+        return rows.stream()
+                .map(row -> new ClassSessionSummaryDTO(
+                        UuidUtils.convertBytesToString(row.getKey()),
+                        row.getUpcoming(),
+                        row.getToday()))
+                .toList();
+    }
+
+
     @Override
     ClassSessionGetDTO returnDTO(ClassSession classSession) {
         if (classSession == null)
@@ -99,9 +228,11 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                 classSession.getStartTime(),
                 classSession.getEndTime(),
                 reportService.returnDTO(classSession.getReport()),
-                classService.returnDTO(classSession.getClassSessionClass()),
+                classService.returnSummaryDTO(classSession.getClassSessionClass()),
                 studentService.returnDTO(classSession.getStudent()),
-                classSession.getRecurrenceGroupId() == null ? null : UuidUtils.convertBytesToString(classSession.getRecurrenceGroupId())
+                classSession.getRecurrenceGroupId() == null ? null : UuidUtils.convertBytesToString(classSession.getRecurrenceGroupId()),
+                classSession.getStatus().name(),
+                classSession.getCancellationReason()
         );
     }
 
@@ -213,6 +344,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
             newClassSession.setStudent(null);
         }
 
+        availabilityService.assertAvailable(subjectTeacher.getEmployee(), newClassSession.getStartTime(), newClassSession.getEndTime());
         checkForConflicts(newClassSession, null);
         repository.save(newClassSession);
 
@@ -339,6 +471,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
             }
         }
 
+        availabilityService.assertAvailable(classSession.getSubjectTeacher().getEmployee(), classSession.getStartTime(), classSession.getEndTime());
         checkForConflicts(classSession, classSession.getId());
         repository.save(classSession);
 
@@ -368,6 +501,10 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
 
         for (ClassSession other : repository.findAll()) {
             if (other.getId().equals(excludeId))
+                continue;
+
+            // Aula cancelada não ocupa professor nem sala.
+            if (other.isCanceled())
                 continue;
 
             if (!overlaps(session.getStartTime(), session.getEndTime(), other.getStartTime(), other.getEndTime()))

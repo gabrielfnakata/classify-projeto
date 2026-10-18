@@ -1,5 +1,5 @@
-import { useEffect, useState, Fragment } from "react";
-import { Plus, Download, Upload, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Search, Download, Upload, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { FilterConfig } from "../../filter-row/FilterRow";
 import FilterRow from "../../filter-row/FilterRow";
 import { DataTable, type DataTableColumn } from "../../common/data-table";
@@ -17,6 +17,7 @@ interface registrationPageProps<T> {
     filters: FilterConfig[];
     columns: DataTableColumn<T>[];
     registrationRoute?: string;
+    detailRoute?: (row: T) => string;
     onRefresh?: () => void;
 }
 
@@ -35,7 +36,7 @@ interface ImportResult {
 }
 
 export default function RegistrationPage<T extends dataType>({
-    title, data, filters, columns, registrationRoute, onRefresh
+    title, data, filters, columns, registrationRoute, detailRoute, onRefresh
 }: registrationPageProps<T>) {
     const [filterValues, setFilterValues] = useState<Record<string,string>>({});
     const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -53,14 +54,36 @@ export default function RegistrationPage<T extends dataType>({
             ? '/employee'
             : null;
 
+    const tableColumns: DataTableColumn<T>[] = detailRoute
+        ? [
+            ...columns,
+            {
+                key: 'details',
+                header: <span className="sr-only">Detalhes</span>,
+                className: 'w-12 text-right',
+                cell: (row) => (
+                    <button
+                        type="button"
+                        title="Ver detalhes"
+                        aria-label="Ver detalhes"
+                        onClick={() => navigate(detailRoute(row))}
+                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+                    >
+                        <Search className="h-4 w-4" />
+                    </button>
+                ),
+            },
+        ]
+        : columns;
+
     const handleFilterSubmit = (values: Record<string, string>) => {
         setFilterValues(values);
-    }
+    };
 
     useEffect(() => {
         // TODO: Chamada à API com a filtragem dos dados
     }, [filterValues]);
-    
+
     const downloadBlob = (blob: Blob, filename: string) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -200,7 +223,7 @@ export default function RegistrationPage<T extends dataType>({
                             />
                             <DataTable
                                 data={data}
-                                columns={columns}
+                                columns={tableColumns}
                                 rowKey={(row) => row.uuid}
                             />
                     </ContentCard>

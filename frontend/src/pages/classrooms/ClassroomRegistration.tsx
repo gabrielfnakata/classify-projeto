@@ -1,7 +1,11 @@
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
+import { StatusBadge } from "@/components/features/status-badge";
+import { UpcomingSessionsBadge } from "@/components/features/schedule-summary-cells";
 import useFetch from "@/hooks/useFetch";
+import useScheduleSummary from "@/hooks/useScheduleSummary";
+import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -12,10 +16,23 @@ import type { Field } from "@/components/page-templates/form/NewEntityPage";
 import { NewClassroomValidationSchema } from "@/validation/ClassroomSchema";
 
 export default function ClassroomRegistration() {
+    const [classroomToDelete, setClassroomToDelete] = useState<ClassroomDTO | null>(null);
+    const [classroomToEdit, setClassroomToEdit] = useState<ClassroomDTO | null>(null);
+
+    const { data, refetch } = useFetch<ClassroomDTO[]>('/classroom');
+
+    const scheduleByClassroom = useScheduleSummary("CLASSROOM");
+
     const columns: DataTableColumn<ClassroomDTO>[] = [
-        {key: 'name', header: 'Nome', cell: row => row.name},
-        {key: 'capacity', header: 'Capacidade', cell: row => row.capacity},
-        {key: 'isDisabled', header: 'Desativada', cell: row => {return row.isDisabled ? "Sim" : "Não"}},
+        { key: 'name', header: 'Nome', cell: row => <span className="font-medium text-foreground">{row.name}</span> },
+        { key: 'capacity', header: 'Capacidade', cell: row => `${row.capacity} aluno${row.capacity === 1 ? '' : 's'}` },
+        {
+            key: 'status', header: 'Situação',
+            cell: row => row.isDisabled
+                ? <StatusBadge variant="danger">Desativada</StatusBadge>
+                : <StatusBadge variant="success">Ativa</StatusBadge>,
+        },
+        { key: 'sessions', header: 'Aulas', cell: row => <UpcomingSessionsBadge summary={scheduleByClassroom.get(row.uuid)} /> },
         {key: 'actions', header: 'Ações', cell: row => (
             <div className="flex gap-2">
                 <Pencil
@@ -43,10 +60,6 @@ export default function ClassroomRegistration() {
         ]},
     ];
 
-    const {data, refetch} = useFetch<ClassroomDTO[]>('/classroom');
-    const [classroomToEdit, setClassroomToEdit] = useState<ClassroomDTO | null>(null);
-    const [classroomToDelete, setClassroomToDelete] = useState<ClassroomDTO | null>(null);
-
     async function handleUpdateClassroom(values: Record<string, unknown>) {
         const payload = {
             name: values.name,
@@ -69,11 +82,12 @@ export default function ClassroomRegistration() {
     return (
         <>
             <RegistrationPage
-                data={data ?? []} 
+                data={sortedByName(data ?? [])}
                 columns={columns}
                 filters={filters}
                 title="Sala de Aula"
                 registrationRoute="/new-classroom"
+                detailRoute={(row) => `/classrooms/${row.uuid}`}
             >
             </RegistrationPage>
 

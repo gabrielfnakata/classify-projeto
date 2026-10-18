@@ -1,127 +1,127 @@
-import { useMemo, useState } from "react"
-import { useNavigate } from "react-router"
-import { BookOpen, CalendarSync, ClipboardCheck, Search, Users } from "lucide-react"
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router";
+import { BookOpen, CalendarSync, ClipboardCheck, Search, Users } from "lucide-react";
 
-import useFetch from "@/hooks/useFetch"
-import { SectionTitle } from "@/components/features/section-title"
-import { EmptyState } from "@/components/common/empty-state"
-import { StatusBadge } from "@/components/features/status-badge"
-import { MetricCard } from "@/components/features/metric-card"
-import { InitialsAvatar } from "@/components/features/initials-avatar"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { ContentCard } from "@/components/layout/content-card"
-import { groupSessions } from "@/shared/utils/session-grouping"
-import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
-import type { AttendanceSessionStatusDTO } from "@/shared/dtos/attendance/AttendanceSessionStatusDTO"
+import useFetch from "@/hooks/useFetch";
+import { SectionTitle } from "@/components/features/section-title";
+import { EmptyState } from "@/components/common/empty-state";
+import { StatusBadge } from "@/components/features/status-badge";
+import { MetricCard } from "@/components/features/metric-card";
+import { InitialsAvatar } from "@/components/features/initials-avatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ContentCard } from "@/components/layout/content-card";
+import { groupSessions } from "@/shared/utils/session-grouping";
+import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence";
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
+import type { AttendanceSessionStatusDTO } from "@/shared/dtos/attendance/AttendanceSessionStatusDTO";
 
-const pad = (n: number) => String(n).padStart(2, "0")
-const startOf = (s: ClassSessionDTO) => new Date(s.startTime as unknown as string)
+const pad = (n: number) => String(n).padStart(2, "0");
+const startOf = (s: ClassSessionDTO) => new Date(s.startTime as unknown as string);
 
 function formatDateTime(raw: unknown): string {
-  const d = new Date(raw as string)
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const d = new Date(raw as string);
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-const formatDate = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`
+const formatDate = (d: Date) => `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 
 interface Entry {
-  key: string
-  kind: "series" | "single"
-  recurrenceUuid: string | null
-  sessions: ClassSessionDTO[]
+  key: string;
+  kind: "series" | "single";
+  recurrenceUuid: string | null;
+  sessions: ClassSessionDTO[];
 }
 
 function targetNames(sessions: ClassSessionDTO[]): string[] {
-  const primary = sessions[0]
-  if (primary.classDTO) return [primary.classDTO.name]
-  const names = new Set<string>()
-  sessions.forEach((s) => s.student && names.add(s.student.name))
-  return [...names]
+  const primary = sessions[0];
+  if (primary.classDTO) return [primary.classDTO.name];
+  const names = new Set<string>();
+  sessions.forEach((s) => s.student && names.add(s.student.name));
+  return [...names];
 }
 
 function targetLabel(sessions: ClassSessionDTO[]): string {
-  const primary = sessions[0]
-  if (primary.classDTO) return `Turma: ${primary.classDTO.name}`
-  const names = targetNames(sessions)
-  if (names.length === 0) return "—"
-  return names.length === 1 ? names[0] : `${names.length} alunos`
+  const primary = sessions[0];
+  if (primary.classDTO) return `Turma: ${primary.classDTO.name}`;
+  const names = targetNames(sessions);
+  if (names.length === 0) return "—";
+  return names.length === 1 ? names[0] : `${names.length} alunos`;
 }
 
 function AttendanceStatusIndicator({ total, marked }: { total: number; marked: number }) {
-  if (marked === 0) return <StatusBadge variant="muted">Pendente</StatusBadge>
-  if (marked < total) return <StatusBadge variant="warning">Parcial</StatusBadge>
-  return <StatusBadge variant="success">Completa</StatusBadge>
+  if (marked === 0) return <StatusBadge variant="muted">Pendente</StatusBadge>;
+  if (marked < total) return <StatusBadge variant="warning">Parcial</StatusBadge>;
+  return <StatusBadge variant="success">Completa</StatusBadge>;
 }
 
 export default function AttendanceOverview() {
-  const { data: sessions, loading } = useFetch<ClassSessionDTO>("/classsession")
-  const { data: statuses } = useFetch<AttendanceSessionStatusDTO>("/attendance/status")
-  const navigate = useNavigate()
-  const [search, setSearch] = useState("")
+  const { data: sessions, loading } = useFetch<ClassSessionDTO>("/classsession");
+  const { data: statuses } = useFetch<AttendanceSessionStatusDTO>("/attendance/status");
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
 
   const statusBySession = useMemo(() => {
     const map = new Map<string, AttendanceSessionStatusDTO>()
-    ;(statuses ?? []).forEach((s) => map.set(s.classSessionUuid, s))
-    return map
-  }, [statuses])
+    ;(statuses ?? []).forEach((s) => map.set(s.classSessionUuid, s));
+    return map;
+  }, [statuses]);
 
   const entries = useMemo<Entry[]>(() => {
-    const all = sessions ?? []
-    const series = new Map<string, ClassSessionDTO[]>()
-    const loose: ClassSessionDTO[] = []
+    const all = sessions ?? [];
+    const series = new Map<string, ClassSessionDTO[]>();
+    const loose: ClassSessionDTO[] = [];
 
     all.forEach((s) => {
       if (s.recurrenceGroupUuid) {
-        const list = series.get(s.recurrenceGroupUuid) ?? []
-        list.push(s)
-        series.set(s.recurrenceGroupUuid, list)
+        const list = series.get(s.recurrenceGroupUuid) ?? [];
+        list.push(s);
+        series.set(s.recurrenceGroupUuid, list);
       } else {
-        loose.push(s)
+        loose.push(s);
       }
-    })
+    });
 
     const seriesEntries: Entry[] = [...series.entries()].map(([uuid, list]) => ({
       key: `series:${uuid}`,
       kind: "series",
       recurrenceUuid: uuid,
       sessions: [...list].sort((a, b) => startOf(a).getTime() - startOf(b).getTime()),
-    }))
+    }));
 
     const looseEntries: Entry[] = groupSessions(loose).map((g) => ({
       key: g.key,
       kind: "single",
       recurrenceUuid: null,
       sessions: g.sessions,
-    }))
+    }));
 
-    return [...seriesEntries, ...looseEntries]
-  }, [sessions])
+    return [...seriesEntries, ...looseEntries];
+  }, [sessions]);
 
   const entryStatus = (entry: Entry) =>
     entry.sessions.reduce(
       (acc, s) => {
-        const st = statusBySession.get(s.uuid)
-        acc.total += st?.totalStudents ?? 0
-        acc.marked += st?.markedStudents ?? 0
-        return acc
+        const st = statusBySession.get(s.uuid);
+        acc.total += st?.totalStudents ?? 0;
+        acc.marked += st?.markedStudents ?? 0;
+        return acc;
       },
       { total: 0, marked: 0 }
-    )
+    );
 
   const summary = useMemo(() => {
     return entries.reduce(
       (acc, entry) => {
-        const { total, marked } = entryStatus(entry)
-        if (marked === 0) acc.pending += 1
-        else if (marked < total) acc.partial += 1
-        else acc.complete += 1
-        return acc
+        const { total, marked } = entryStatus(entry);
+        if (marked === 0) acc.pending += 1;
+        else if (marked < total) acc.partial += 1;
+        else acc.complete += 1;
+        return acc;
       },
       { pending: 0, partial: 0, complete: 0 }
-    )
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries, statusBySession])
+  }, [entries, statusBySession]);
 
   const sorted = useMemo(
     () =>
@@ -131,30 +131,30 @@ export default function AttendanceOverview() {
           startOf(a.sessions[a.sessions.length - 1]).getTime()
       ),
     [entries]
-  )
+  );
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return sorted
-    const q = search.toLowerCase()
+    if (!search.trim()) return sorted;
+    const q = search.toLowerCase();
     return sorted.filter((entry) => {
-      const p = entry.sessions[0]
+      const p = entry.sessions[0];
       return (
         p.subjectTeacher.subject.description.toLowerCase().includes(q) ||
         p.subjectTeacher.employee.name.toLowerCase().includes(q) ||
         targetLabel(entry.sessions).toLowerCase().includes(q)
-      )
-    })
-  }, [sorted, search])
+      );
+    });
+  }, [sorted, search]);
 
   const openAttendance = (entry: Entry) => {
     if (entry.kind === "series" && entry.recurrenceUuid) {
-      navigate(`/attendance/series/${entry.recurrenceUuid}`)
-      return
+      navigate(`/attendance/series/${entry.recurrenceUuid}`);
+      return;
     }
-    const [first, ...rest] = entry.sessions
-    const query = rest.length > 0 ? `?group=${rest.map((s) => s.uuid).join(",")}` : ""
-    navigate(`/attendance/${first.uuid}${query}`)
-  }
+    const [first, ...rest] = entry.sessions;
+    const query = rest.length > 0 ? `?group=${rest.map((s) => s.uuid).join(",")}` : "";
+    navigate(`/attendance/${first.uuid}${query}`);
+  };
 
   return (
     <div className="animate-in fade-in space-y-6 p-6 duration-500 md:p-8">
@@ -195,17 +195,17 @@ export default function AttendanceOverview() {
         ) : (
           <div className="space-y-2">
             {filtered.map((entry) => {
-              const primary = entry.sessions[0]
-              const last = entry.sessions[entry.sessions.length - 1]
-              const { total, marked } = entryStatus(entry)
-              const isClass = Boolean(primary.classDTO)
-              const names = targetNames(entry.sessions)
-              const visible = names.slice(0, 3)
-              const overflow = names.length - visible.length
-              const isSeries = entry.kind === "series"
+              const primary = entry.sessions[0];
+              const last = entry.sessions[entry.sessions.length - 1];
+              const { total, marked } = entryStatus(entry);
+              const isClass = Boolean(primary.classDTO);
+              const names = targetNames(entry.sessions);
+              const visible = names.slice(0, 3);
+              const overflow = names.length - visible.length;
+              const isSeries = entry.kind === "series";
               const pattern = isSeries
                 ? describeWeekdays(weekdaysOfDates(entry.sessions.map(startOf)))
-                : ""
+                : "";
 
               return (
                 <div
@@ -266,11 +266,11 @@ export default function AttendanceOverview() {
                     </Button>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         )}
       </ContentCard>
     </div>
-  )
+  );
 }

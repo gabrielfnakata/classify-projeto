@@ -1,34 +1,53 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
+import { NamesCell } from "@/components/features/schedule-summary-cells";
 import useFetch from "@/hooks/useFetch";
+import { formatTelephone, parseTelephone } from "@/shared/utils/telephone-parser";
 import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
 import { Pencil, Trash2 } from "lucide-react";
 import { NewStudentValidationSchema } from "@/validation/StudentSchema";
-import { formatTelephone, parseTelephone } from "@/shared/utils/telephone-parser";
 import { formatCpf } from "@/shared/utils/cpf-formatter";
 import api from "@/services/api";
 import ConfirmDeleteDialog from "@/components/common/confirm-delete-dialog";
 import EditEntityDialog from "@/components/page-templates/edit-dialog/EditEntityDialog";
 import type { Field } from "@/components/page-templates/form/NewEntityPage";
+import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
 
+const collator = new Intl.Collator("pt-BR", { sensitivity: "base" });
 
 export default function StudentRegistration() {
     const [refreshKey, setRefreshKey] = useState(0);
     const [studentToEdit, setStudentToEdit] = useState<StudentDTO | null>(null);
     const [studentToDelete, setStudentToDelete] = useState<StudentDTO | null>(null);
 
-    const {data, refetch} = useFetch<StudentDTO>(`/student?r=${refreshKey}`);
+    const { data, refetch } = useFetch<StudentDTO[]>(`/student?r=${refreshKey}`);
+    const { data: classGroups } = useFetch<ClassGroupDTO[]>('/class');
 
     const handleRefresh = () => setRefreshKey(k => k + 1);
 
+    const classGroupsByStudent = useMemo(() => {
+        const map = new Map<string, string[]>();
+        for (const classGroup of classGroups ?? []) {
+            for (const student of classGroup.students) {
+                const list = map.get(student.uuid);
+                if (list) list.push(classGroup.name);
+                else map.set(student.uuid, [classGroup.name]);
+            }
+        }
+        for (const list of map.values()) list.sort(collator.compare);
+        return map;
+    }, [classGroups]);
+
     const columns: DataTableColumn<StudentDTO>[] = [
-        {key: 'name', header: 'Nome', cell: row => row.name},
-        {key: 'email', header: 'E-mail', cell: row => row.email},
+        { key: 'name', header: 'Nome', cell: row => <span className="font-medium text-foreground">{row.name}</span> },
+        { key: 'email', header: 'E-mail', cell: row => row.email },
         {key: 'cpf', header: 'CPF', cell: row => formatCpf(row.cpf)},
-        {key: 'telephone', header: 'Telefone', cell: row => row.telephones.at(0) ? formatTelephone(row.telephones.at(0)!) : ''},
+        { key: 'telephone', header: 'Telefone', cell: row => row.telephones.length ? formatTelephone(row.telephones[0]) : <span className="text-muted-foreground">—</span> },
+        { key: 'classGroups', header: 'Turmas', cell: row => <NamesCell names={classGroupsByStudent.get(row.uuid)} emptyText="Nenhuma" /> },
         {key: 'actions', header: 'Ações', cell: row => (
             <div className="flex gap-2">
                 <Pencil 
@@ -90,11 +109,12 @@ export default function StudentRegistration() {
     return (
         <>
             <RegistrationPage
-                data={sortedByName(data ?? [])} 
+                data={sortedByName(data ?? [])}
                 columns={columns}
                 filters={filters}
                 title="Alunos"
                 registrationRoute="/new-student"
+                detailRoute={(row) => `/students/${row.uuid}`}
                 onRefresh={handleRefresh}
             >
             </RegistrationPage>

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 export type SegmentedTabOption = {
   label: string
@@ -6,22 +6,22 @@ export type SegmentedTabOption = {
 }
 
 interface SegmentedTabsProps {
-  options: SegmentedTabOption[]
-  value: string
-  onChange: (value: string) => void
-  className?: string
-  size?: "default" | "sm"
+  options: SegmentedTabOption[];
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  size?: "default" | "sm";
 }
 
 const containerSizeClasses: Record<"default" | "sm", string> = {
   default: "rounded-2xl p-1.5",
   sm: "rounded-lg p-1",
-}
+};
 
 const buttonSizeClasses: Record<"default" | "sm", string> = {
   default: "rounded-xl px-4 py-3 text-sm",
   sm: "rounded-md px-2.5 py-1.5 text-xs",
-}
+};
 
 export function SegmentedTabs({
   options,
@@ -39,7 +39,7 @@ export function SegmentedTabs({
       )}
     >
       {options.map((option) => {
-        const isActive = option.value === value
+        const isActive = option.value === value;
 
         return (
           <button
@@ -56,8 +56,8 @@ export function SegmentedTabs({
           >
             {option.label}
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

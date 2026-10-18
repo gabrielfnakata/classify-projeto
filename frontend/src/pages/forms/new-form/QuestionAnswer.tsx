@@ -27,7 +27,6 @@ export default function QuestionAnswer({ type, options, onOptionsChange, mode }:
     const [files, setFiles] = useState<AnswerFileCreateDTO[]>([]);
 
     useEffect(() => {
-        console.log(files);
         files.forEach((file) => {
             api.post<FormAnswerFileUploadDTO>("/form/upload-url", {bucket: file.bucket, fileName: file.file.name})
                 .then((response) => {
@@ -179,7 +178,8 @@ export default function QuestionAnswer({ type, options, onOptionsChange, mode }:
         const updated: FormQuestionOptionCreateDTO[] = options.map((option, i) => {
             return {
                 ...option,
-                correct: type === AnswerType.SELECT ? i === index : i === index ? !option.correct : false
+                correct: (type === AnswerType.SELECT) ? (i === index) :
+                    (i === index ? !option.correct : option.correct)
             }
         });
         onOptionsChange(updated);

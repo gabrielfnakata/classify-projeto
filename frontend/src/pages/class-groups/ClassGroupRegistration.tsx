@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
 
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
@@ -87,11 +86,7 @@ export default function ClassGroupRegistration() {
         {
             key: 'name',
             header: 'Nome',
-            cell: row => (
-                <Link to={`/class-groups/${row.uuid}`} className="font-medium text-primary hover:underline">
-                    {row.name}
-                </Link>
-            ),
+            cell: row => <span className="font-medium text-foreground">{row.name}</span>,
         },
         {
             key: 'sessions',
@@ -150,6 +145,7 @@ export default function ClassGroupRegistration() {
             filters={filters}
             title="Turmas"
             registrationRoute="/new-class-group"
+            detailRoute={(row) => `/class-groups/${row.uuid}`}
         >
         </RegistrationPage>
     );

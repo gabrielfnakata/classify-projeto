@@ -1,18 +1,18 @@
-import { cn } from "@/lib/utils"
-import type { AttendanceStatus } from "@/shared/dtos/attendance/AttendanceRosterEntryDTO"
+import { cn } from "@/lib/utils";
+import type { AttendanceStatus } from "@/shared/dtos/attendance/AttendanceRosterEntryDTO";
 
 const NEXT_STATUS: Record<string, AttendanceStatus | null> = {
   null: "PRESENTE",
   PRESENTE: "AUSENTE",
   AUSENTE: null,
-}
+};
 
 interface AttendanceStatusCellProps {
-  value: AttendanceStatus | null
-  onChange: (next: AttendanceStatus | null) => void
-  disabled?: boolean
-  title?: string
-  className?: string
+  value: AttendanceStatus | null;
+  onChange: (next: AttendanceStatus | null) => void;
+  disabled?: boolean;
+  title?: string;
+  className?: string;
 }
 
 export function AttendanceStatusCell({
@@ -39,5 +39,5 @@ export function AttendanceStatusCell({
     >
       {disabled ? "–" : value === "PRESENTE" ? "P" : value === "AUSENTE" ? "F" : "·"}
     </button>
-  )
+  );
 }

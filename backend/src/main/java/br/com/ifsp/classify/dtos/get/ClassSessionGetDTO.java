@@ -9,7 +9,9 @@ public record ClassSessionGetDTO(
         LocalDateTime startTime,
         LocalDateTime endTime,
         ReportGetDTO report,
-        ClassGetDTO classDTO,
+        ClassSummaryDTO classDTO,
         StudentGetDTO student,
-        String recurrenceGroupUuid
+        String recurrenceGroupUuid,
+        String status,
+        String cancellationReason
 ) {}

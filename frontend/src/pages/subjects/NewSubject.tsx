@@ -14,7 +14,7 @@ export default function NewSubject() {
     const initialFormValue = {
         description: ''
     };
-    
+
     function buildPayload(values: Record<string, any>): SubjectCreateDTO {
         return {
             description: values.description as string
@@ -35,8 +35,8 @@ export default function NewSubject() {
             validationSchema={NewSubjectValidationSchema}
             buildPayload={buildPayload}
             onSubmit={handleSubmit}
-        
+
         />
-    )
+    );
 
 };

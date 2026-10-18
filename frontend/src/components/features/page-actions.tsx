@@ -1,17 +1,17 @@
-import type { ReactNode } from "react"
-import { cn } from "@/lib/utils"
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface PageActionsProps {
-  children: ReactNode
-  align?: "left" | "right" | "between"
-  className?: string
+  children: ReactNode;
+  align?: "left" | "right" | "between";
+  className?: string;
 }
 
 const alignClasses = {
   left: "justify-start",
   right: "justify-end",
   between: "justify-between",
-}
+};
 
 export function PageActions({
   children,
@@ -28,5 +28,5 @@ export function PageActions({
     >
       {children}
     </div>
-  )
+  );
 }

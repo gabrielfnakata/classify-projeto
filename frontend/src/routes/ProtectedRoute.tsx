@@ -26,4 +26,4 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
       {children}
     </AppShell>
   );
-} 
+};

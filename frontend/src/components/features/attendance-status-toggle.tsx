@@ -1,16 +1,16 @@
-import { cn } from "@/lib/utils"
-import type { AttendanceStatus } from "@/shared/dtos/attendance/AttendanceRosterEntryDTO"
+import { cn } from "@/lib/utils";
+import type { AttendanceStatus } from "@/shared/dtos/attendance/AttendanceRosterEntryDTO";
 
 interface AttendanceStatusToggleProps {
-  value: AttendanceStatus | null
-  onChange: (value: AttendanceStatus | null) => void
-  className?: string
+  value: AttendanceStatus | null;
+  onChange: (value: AttendanceStatus | null) => void;
+  className?: string;
 }
 
 const OPTIONS: { label: string; value: AttendanceStatus }[] = [
   { label: "Presente", value: "PRESENTE" },
   { label: "Ausente", value: "AUSENTE" },
-]
+];
 
 export function AttendanceStatusToggle({ value, onChange, className }: AttendanceStatusToggleProps) {
   return (
@@ -21,7 +21,7 @@ export function AttendanceStatusToggle({ value, onChange, className }: Attendanc
       )}
     >
       {OPTIONS.map((option) => {
-        const isActive = option.value === value
+        const isActive = option.value === value;
 
         return (
           <button
@@ -40,8 +40,8 @@ export function AttendanceStatusToggle({ value, onChange, className }: Attendanc
           >
             {option.label}
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

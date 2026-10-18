@@ -1,14 +1,14 @@
-import { MoreHorizontal, X } from "lucide-react"
-import { Avatar } from "@/components/common/avatar"
-import { cn } from "@/lib/utils"
+import { MoreHorizontal, X } from "lucide-react";
+import { Avatar } from "@/components/common/avatar";
+import { cn } from "@/lib/utils";
 
 interface EntityCardProps {
-  name: string
-  subtitle?: string
-  description?: string
-  seed?: string | number
-  className?: string
-  onRemove?: () => void
+  name: string;
+  subtitle?: string;
+  description?: string;
+  seed?: string | number;
+  className?: string;
+  onRemove?: () => void;
 }
 
 export function EntityCard({
@@ -68,5 +68,5 @@ export function EntityCard({
         </div>
       </div>
     </div>
-  )
+  );
 }
