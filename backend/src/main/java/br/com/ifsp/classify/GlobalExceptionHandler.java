@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -58,6 +59,15 @@ public class GlobalExceptionHandler {
                         HttpStatus.UNAUTHORIZED.value(),
                         ExceptionCode.INVALID_CREDENTIALS.getCode(),
                         "E-mail ou senha inválidos."));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ExceptionDTO> handleAccessDenied(AccessDeniedException exception) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ExceptionDTO(
+                        HttpStatus.FORBIDDEN.value(),
+                        ExceptionCode.FORBIDDEN.getCode(),
+                        exception.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
