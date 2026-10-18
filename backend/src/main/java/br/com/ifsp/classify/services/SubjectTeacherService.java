@@ -1,5 +1,6 @@
 package br.com.ifsp.classify.services;
 
+import java.util.List;
 import br.com.ifsp.classify.dtos.create.SubjectTeacherCreateDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
 import br.com.ifsp.classify.dtos.get.SubjectTeacherEmployeeGetDTO;
@@ -30,11 +31,27 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
     private final ClassSessionRepository classSessionRepository;
 
     public SubjectTeacherService(AbstractRepository<SubjectTeacher, Long> repository, EmployeeRepository employeeRepository,
-            SubjectRepository subjectRepository, ClassSessionRepository classSessionRepository) {
+            SubjectRepository subjectRepository, ClassSessionRepository classSessionRepository, AccessScopeService accessScope) {
         super(repository);
+        this.accessScope = accessScope;
         this.employeeRepository = employeeRepository;
         this.subjectRepository = subjectRepository;
         this.classSessionRepository = classSessionRepository;
+    }
+
+    private final AccessScopeService accessScope;
+
+    /** O professor agenda só como ele mesmo, então só enxerga os próprios vínculos com disciplinas. */
+    @Override
+    public List<SubjectTeacherGetDTO> findAll() {
+        if (!accessScope.isProfessor())
+            return super.findAll();
+
+        Long employeeId = accessScope.currentEmployee().getId();
+        return repository.findAll().stream()
+            .filter(subjectTeacher -> subjectTeacher.getEmployee().getId().equals(employeeId))
+            .map(this::returnDTO)
+            .toList();
     }
 
     @Override
