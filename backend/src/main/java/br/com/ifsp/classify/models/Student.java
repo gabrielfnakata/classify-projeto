@@ -1,5 +1,6 @@
 package br.com.ifsp.classify.models;
 
+import br.com.ifsp.classify.models.form.FormSubmission;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -46,6 +47,9 @@ public class Student implements Serializable {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    private User user;
+
     @ManyToMany
     @JoinTable(
         name = "STUDENT_GUARDIAN",
@@ -64,6 +68,9 @@ public class Student implements Serializable {
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Telephone> telephones = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    private List<FormSubmission> formSubmissions = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -129,6 +136,14 @@ public class Student implements Serializable {
         this.isDeleted = isDeleted;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     public List<Guardian> getGuardians() {
         return guardians;
     }
@@ -151,6 +166,14 @@ public class Student implements Serializable {
 
     public void setTelephones(List<Telephone> telephones) {
         this.telephones = telephones;
+    }
+
+    public List<FormSubmission> getFormSubmissions() {
+        return formSubmissions;
+    }
+
+    public void setFormSubmissions(List<FormSubmission> formSubmissions) {
+        this.formSubmissions = formSubmissions;
     }
 
     public void addGuardian(Guardian guardian) {

@@ -43,7 +43,7 @@ export default function ClassroomRegistration() {
         ]},
     ];
 
-    const {data, refetch} = useFetch<ClassroomDTO>('/classroom');
+    const {data, refetch} = useFetch<ClassroomDTO[]>('/classroom');
     const [classroomToEdit, setClassroomToEdit] = useState<ClassroomDTO | null>(null);
     const [classroomToDelete, setClassroomToDelete] = useState<ClassroomDTO | null>(null);
 

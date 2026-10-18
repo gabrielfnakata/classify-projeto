@@ -16,11 +16,9 @@ function ShellContent({ children }: AppShellProps) {
   
   return (
     <div className="min-h-svh bg-background text-foreground transition-colors">
-      <main className="flex-y overflow-y-auto">
-          <div className={`mx-auto ${state === 'collapsed' ? 'w-[calc(100vw-92px)]' : 'w-[calc(100vw-280px)]'} h-screen`}>
-            {children}
-          </div>
-      </main>
+      <div className={`mx-auto ${state === 'collapsed' ? 'w-[calc(100vw-92px)]' : 'w-[calc(100vw-280px)]'} min-h-full`}>
+        {children}
+      </div>
     </div>
   )
 }

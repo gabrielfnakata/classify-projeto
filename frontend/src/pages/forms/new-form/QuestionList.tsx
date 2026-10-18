@@ -1,0 +1,104 @@
+import {useFormikContext} from "formik";
+import type {FormCreateDTO} from "@/shared/dtos/form/FormCreateDTO.ts";
+import {type ChangeEvent} from "react";
+import type {FormQuestionOptionCreateDTO} from "@/shared/dtos/form-question-options/FormQuestionOptionCreateDTO.ts";
+import {Ghost} from "lucide-react";
+import {Label} from "@/components/ui/label.tsx";
+import {ContentCard} from "@/components/layout/content-card.tsx";
+import QuestionAnswer from "./QuestionAnswer";
+import TextareaAutosize from "react-textarea-autosize";
+import QuestionConfigurationOptions from "@/pages/forms/new-form/QuestionConfigurationOptions.tsx";
+import {AnswerType} from "@/shared/models/enums/answer-type.ts";
+import {predefinedOptions} from "@/shared/models/constants/answer-type-options.tsx";
+
+interface QuestionListProps {
+    readOnly?: boolean;
+}
+
+export default function QuestionList({ readOnly = false }: QuestionListProps) {
+    const { errors, values, setFieldValue, setValues } = useFormikContext<FormCreateDTO>();
+    const questions = values.questions ?? [];
+
+    const handleQuestionChange = (e: ChangeEvent<HTMLTextAreaElement>, index: number) =>
+        setFieldValue(`questions[${index}].question`, e.target.value);
+
+    const handleDuplicateQuestion = (index: number) => {
+        const updatedQuestions = [...questions];
+        updatedQuestions.splice(index + 1, 0, questions[index]);
+        setFieldValue(`questions`, updatedQuestions);
+    }
+
+    const handleDeleteQuestion = (index: number) =>
+        setFieldValue("questions", questions.filter((_, i) => i !== index));
+
+    const handleAddOption = (index: number, updatedOptions: FormQuestionOptionCreateDTO[]) =>
+        setFieldValue(`questions[${index}].options`, updatedOptions);
+
+    const handleRequiredChange = (index: number, required: boolean) =>
+        setFieldValue(`questions[${index}].isRequired`, required);
+
+    const handleQuestionTypeChange = (index: number, type: AnswerType) => {
+        const isSelect = type === AnswerType.MULTI_SELECT || type === AnswerType.SELECT
+        const options = isSelect ? predefinedOptions : undefined;
+        setValues(prev => {
+            const questions = [...prev.questions];
+            questions[index] = {...questions[index], answerType: type, options};
+            return { ...prev, questions };
+        });
+    }
+
+    if (questions.length === 0) {
+        return (
+            <div className="flex flex-col justify-center items-center w-full mt-24 gap-8">
+                <Ghost className="scale-200 text-foreground opacity-50" />
+                <Label className="text-foreground text-center opacity-50">
+                    Ainda não há questões no seu formulário
+                </Label>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-10 w-8/10">
+            {questions.map((question, index) => {
+                const hasError = errors.questions?.at(index);
+                const errorStyle =
+                    hasError ? 'outline-1 outline-solid outline-destructive' : 'outline-none';
+                return (
+                <ContentCard key={index} className={`flex flex-col w-full gap-8 ${errorStyle}`}>
+                    <div className="flex w-full justify-between items-center gap-4">
+                        <TextareaAutosize
+                            readOnly={readOnly}
+                            value={question.question}
+                            minRows={1}
+                            onChange={(event) => handleQuestionChange(event, index)}
+                            placeholder="Insira a questão aqui"
+                            className="w-6/10 h-16 px-2 border-table-foreground text-2xl font-bold
+                            text-foreground placeholder:text-muted-foreground focus:outline-none resize-none
+                            "
+                        />
+                        {!readOnly && (
+                        <div className="flex">
+                            <QuestionConfigurationOptions
+                                currentType={question.answerType}
+                                required={question.isRequired}
+                                handleRequiredChange={(required) => handleRequiredChange(index, required)}
+                                handleDuplicateQuestion={() => handleDuplicateQuestion(index)}
+                                handleDeleteQuestion={() => handleDeleteQuestion(index)}
+                                handleChangeAnswerType={(type) => handleQuestionTypeChange(index, type)}
+                            />
+                        </div>
+                        )}
+                    </div>
+                    <QuestionAnswer
+                        type={question.answerType}
+                        options={question.options ?? []}
+                        onOptionsChange={(updatedOptions) => handleAddOption(index, updatedOptions)}
+                        mode={readOnly ? "preview" : "configure"}
+                    />
+                </ContentCard>
+            )}
+        )}
+        </div>
+    );
+}

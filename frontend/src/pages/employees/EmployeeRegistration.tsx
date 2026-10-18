@@ -1,10 +1,11 @@
+import { useState } from "react";
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import useFetch from "@/hooks/useFetch";
 import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO";
+import { Roles } from "@/shared/models/enums/roles";
 import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 import type { RoleDTO } from "@/shared/dtos/role/RoleDTO";
 import { NewEmployeeValidationSchema } from "@/validation/EmployeeSchema";
 import { formatTelephone, parseTelephone } from "@/shared/utils/telephone-parser";
@@ -15,6 +16,15 @@ import ConfirmDeleteDialog from "@/components/common/confirm-delete-dialog";
 import type { Field } from "@/components/page-templates/form/NewEntityPage";
 
 export default function EmployeeRegistration() {
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [employeeToEdit, setEmployeeToEdit] = useState<EmployeeDTO | null>(null);
+    const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeDTO | null>(null);
+
+    const {data: roles} = useFetch<RoleDTO>('/role');
+    const {data, refetch} = useFetch<EmployeeDTO>(`/employee?r=${refreshKey}`);
+
+    const handleRefresh = () => setRefreshKey(k => k + 1);
+
     const columns: DataTableColumn<EmployeeDTO>[] = [
         {key: 'name', header: 'Nome', cell: row => row.name},
         {key: 'cpf', header: 'CPF', cell: row => formatCpf(row.cpf)},
@@ -31,21 +41,18 @@ export default function EmployeeRegistration() {
             </div> )
         },
     ];
+
     const filters: FilterConfig[] = [
         {name: 'name', inputType: 'text', placeholder: 'Nome', width: 25},
         {name: 'cpf', inputType: 'cpf', placeholder: 'CPF', width: 25},
         {name: 'email', inputType: 'text', placeholder: 'E-mail', width: 25},
         {name: 'position', inputType: 'select', placeholder: 'Cargo', width: 25,
-            options: [
-                {label: "Professor", value: "TEACHER"},
-                {label: "Administrador", value: "ADMIN"}
-            ]
+            options: roles?.filter(role => role.id !== Roles.ESTUDANTE).map(role => {
+                return {value: role.id, label: role.description}
+            }) ?? []
         }
     ];
-    const {data, refetch} = useFetch<EmployeeDTO>('/employee');
-    const {data: roles} = useFetch<RoleDTO>('/role');
-    const [employeeToEdit, setEmployeeToEdit] = useState<EmployeeDTO | null>(null);
-    const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeDTO | null>(null);
+
     const editFields: Field[] = [
             {key: 'name', name: 'name', label: 'Nome', type: 'text', required: true},
             {key: 'birthDate', name: 'birthDate', label: 'Data de nascimento', type: 'date', required: true},
@@ -98,6 +105,7 @@ async function handleDeleteEmployee() {
                 filters={filters}
                 title="Funcionários"
                 registrationRoute="/new-employee"
+                onRefresh={handleRefresh}
             >
             </RegistrationPage>
 

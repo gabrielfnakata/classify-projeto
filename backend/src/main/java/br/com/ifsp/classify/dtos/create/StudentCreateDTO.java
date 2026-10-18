@@ -10,5 +10,6 @@ public record StudentCreateDTO(
         String cpf,
         LocalDate registrationDate,
         List<TelephoneCreateDTO> telephones,
-        List<GuardianCreateDTO> guardians
+        List<GuardianCreateDTO> guardians,
+        StudentAccountCreateDTO account
 ) {}

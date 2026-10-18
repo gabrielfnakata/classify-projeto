@@ -1,10 +1,11 @@
+import { useState } from "react";
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import useFetch from "@/hooks/useFetch";
+import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
 import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { NewStudentValidationSchema } from "@/validation/StudentSchema";
 import { formatTelephone, parseTelephone } from "@/shared/utils/telephone-parser";
 import { formatCpf } from "@/shared/utils/cpf-formatter";
@@ -15,6 +16,14 @@ import type { Field } from "@/components/page-templates/form/NewEntityPage";
 
 
 export default function StudentRegistration() {
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [studentToEdit, setStudentToEdit] = useState<StudentDTO | null>(null);
+    const [studentToDelete, setStudentToDelete] = useState<StudentDTO | null>(null);
+
+    const {data, refetch} = useFetch<StudentDTO>(`/student?r=${refreshKey}`);
+
+    const handleRefresh = () => setRefreshKey(k => k + 1);
+
     const columns: DataTableColumn<StudentDTO>[] = [
         {key: 'name', header: 'Nome', cell: row => row.name},
         {key: 'email', header: 'E-mail', cell: row => row.email},
@@ -33,6 +42,7 @@ export default function StudentRegistration() {
             </div> )
         },
     ];
+
     const filters: FilterConfig[] = [
         {name: 'name', inputType: 'text', placeholder: 'Nome', width: 25},
         {name: 'email', inputType: 'text', placeholder: 'E-mail', width: 25},
@@ -49,11 +59,6 @@ export default function StudentRegistration() {
         {key: 'telephone1', name: 'telephone1', label: 'Telefone 1', type: 'phone', required: true},
         {key: 'telephone2', name: 'telephone2', label: 'Telefone 2', type: 'phone', required: false},
     ];
-
-    const {data, refetch} = useFetch<StudentDTO>('/student');
-
-    const [studentToEdit, setStudentToEdit] = useState<StudentDTO | null>(null);
-    const [studentToDelete, setStudentToDelete] = useState<StudentDTO | null>(null);
     
     async function handleUpdateStudent(values: Record<string, unknown>) {
         const telephones = [values.telephone1, values.telephone2]
@@ -85,11 +90,12 @@ export default function StudentRegistration() {
     return (
         <>
             <RegistrationPage
-                data={data ?? []} 
+                data={sortedByName(data ?? [])} 
                 columns={columns}
                 filters={filters}
                 title="Alunos"
                 registrationRoute="/new-student"
+                onRefresh={handleRefresh}
             >
             </RegistrationPage>
 

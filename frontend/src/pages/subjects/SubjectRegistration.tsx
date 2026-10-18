@@ -35,7 +35,7 @@ export default function SubjectRegistration() {
         {key: 'description', name: 'description', label: 'Descrição', type: 'text', required: true}
     ];
 
-    const {data, refetch} = useFetch<SubjectDTO>('/subject');
+    const {data, refetch} = useFetch<SubjectDTO[]>('/subject');
     const [subjectToEdit, setSubjectToEdit] = useState<SubjectDTO | null>(null);
     const [subjectToDelete, setSubjectToDelete] = useState<SubjectDTO | null>(null);
 
