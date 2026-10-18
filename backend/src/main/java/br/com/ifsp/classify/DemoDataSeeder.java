@@ -13,6 +13,7 @@ import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.create.SubjectCreateDTO;
 import br.com.ifsp.classify.dtos.create.SubjectTeacherCreateDTO;
 import br.com.ifsp.classify.dtos.create.TeacherAvailabilityCreateDTO;
+import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
 import br.com.ifsp.classify.dtos.update.ClassSessionStatusUpdateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.create.UserCreateDTO;
@@ -284,14 +285,20 @@ public class DemoDataSeeder implements CommandLineRunner {
             if (random.nextInt(4) == 0)
                 guardians.add(guardian(lastName));
 
+            String email = emailFor(name, "email.com");
+
             StudentGetDTO student = attempt("aluno " + name, () -> studentService.create(new StudentCreateDTO(
                 name,
                 randomDate(2008, 2014),
-                emailFor(name, "email.com"),
+                email,
                 generateCpf(),
                 randomDate(2023, 2026),
                 List.of(telephone()),
-                guardians
+                guardians,
+                new StudentAccountCreateDTO(
+                    email,
+                    "123456aA"
+                )
             )));
 
             if (student != null)

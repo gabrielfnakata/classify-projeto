@@ -7,19 +7,35 @@ import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FormikInput } from "@/components/formik-input/FormikInput";
 import { LoginValidationSchema } from "@/validation/LoginSchema";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ContentCard } from "@/components/layout/content-card";
+import { Roles } from "@/shared/models/enums/roles";
 import type { LoginForm } from "@/shared/models/forms/loginForm";
+import type {AxiosError} from "axios";
+import type {ApiExceptionPayload} from "@/services/api.ts";
 
 export default function Login() {
     const { login, logout } = useAuth();
     const navigate = useNavigate();
+    const [erroLogin, setErroLogin] = useState<string | null>(null);
 
     const handleLogin = async (values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
-        await login(values)
-        .then(() => navigate('/classes'))
-        .catch(() => alert("Ocorreu um erro ao logar. Tente novamente mais tarde."))
-        .finally(() => helpers.setSubmitting(false));
+        setErroLogin(null);
+
+        try {
+            const authenticatedUser = await login(values);
+
+            if (authenticatedUser.role === Roles.ESTUDANTE) {
+                navigate('/student-home-page');
+            } else if (authenticatedUser.role === Roles.ADMIN || authenticatedUser.role === Roles.PROFESSOR) {
+                navigate('/classes');
+            }
+        } catch(error) {
+            const data = (error as AxiosError).response?.data as ApiExceptionPayload;
+            setErroLogin(data?.message ?? "Ocorreu um erro. Tente novamente.");
+        } finally {
+            helpers.setSubmitting(false);
+        }
     }
 
     useEffect(() => {
@@ -39,7 +55,13 @@ export default function Login() {
                     validateOnMount={true}
                 >
                     {({isSubmitting, isValid, setFieldValue, values}) => (
-                        <Form className="flex flex-col gap-[1.5vh] items-center justify-evenly">
+                        <Form className="flex flex-col gap-6 items-center justify-evenly">
+                            {erroLogin && (
+                                <div className="w-[20vw] rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
+                                    <p className="leading-relaxed">{erroLogin}</p>
+                                </div>
+                            )}
+
                             <FormikInput 
                                 name="email"
                                 placeholder="Email"
@@ -52,13 +74,13 @@ export default function Login() {
                                 label="Senha"
                                 type="password"
                             />
-                            <div className="w-[20vw] flex flex-row items-center justify-between">
+                            <div className="pt-2 w-[20vw] flex flex-row items-center justify-between">
                                 <FieldGroup className="w-[36%]">
                                     <UIField orientation="horizontal">
                                         <Checkbox 
-                                          className="bg-[#D9D9D9] dark:bg-[#f1f1f1] data-checked:bg-[#f1f1f1] dark:data-checked:bg-[#f1f1f1] data-checked:text-[#119E96]"
-                                          checked={values.rememberMe}
-                                          onCheckedChange={(checked) => setFieldValue("rememberMe", checked)}
+                                        className="bg-[#D9D9D9] dark:bg-[#f1f1f1] data-checked:bg-[#f1f1f1] dark:data-checked:bg-[#f1f1f1] data-checked:text-[#119E96]"
+                                        checked={values.rememberMe}
+                                        onCheckedChange={(checked) => setFieldValue("rememberMe", checked)}
                                         />
                                         <FieldLabel className="text-xs"> Lembrar de mim </FieldLabel>
                                     </UIField>

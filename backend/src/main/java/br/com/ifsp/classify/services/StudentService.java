@@ -21,12 +21,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
+import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
+import br.com.ifsp.classify.dtos.update.TelephoneUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Address;
 import br.com.ifsp.classify.models.Guardian;
 import br.com.ifsp.classify.models.Student;
@@ -34,17 +37,24 @@ import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.http.ResponseEntity;
 
 @Service
 public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, Long> {
 
     private final TelephoneService telephoneService;
     private final AddressService addressService;
+    private final AuditService auditService;
+    private final StudentRepository studentRepository;
+    private final UserService userService;
 
-    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService) {
+    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService) {
         super(repository);
+        this.studentRepository = repository;
         this.telephoneService = telephoneService;
         this.addressService = addressService;
+        this.auditService = auditService;
+        this.userService = userService;
     }
 
     @Override
@@ -96,13 +106,22 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             return null;
 
         if (Utils.isNullOrEmpty(studentDTO.name()))
-            throw new DtoException("O nome do aluno não pode ser nulo ou vazio");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o nome do aluno.");
 
         if (!Utils.isNullOrEmpty(studentDTO.cpf()) && !Utils.cpfValidator(studentDTO.cpf()))
-            throw new DtoException("O CPF informado é inválido");
+            throw new DtoException(ExceptionCode.INVALID_CPF, "O CPF informado é inválido.");
 
         if (studentDTO.registrationDate() == null)
-            throw new DtoException("A data de matrícula do aluno não pode ser nula");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a data de matrícula do aluno.");
+
+        if (studentDTO.birthDate().isAfter(LocalDate.now())) {
+            throw new DtoException(ExceptionCode.DATA_INTEGRITY, "A data de nascimento não pode ser uma data futura.");
+        }
+
+        if (studentDTO.birthDate().isAfter(studentDTO.registrationDate())) {
+            throw new DtoException(ExceptionCode.DATA_INTEGRITY,
+                    "O aluno não pode ter uma data de matrícula anterior ao seu nascimento.");
+        }
 
         Student newStudent = new Student();
         newStudent.setUuid(UuidUtils.generateUUID());
@@ -111,6 +130,11 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         newStudent.setEmail(Utils.trimAndUpper(studentDTO.email()));
         newStudent.setCpf(Utils.removeAllNonDigits(studentDTO.cpf()));
         newStudent.setRegistrationDate(studentDTO.registrationDate());
+
+        StudentAccountCreateDTO account = studentDTO.account();
+        if (account != null) {
+            newStudent.setUser(userService.createUserForStudent(account));
+        }
 
         if (Utils.hasElements(studentDTO.guardians())) {
             for (GuardianCreateDTO guardian : studentDTO.guardians()) {
@@ -132,8 +156,20 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         }
 
         repository.save(newStudent);
+        StudentGetDTO createdStudent = returnDTO(newStudent);
+        auditService.logInsert("STUDENT", newStudent.getId(), createdStudent);
 
-        return returnDTO(newStudent);
+        return createdStudent;
+    }
+
+    public StudentGetDTO getForUser(String email) {
+        return studentRepository.findByUserEmail(email)
+                .map(this::returnDTO)
+                .orElse(null);
+    }
+
+    public Student getEntityForUser(String email) {
+        return studentRepository.findByUserEmail(email).orElse(null);
     }
 
     @Override
@@ -141,6 +177,8 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         Student student = getEntityById(uuid);
         if (studentDTO == null || student == null)
             return null;
+
+        StudentGetDTO oldStudent = returnDTO(student);
 
         if (!Utils.isNullOrEmpty(studentDTO.name()))
             student.setName(Utils.trimAndUpper(studentDTO.name()));
@@ -162,9 +200,55 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             
         // }
 
-        repository.save(student);
+        //oiii eu fiz aqui a alteração do ngc do telefone, pra dar pra atualizar no meu modal, se nao funcionar avisa
 
-        return returnDTO(student);
+        if (studentDTO.telephones() != null) {
+            List<String> newNumbers = studentDTO.telephones()
+                .stream()
+                .map(TelephoneUpdateDTO::number)
+                .toList();
+
+            student.getTelephones().removeIf(telephone -> !newNumbers.contains(telephone.getNumber()));
+
+            List<String> existingNumbers = student.getTelephones()
+                .stream()
+                .map(Telephone::getNumber)
+                .toList();
+                
+            for (TelephoneUpdateDTO telephoneDTO : studentDTO.telephones()) {
+                if (!existingNumbers.contains(telephoneDTO.number())) {
+                    TelephoneCreateDTO createDTO = new TelephoneCreateDTO(
+                        telephoneDTO.country(),
+                        telephoneDTO.ddd(),
+                        telephoneDTO.number()
+                    );
+                    Telephone newTelephone = telephoneService.create(createDTO);
+
+                    if (newTelephone != null)
+                        student.addTelephone(newTelephone);
+                }
+            }
+        }
+
+        repository.save(student);
+        StudentGetDTO updatedStudent = returnDTO(student);
+        auditService.logUpdate("STUDENT", student.getId(), oldStudent, updatedStudent);
+
+        return updatedStudent;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        Student student = getEntityById(uuid);
+        if (student == null)
+            return ResponseEntity.badRequest().build();
+
+        StudentGetDTO oldStudent = returnDTO(student);
+        Long id = student.getId();
+        repository.delete(student);
+        auditService.logDelete("STUDENT", id, oldStudent);
+
+        return ResponseEntity.noContent().build();
     }
 
     public List<GuardianGetDTO> addGuardians(String studentUuid, List<GuardianCreateDTO> guardiansDTO) {
@@ -173,7 +257,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
 
         Student student = getEntityById(studentUuid);
         if (student == null)
-            throw new DtoException("O aluno informado não existe");
+            throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O aluno informado não foi encontrado.");
 
         for (GuardianCreateDTO guardian : guardiansDTO) {
             Guardian newGuardian = create(guardian);
@@ -225,13 +309,13 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             return null;
 
         if (Utils.isNullOrEmpty(guardianDTO.name()))
-            throw new DtoException("O nome do responsável não pode ser nulo ou vazio");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o nome do responsável.");
 
         if (!Utils.isNullOrEmpty(guardianDTO.cpf()) && !Utils.cpfValidator(guardianDTO.cpf()))
-            throw new DtoException("O CPF informado é inválido");
+            throw new DtoException(ExceptionCode.INVALID_CPF, "O CPF informado é inválido.");
 
         if (Utils.isNullOrEmpty(guardianDTO.email()))
-            throw new DtoException("O email do responsável não pode ser nulo");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail do responsável.");
 
         Guardian newGuardian = new Guardian();
         newGuardian.setUuid(UuidUtils.generateUUID());
@@ -320,7 +404,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     comment.setString(factory.createRichTextString(text));
     comment.setAuthor("Sistema");
     return comment;
-    }   
+    }
 
     public byte[] generateTemplate() {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -406,8 +490,9 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                             cpf,
                             registrationDate,
                             telephones,
-                            null
-                    );
+                                    null,
+                                    null
+                            );
 
                     StudentGetDTO created = create(studentDTO);
                     if (created != null) imported.add(created);

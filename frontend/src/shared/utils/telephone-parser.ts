@@ -6,7 +6,7 @@ export function parseTelephone(maskedPhone: string): TelephoneCreateDTO {
     return {
         country: "BR",
         ddd: digits.slice(0, 2),
-        number: digits
+        number: digits, 
     };
 }
 

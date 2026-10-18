@@ -28,8 +28,8 @@ function sessionDate(dto: ClassSessionDTO): string {
 
 export default function SchedulePage() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO>(`/classsession?r=${refreshKey}`);
-  const { data: classrooms } = useFetch<ClassroomDTO>("/classroom");
+  const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO[]>(`/classsession?r=${refreshKey}`);
+  const { data: classrooms } = useFetch<ClassroomDTO[]>("/classroom");
   const classroomNames = useMemo(() => classroomNameMap(classrooms ?? []), [classrooms]);
 
   const [searchQuery, setSearchQuery] = useState("");

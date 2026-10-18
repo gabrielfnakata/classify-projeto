@@ -59,10 +59,10 @@ interface ScheduleFormProps {
 export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset }: ScheduleFormProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO>("/subjectteacher");
-  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO>("/classroom");
-  const { data: studentsData, loading: loadingStu } = useFetch<StudentDTO>("/student");
-  const { data: classGroupsData, loading: loadingCG } = useFetch<ClassGroupDTO>("/class");
+  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO[]>("/subjectteacher");
+  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO[]>("/classroom");
+  const { data: studentsData, loading: loadingStu } = useFetch<StudentDTO[]>("/student");
+  const { data: classGroupsData, loading: loadingCG } = useFetch<ClassGroupDTO[]>("/class");
 
   const subjectTeachers = subjectTeachersData ?? [];
   const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled);

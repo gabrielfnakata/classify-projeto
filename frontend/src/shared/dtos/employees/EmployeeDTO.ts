@@ -4,9 +4,12 @@ import type { TelephoneDTO } from "../telephone/TelephoneDTO";
 export interface EmployeeDTO {
     uuid: string;
     name: string;
+    birthDate: string;
     cpf: string;
-    birthDate: Date;
-    hireDate: Date;
+    hireDate: string;
     telephones: TelephoneDTO[];
     userUuid: string | null;
+    email: string;
+    roleId: string;
+    roleDescription: string;
 }

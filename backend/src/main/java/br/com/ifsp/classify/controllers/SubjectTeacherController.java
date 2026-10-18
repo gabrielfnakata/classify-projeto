@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/subjectteacher", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/subjectteacher", produces = MediaType.APPLICATION_JSON_VALUE)
 public class SubjectTeacherController extends AbstractController<SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO> {
 
     public SubjectTeacherController(InterfaceService<SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO> service) {

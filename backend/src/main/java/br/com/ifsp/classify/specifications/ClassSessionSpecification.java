@@ -5,17 +5,29 @@ import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.jpa.domain.Specification;
+
 public class ClassSessionSpecification {
 
+    private static final String ID = "id";
     private static final String UUID = "uuid";
+    private static final String CLASS = "class";
+    private static final String STUDENT = "student";
     private static final String START_TIME = "startTime";
 
+    public static Specification<ClassSession> getByStudentId(Long studentId) {
+        return (root, query, cb) -> cb.equal(root.get(STUDENT).get(ID), studentId);
+    }
+
+    public static Specification<ClassSession> getByClassId(List<Long> classId) {
+        return (root, query, cb) -> cb.equal(root.get(CLASS).in(ID), classId);
+    }
+    
     public static Specification<ClassSession> getBySubjectTeacherId(Long subjectTeacherId) {
         return (root, query, cb) ->
                 cb.equal(root.get("subjectTeacher").get("id"), subjectTeacherId);

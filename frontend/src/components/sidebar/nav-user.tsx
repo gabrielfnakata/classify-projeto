@@ -8,6 +8,7 @@ import {
 
 import { Avatar } from "@/components/common/avatar"
 import { useAuth } from "@/hooks/useAuth"
+import { useCurrentUser } from "@/hooks/useCurrentUser"
 import { useNavigate } from "react-router"
 import {
   SidebarMenu,
@@ -26,17 +27,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "../theme-provider"
+import { Roles } from "@/shared/models/enums/roles"
+
+const roleLabels: Record<Roles, string> = {
+  [Roles.ADMIN]: "Administrador",
+  [Roles.PROFESSOR]: "Professor",
+  [Roles.ESTUDANTE]: "Estudante",
+}
 
 export function NavUser() {
-  const { isMobile, state } = useSidebar()
+  const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed"
-  const { userData, logout } = useAuth()
-  const navigate = useNavigate()
+  const { userData, logout } = useAuth();
+  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { user: currentUser, avatarSrc } = useCurrentUser();
 
   const user = {
-    name: userData?.email ?? "Placeholder",
-    cargo: userData?.role ?? "Placeholder",
+    name: currentUser?.name?.toLowerCase() ?? currentUser?.email ?? userData?.email ?? "Sem email",
+    cargo: currentUser?.role?.description ?? roleLabels[userData.role] ?? "Sem cargo",
     avatar: "usuario-logado",
   };
 
@@ -49,11 +58,11 @@ export function NavUser() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-foreground group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:p-0 justify-center"
             >
-              <Avatar name={user.name} seed={user.avatar} size="sm" />
+              <Avatar name={user.name} seed={user.avatar} src={avatarSrc} size="sm" />
               {!isCollapsed && (
                 <>
                   <div className="grid flex-1 text-left text-sm leading-tight ml-2">
-                    <span className="truncate font-semibold">{user.name}</span>
+                    <span className="truncate font-semibold capitalize">{user.name}</span>
                     <span className="truncate text-xs text-muted-foreground">{user.cargo}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
@@ -68,9 +77,9 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar name={user.name} seed={user.avatar} size="sm" />
+                <Avatar name={user.name} seed={user.avatar} src={avatarSrc} size="sm" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate font-semibold capitalize">{user.name}</span>
                   <span className="truncate text-xs text-muted-foreground">{user.cargo}</span>
                 </div>
               </div>
@@ -79,7 +88,7 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem onClick={() => navigate("/account")}>
                 <BadgeCheck className="mr-2 size-4" />
-                Conta
+                Meu perfil
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                 <Moon className="mr-2 size-4" />

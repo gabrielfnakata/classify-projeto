@@ -4,12 +4,18 @@ import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
+import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
+import br.com.ifsp.classify.dtos.get.AttendanceGetDTO;
+import br.com.ifsp.classify.services.AttendanceService;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
+import br.com.ifsp.classify.security.AuthenticatedUser;
 import br.com.ifsp.classify.services.StudentService;
+import br.com.ifsp.classify.services.ClassSessionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,10 +27,41 @@ import java.util.Map;
 public class StudentController extends AbstractController<StudentCreateDTO, StudentGetDTO, StudentUpdateDTO> {
 
     private final StudentService service;
+    private final ClassSessionService classSessionService;
+    private final AttendanceService attendanceService;
 
-    public StudentController(StudentService service) {
+    public StudentController(StudentService service, ClassSessionService classSessionService, AttendanceService attendanceService) {
         super(service);
         this.service = service;
+        this.classSessionService = classSessionService;
+        this.attendanceService = attendanceService;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<StudentGetDTO> getCurrentStudent(Authentication authentication) {
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        StudentGetDTO student = service.getForUser(user.username());
+        return (student != null)
+                ? ResponseEntity.ok(student)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @GetMapping("/me/schedule")
+    public ResponseEntity<List<ClassSessionGetDTO>> getCurrentStudentSchedule(Authentication authentication) {
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        List<ClassSessionGetDTO> schedule = classSessionService.getScheduleForUser(user.username());
+        return (schedule != null)
+                ? ResponseEntity.ok(schedule)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @GetMapping("/me/attendance")
+    public ResponseEntity<List<AttendanceGetDTO>> getCurrentStudentAttendance(Authentication authentication) {
+        AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
+        List<AttendanceGetDTO> attendance = attendanceService.getForStudentAccount(user.username());
+        return (attendance != null)
+                ? ResponseEntity.ok(attendance)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     @PostMapping("/{uuid}/guardians")

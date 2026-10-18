@@ -24,6 +24,7 @@ import br.com.ifsp.classify.services.RoleService;
 import br.com.ifsp.classify.services.SubjectService;
 import br.com.ifsp.classify.services.SubjectTeacherService;
 import br.com.ifsp.classify.services.UserService;
+import br.com.ifsp.classify.security.UserRole;
 
 @Configuration
 public class DataInitializer {
@@ -33,15 +34,17 @@ public class DataInitializer {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     CommandLineRunner initDatabase(RoleRepository roleRepository, RoleService roleService, EmployeeService employeeService, UserRepository userRepository, UserService userService, SubjectService subjectService, SubjectTeacherService subjectTeacherService) {
         return (args) -> {
-            if (roleRepository.count() == 0) {
-                roleService.create(new RoleCreateDTO("ADMIN", "Cargo máximo, possui todas as permissões"));
-                roleService.create(new RoleCreateDTO("SECRE", "Pode visualizar e cadastrar alunos e professores"));
-                roleService.create(new RoleCreateDTO("PROFE", "Pode marcar aulas e criar turmas"));
+            for (UserRole role : UserRole.values()) {
+                String roleName = role.name();
+                
+                if (roleName != null && roleRepository.findById(roleName).isEmpty()) {
+                    roleService.create(new RoleCreateDTO(role.name(), role.name()));
+                }
             }
 
             if (userRepository.count() == 0) {
-                RoleGetDTO adminRole = roleService.getById("ADMIN");
-                RoleGetDTO profRole = roleService.getById("PROFE");
+                RoleGetDTO adminRole = roleService.getById(UserRole.ADMIN.name());
+                RoleGetDTO profRole = roleService.getById(UserRole.PROFESSOR.name());
                 if (adminRole == null || profRole == null)
                     return;
 

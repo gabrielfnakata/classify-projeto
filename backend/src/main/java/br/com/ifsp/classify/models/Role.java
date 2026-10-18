@@ -14,7 +14,7 @@ public class Role implements Serializable {
 
     @JdbcTypeCode(SqlTypes.CHAR)
     @Id
-    @Column(length = 5)
+    @Column(length = 10)
     private String id;
 
     @JdbcTypeCode(SqlTypes.VARCHAR)
@@ -33,7 +33,12 @@ public class Role implements Serializable {
     }
 
     public String getDescription() {
-        return description;
+        return switch (this.id) {
+            case "ADMIN" -> "Administrador do Sistema";
+            case "PROFESSOR" -> "Professor";
+            case "ESTUDANTE" -> "Estudante";
+            default -> this.description;
+        };
     }
 
     public void setDescription(String description) {

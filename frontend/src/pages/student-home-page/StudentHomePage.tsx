@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { BookOpen, Clock, FileText, Mail, User } from "lucide-react"
 
 import { PageHeader } from "@/components/layout/page-header"
@@ -11,13 +11,11 @@ import { StatusBadge } from "@/components/features/status-badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import useFetch from "@/hooks/useFetch"
+import api from "@/services/api"
 import { formatFullDateLabel, formatHHMM, formatYMD, toDate } from "@/shared/utils/date-formatter"
-import type {ClassSessionDTO} from "@/shared/dtos/class-session/ClassSessionDTO.ts";
-
-// TODO: remover os dados mockados
-//  Ambos dependem da CLA-119
-const MOCK_ATTENDANCE = { percent: 90, presences: 9, absences: 1 }
-const MOCK_PENDING = { total: 5, reports: 2, activities: 3 }
+import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
+import type { AttendanceGetDTO } from "@/shared/dtos/attendance/AttendanceGetDTO"
 
 function atToday(hour: number, minute = 0, dayOffset = 0): Date {
   const d = new Date()
@@ -36,11 +34,19 @@ function sessionDateKey(session: ClassSessionDTO): string {
 }
 
 export default function StudentHomePage() {
-  const { data: rawSessions } = useFetch<ClassSessionDTO>("/classsession")
-
+  const { data: rawSessions } = useFetch<ClassSessionDTO>("/student/me/schedule")
+  const { data: attendanceRecords } = useFetch<AttendanceGetDTO>("/student/me/attendance")
+  const [student, setStudent] = useState<StudentDTO | null>(null)
+  const [profileError, setProfileError] = useState(false)
   const [month, setMonth] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState(formatYMD(new Date()))
   const [activeSessionUuid, setActiveSessionUuid] = useState<string | null>(null)
+
+  useEffect(() => {
+    api.get<StudentDTO>("/student/me")
+      .then((response) => setStudent(response.data))
+      .catch(() => setProfileError(true))
+  }, [])
 
   const sessionsByDate = useMemo(() => {
     const map = new Map<string, ClassSessionDTO[]>()
@@ -62,11 +68,15 @@ export default function StudentHomePage() {
   )
 
   const selectedDaySessions = sessionsByDate.get(selectedDate) ?? []
+  const presences = attendanceRecords?.filter((record) => record.status === "PRESENTE").length ?? 0
+  const absences = attendanceRecords?.filter((record) => record.status === "AUSENTE").length ?? 0
+  const attendanceCount = presences + absences
+  const attendancePercent = attendanceCount === 0 ? 0 : Math.round((presences / attendanceCount) * 100)
   const activeSession =
     selectedDaySessions.find((s) => s.uuid === activeSessionUuid) ?? selectedDaySessions[0] ?? null
   const activeStatus = activeSession
-      ? toDate(activeSession.endTime) < new Date() ? "success" : "info"
-      : null
+    ? toDate(activeSession.endTime) < new Date() ? "success" : "info"
+    : null
 
   const handleSelectDate = (dateStr: string) => {
     setSelectedDate(dateStr)
@@ -81,7 +91,7 @@ export default function StudentHomePage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 p-8 md:p-10">
-      <PageHeader title="Olá, Nome da pessoa!" />
+      <PageHeader title={profileError ? "Meu espaço de estudante" : `Olá, ${student?.name ?? "estudante"}!`} />
 
       <div>
         <SectionTitle title="Minha semana" />
@@ -119,32 +129,18 @@ export default function StudentHomePage() {
 
       <div>
         <SectionTitle title="Resumo do aluno" />
-        <div className="grid gap-8 sm:grid-cols-2">
-          <ContentCard className="flex min-h-72 flex-col p-8">
-            <div className="text-base font-bold uppercase tracking-wider text-muted-foreground">Frequência Total</div>
-            <div className="flex flex-1 items-center gap-8">
-              <CircularProgress percent={MOCK_ATTENDANCE.percent} size={140} stroke={22} />
-              <div className="space-y-1">
-                <p className="text-xl font-semibold text-foreground">{MOCK_ATTENDANCE.presences} presenças</p>
-                <p className="text-lg text-muted-foreground">{MOCK_ATTENDANCE.absences} falta registrada</p>
-              </div>
+        <ContentCard className="p-8">
+          <div className="flex flex-wrap items-center gap-6">
+            <CircularProgress percent={attendancePercent} size={120} stroke={18} />
+            <div className="space-y-1">
+              <p className="text-lg font-semibold">Frequência: {attendancePercent}%</p>
+              <p className="text-sm text-muted-foreground">{presences} presenças · {absences} faltas</p>
+              {attendanceCount === 0 ? (
+                <p className="text-sm text-muted-foreground">Ainda não há registros de frequência.</p>
+              ) : null}
             </div>
-          </ContentCard>
-
-          <ContentCard className="flex min-h-72 flex-col p-8">
-            <div className="text-base font-bold uppercase tracking-wider text-muted-foreground">Pendências Atuais</div>
-            <div className="flex flex-1 flex-col justify-center gap-1">
-              <p className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold text-foreground">{MOCK_PENDING.total}</span>
-                <span className="text-xl text-muted-foreground">itens</span>
-              </p>
-              <p className="text-lg text-muted-foreground">
-                {MOCK_PENDING.reports} relatórios · {MOCK_PENDING.activities} atividades
-              </p>
-              <Button className="mt-4 h-11 self-start px-6 text-base">Enviar pendências</Button>
-            </div>
-          </ContentCard>
-        </div>
+          </div>
+        </ContentCard>
       </div>
 
       <div>
