@@ -84,7 +84,6 @@ export function TeacherAvailabilitySection({ employeeUuid, editing }: TeacherAva
     <ContentCard className="space-y-4">
       <SectionTitle
         title="Disponibilidade"
-        description={editing ? "Sem horários cadastrados, o professor pode ser agendado em qualquer dia." : undefined}
         className="mb-5 md:items-center"
       />
 
@@ -132,7 +131,7 @@ export function TeacherAvailabilitySection({ employeeUuid, editing }: TeacherAva
         <EmptyState
           icon={CalendarClock}
           title="Sem horários cadastrados"
-          description="Este professor pode ser agendado em qualquer dia e horário."
+          description="O agendamento poderá ser feito em qualquer dia e horário."
         />
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">

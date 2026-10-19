@@ -8,6 +8,7 @@ import { ContentCard } from "@/components/layout/content-card"
 import { PageHeader } from "@/components/layout/page-header"
 import { AvatarPickerDialog } from "@/components/profile/AvatarPickerDialog"
 import { ChangePasswordDialog } from "@/components/profile/ChangePasswordDialog"
+import { TeacherAvailabilitySection } from "@/components/features/teacher-availability-section"
 import { EditProfileDialog } from "@/components/profile/EditProfileDialog"
 import { EditStudentTelephoneDialog } from "@/components/profile/EditStudentTelephoneDialog"
 import { Button } from "@/components/ui/button"
@@ -227,6 +228,12 @@ export default function ProfilePage() {
               }}
             />
           </ContentCard>
+        )}
+
+        {profile && userData?.role === Roles.PROFESSOR && (
+          <div className="mt-6">
+            <TeacherAvailabilitySection employeeUuid="me" editing />
+          </div>
         )}
       </div>
     </div>
