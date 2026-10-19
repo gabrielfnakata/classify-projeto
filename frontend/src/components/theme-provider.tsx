@@ -1,7 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
 import * as React from "react"
 
-type Theme = "dark" | "light" | "system"
+import {
+  DEFAULT_ACCENT,
+  isAccent,
+  isTheme,
+  type Accent,
+  type Theme,
+  type ThemePreference,
+} from "@/shared/models/theme"
+
 type ResolvedTheme = "dark" | "light"
 
 type ThemeProviderProps = {
@@ -14,21 +22,41 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme
   setTheme: (theme: Theme) => void
+  accent: Accent
+  defaults: ThemePreference
+  setDefaults: (defaults: ThemePreference) => void
+  isCustomized: boolean
+  resetToDefaults: () => void
 }
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
-const THEME_VALUES: Theme[] = ["dark", "light", "system"]
+const DEFAULTS_STORAGE_KEY = "default-theme"
 
 const ThemeProviderContext = React.createContext<
   ThemeProviderState | undefined
 >(undefined)
 
-function isTheme(value: string | null): value is Theme {
+function readStoredTheme(key: string) {
+  const value = localStorage.getItem(key)
+
+  return isTheme(value) ? value : null
+}
+
+function parseDefaults(value: string | null, fallback: ThemePreference) {
   if (value === null) {
-    return false
+    return fallback
   }
 
-  return THEME_VALUES.includes(value as Theme)
+  try {
+    const parsed = JSON.parse(value)
+    if (isTheme(parsed?.theme) && isAccent(parsed?.accent)) {
+      return { theme: parsed.theme, accent: parsed.accent }
+    }
+  } catch {
+    return fallback
+  }
+
+  return fallback
 }
 
 function getSystemTheme(): ResolvedTheme {
@@ -84,22 +112,38 @@ export function ThemeProvider({
   disableTransitionOnChange = true,
   ...props
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = React.useState<Theme>(() => {
-    const storedTheme = localStorage.getItem(storageKey)
-    if (isTheme(storedTheme)) {
-      return storedTheme
-    }
+  const fallbackDefaults = React.useMemo<ThemePreference>(
+    () => ({ theme: defaultTheme, accent: DEFAULT_ACCENT }),
+    [defaultTheme]
+  )
+  const [storedTheme, setStoredTheme] = React.useState<Theme | null>(() =>
+    readStoredTheme(storageKey)
+  )
+  const [defaults, setDefaultsState] = React.useState<ThemePreference>(() =>
+    parseDefaults(localStorage.getItem(DEFAULTS_STORAGE_KEY), fallbackDefaults)
+  )
 
-    return defaultTheme
-  })
+  const theme = storedTheme ?? defaults.theme
+  const accent = defaults.accent
+  const isCustomized = storedTheme !== null
 
   const setTheme = React.useCallback(
     (nextTheme: Theme) => {
       localStorage.setItem(storageKey, nextTheme)
-      setThemeState(nextTheme)
+      setStoredTheme(nextTheme)
     },
     [storageKey]
   )
+
+  const setDefaults = React.useCallback((nextDefaults: ThemePreference) => {
+    localStorage.setItem(DEFAULTS_STORAGE_KEY, JSON.stringify(nextDefaults))
+    setDefaultsState(nextDefaults)
+  }, [])
+
+  const resetToDefaults = React.useCallback(() => {
+    localStorage.removeItem(storageKey)
+    setStoredTheme(null)
+  }, [storageKey])
 
   const applyTheme = React.useCallback(
     (nextTheme: Theme) => {
@@ -140,6 +184,17 @@ export function ThemeProvider({
   }, [theme, applyTheme])
 
   React.useEffect(() => {
+    const root = document.documentElement
+
+    if (accent === DEFAULT_ACCENT) {
+      root.removeAttribute("data-accent")
+      return
+    }
+
+    root.setAttribute("data-accent", accent)
+  }, [accent])
+
+  React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat) {
         return
@@ -157,19 +212,16 @@ export function ThemeProvider({
         return
       }
 
-      setThemeState((currentTheme) => {
-        const nextTheme =
-          currentTheme === "dark"
-            ? "light"
-            : currentTheme === "light"
-              ? "dark"
-              : getSystemTheme() === "dark"
-                ? "light"
-                : "dark"
+      const nextTheme =
+        theme === "dark"
+          ? "light"
+          : theme === "light"
+            ? "dark"
+            : getSystemTheme() === "dark"
+              ? "light"
+              : "dark"
 
-        localStorage.setItem(storageKey, nextTheme)
-        return nextTheme
-      })
+      setTheme(nextTheme)
     }
 
     window.addEventListener("keydown", handleKeyDown)
@@ -177,7 +229,7 @@ export function ThemeProvider({
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [storageKey])
+  }, [theme, setTheme])
 
   React.useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
@@ -185,16 +237,14 @@ export function ThemeProvider({
         return
       }
 
-      if (event.key !== storageKey) {
+      if (event.key === storageKey) {
+        setStoredTheme(isTheme(event.newValue) ? event.newValue : null)
         return
       }
 
-      if (isTheme(event.newValue)) {
-        setThemeState(event.newValue)
-        return
+      if (event.key === DEFAULTS_STORAGE_KEY) {
+        setDefaultsState(parseDefaults(event.newValue, fallbackDefaults))
       }
-
-      setThemeState(defaultTheme)
     }
 
     window.addEventListener("storage", handleStorageChange)
@@ -202,14 +252,27 @@ export function ThemeProvider({
     return () => {
       window.removeEventListener("storage", handleStorageChange)
     }
-  }, [defaultTheme, storageKey])
+  }, [fallbackDefaults, storageKey])
 
   const value = React.useMemo(
     () => ({
       theme,
       setTheme,
+      accent,
+      defaults,
+      setDefaults,
+      isCustomized,
+      resetToDefaults,
     }),
-    [theme, setTheme]
+    [
+      theme,
+      setTheme,
+      accent,
+      defaults,
+      setDefaults,
+      isCustomized,
+      resetToDefaults,
+    ]
   )
 
   return (

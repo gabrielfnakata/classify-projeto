@@ -378,3 +378,13 @@ CREATE TABLE IF NOT EXISTS form_answer_files (
     FOREIGN KEY (answer_id) REFERENCES form_answer (id)
 )$$
 
+CREATE TABLE IF NOT EXISTS theme_setting (
+	id TINYINT UNSIGNED NOT NULL,
+	color_mode VARCHAR(6) NOT NULL,
+	accent VARCHAR(10) NOT NULL,
+
+	CONSTRAINT themeSetting_id_pk PRIMARY KEY (id),
+	CONSTRAINT themeSetting_id_ck CHECK (id = 1)
+)$$
+
+INSERT IGNORE INTO theme_setting (id, color_mode, accent) VALUES (1, 'system', 'blue')$$

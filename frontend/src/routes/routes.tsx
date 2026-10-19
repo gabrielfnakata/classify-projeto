@@ -33,6 +33,7 @@ import SubjectDetail from "@/pages/subjects/SubjectDetail";
 import ClassroomDetail from "@/pages/classrooms/ClassroomDetail";
 import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import SettingsPage from "@/pages/settings/SettingsPage";
 import { Roles } from "@/shared/models/enums/roles";
 
 const adminRoles = [Roles.ADMIN];
@@ -173,7 +174,7 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<ProfilePage />} />
             }/>
             <Route path="/settings" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute children={<SettingsPage />} />
             }/>
             {/* <Route path="/schedule" element={
                 <ProtectedRoute children={<ClassRegistration />} />
