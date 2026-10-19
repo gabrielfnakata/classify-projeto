@@ -13,6 +13,7 @@ import { Roles } from "@/shared/models/enums/roles";
 import type { LoginForm } from "@/shared/models/forms/loginForm";
 import type {AxiosError} from "axios";
 import type {ApiExceptionPayload} from "@/services/api.ts";
+import { Logo } from "@/components/common/logo";
 
 export default function Login() {
     const { login, logout } = useAuth();
@@ -45,7 +46,7 @@ export default function Login() {
     return (
         <div className="background w-screen h-screen flex flex-col items-center justify-center">
             <ContentCard className="card rounded-2xl w-[36.5vw] h-[64vh] g-[4vh] flex flex-col items-center justify-center">
-                <img className="w-[25vw] h-[12vh] mb-[5vh]" src="/light logo.svg" />
+                <Logo tone="page" className="w-[25vw] h-[12vh] mb-[5vh]" />
                 <Formik
                     initialValues={{email: "", password: "", rememberMe: false}}
                     validationSchema={LoginValidationSchema}
