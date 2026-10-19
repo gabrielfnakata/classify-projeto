@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
-import useFetchList from "@/hooks/useFetchList";
 import useFetchOne from "@/hooks/useFetchOne";
 import { EntityDetailLayout } from "@/components/features/entity-detail-layout";
 import { ScheduledSessionsList } from "@/components/features/scheduled-sessions-list";
@@ -18,6 +17,7 @@ import {
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type { ScheduleFormState } from "@/shared/models/forms/ScheduleFormState";
+import useFetchList from "@/hooks/useFetchList";
 
 const EMPTY_SESSIONS: ClassSessionDTO[] = [];
 const CLOCK_TICK_MS = 60_000;
