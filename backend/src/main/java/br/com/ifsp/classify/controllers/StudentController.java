@@ -2,6 +2,10 @@ package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
+import br.com.ifsp.classify.dtos.create.TeacherMessageCreateDTO;
+import br.com.ifsp.classify.services.TeacherMessageService;
+import br.com.ifsp.classify.services.ScheduleRequestService;
+import br.com.ifsp.classify.dtos.create.ScheduleRequestCreateDTO;
 import br.com.ifsp.classify.dtos.filter.StudentFilterDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
@@ -34,13 +38,18 @@ public class StudentController extends AbstractController<StudentCreateDTO, Stud
     private final ClassSessionService classSessionService;
     private final AttendanceService attendanceService;
     private final FormService formService;
+    private final TeacherMessageService teacherMessageService;
+    private final ScheduleRequestService scheduleRequestService;
 
-    public StudentController(StudentService service, ClassSessionService classSessionService, AttendanceService attendanceService, FormService formService) {
+    public StudentController(StudentService service, ClassSessionService classSessionService, AttendanceService attendanceService,
+            FormService formService, TeacherMessageService teacherMessageService, ScheduleRequestService scheduleRequestService) {
         super(service);
         this.service = service;
         this.classSessionService = classSessionService;
         this.attendanceService = attendanceService;
         this.formService = formService;
+        this.teacherMessageService = teacherMessageService;
+        this.scheduleRequestService = scheduleRequestService;
     }
 
     @GetMapping("/me")
@@ -68,6 +77,18 @@ public class StudentController extends AbstractController<StudentCreateDTO, Stud
         return (attendance != null)
                 ? ResponseEntity.ok(attendance)
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @PostMapping(value = "/me/schedule-requests", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> requestSchedule(@RequestBody ScheduleRequestCreateDTO request) {
+        scheduleRequestService.request(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/me/messages", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> sendMessageToTeacher(@RequestBody TeacherMessageCreateDTO message) {
+        teacherMessageService.sendToTeacher(message);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/options")

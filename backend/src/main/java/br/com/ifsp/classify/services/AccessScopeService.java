@@ -126,9 +126,19 @@ public class AccessScopeService {
             return true;
         if (isProfessor())
             return Objects.equals(session.getSubjectTeacher().getEmployee().getId(), currentEmployee().getId());
-        if (isStudent())
-            return session.getStudent() != null && Objects.equals(session.getStudent().getId(), currentStudent().getId());
         return false;
+    }
+
+    public void requireTeacherOrAdmin(Employee teacher) {
+        requireTeacherOrAdmin(teacher, "Só o professor dessa aula ou um administrador pode responder a esta solicitação.");
+    }
+
+    public void requireTeacherOrAdmin(Employee teacher, String message) {
+        if (isUnrestricted())
+            return;
+        if (isProfessor() && teacher != null && Objects.equals(teacher.getId(), currentEmployee().getId()))
+            return;
+        throw new AccessDeniedException(message);
     }
 
     public void requireOwnsSession(ClassSession session) {
@@ -159,10 +169,6 @@ public class AccessScopeService {
         return session -> false;
     }
 
-    /**
-     * Mesma regra do {@link #sessionVisibility()}, como Specification para as listagens paginadas.
-     * {@code session} leva da raiz da consulta até a aula (a própria raiz, ou um join a partir dela).
-     */
     public <T> Specification<T> sessionVisibilitySpec(Function<Root<T>, From<?, ClassSession>> session) {
         if (isUnrestricted())
             return Specification.unrestricted();
@@ -189,7 +195,6 @@ public class AccessScopeService {
         return (root, query, cb) -> cb.disjunction();
     }
 
-    /** Restringe a listagem aos ids informados (nenhum id, nenhum resultado). */
     public static <T> Specification<T> idIn(Collection<?> ids) {
         return (root, query, cb) -> ids.isEmpty() ? cb.disjunction() : root.get("id").in(ids);
     }

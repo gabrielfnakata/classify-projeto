@@ -50,10 +50,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh", "/auth/first-access",
+                                "/auth/forgot-password", "/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/user/**").hasAnyRole(ESTUDANTE, PROFESSOR, ADMIN)
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/student/me", "/student/me/**").hasRole(ESTUDANTE)
+                        .requestMatchers(HttpMethod.POST, "/student/me/messages", "/student/me/schedule-requests").hasRole(ESTUDANTE)
+                        .requestMatchers("/classsession/requests/**").hasAnyRole(ADMIN, PROFESSOR)
                         .requestMatchers(HttpMethod.GET, "/student/**").hasAnyRole(ADMIN, PROFESSOR)
                         .requestMatchers("/student/**").hasRole(ADMIN)
                         // O que cada um pode fazer com as aulas (só as próprias, para professor e aluno)

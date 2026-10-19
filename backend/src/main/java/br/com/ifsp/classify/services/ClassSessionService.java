@@ -597,12 +597,8 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
             return;
         }
 
-        if (accessScope.isStudent()) {
-            String ownUuid = UuidUtils.convertBytesToString(accessScope.currentStudent().getUuid());
-            if (!Utils.isNullOrEmpty(classUuid) || Utils.isNullOrEmpty(studentUuid) || !ownUuid.equalsIgnoreCase(studentUuid))
-                throw new AccessDeniedException("Alunos só podem agendar aulas individuais para si mesmos.");
-            return;
-        }
+        if (accessScope.isStudent())
+            throw new AccessDeniedException("Alunos não agendam aulas diretamente. Use \"Solicitar agendamento\".");
 
         throw new AccessDeniedException("Você não pode agendar aulas.");
     }
