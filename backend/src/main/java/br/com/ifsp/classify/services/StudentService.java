@@ -1,8 +1,12 @@
 package br.com.ifsp.classify.services;
+import br.com.ifsp.classify.models.ClassSession;
+import br.com.ifsp.classify.models.enums.ClassSessionStatus;
+import br.com.ifsp.classify.repositories.ClassSessionRepository;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,14 +52,16 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     private final AuditService auditService;
     private final StudentRepository studentRepository;
     private final UserService userService;
+    private final ClassSessionRepository classSessionRepository;
 
-    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService) {
+    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService, ClassSessionRepository classSessionRepository) {
         super(repository);
         this.studentRepository = repository;
         this.telephoneService = telephoneService;
         this.addressService = addressService;
         this.auditService = auditService;
         this.userService = userService;
+        this.classSessionRepository = classSessionRepository;
     }
 
     @Override
@@ -77,6 +83,19 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                 .toList()
         );
     }
+
+    private void cancelFutureSessions(Student student) {
+    List<ClassSession> sessions = classSessionRepository
+        .findByStudentAndStatusAndStartTimeAfter(
+            student, ClassSessionStatus.SCHEDULED, LocalDateTime.now());
+
+    for (ClassSession session : sessions) {
+        session.setStatus(ClassSessionStatus.CANCELED);
+        session.setCancellationReason("Aluno inativado");
+    }
+
+    classSessionRepository.saveAll(sessions);
+}
 
     private List<GuardianGetDTO> returnDTO(List<Guardian> guardians) {
         if (guardians == null || guardians.isEmpty())
@@ -249,6 +268,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
 
         student.setIsDeleted(true);      
         repository.save(student);
+        cancelFutureSessions(student);
 
         auditService.logDelete("STUDENT", id, oldStudent);
 
