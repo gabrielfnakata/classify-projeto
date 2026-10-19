@@ -2,11 +2,16 @@ import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import { StatusBadge } from "@/components/features/status-badge";
-import { formatDateLabel } from "@/shared/utils/date-formatter";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatDateLabel, formatYMD } from "@/shared/utils/date-formatter";
+import { PenLine } from "lucide-react";
+import { useNavigate } from "react-router";
 import type { FormDTO } from "@/shared/dtos/form/FormDTO";
 import { statusLabel, statusVariant } from "@/shared/models/enums/form-status";
 
 export default function StudentForms() {
+    const navigate = useNavigate();
+
     const columns: DataTableColumn<FormDTO>[] = [
         {key: 'title', header: 'Título', cell: row => row.title},
         {key: 'createdAt', header: 'Data', cell: row => formatDateLabel(new Date(row.createdAt))},
@@ -18,6 +23,22 @@ export default function StudentForms() {
         {key: 'status', header: 'Status', cell: row => (
             <StatusBadge variant={statusVariant[row.status]}>{statusLabel[row.status]}</StatusBadge>
         )},
+        {key: 'actions', header: 'Ações', cell: row => {
+            const canAnswer = row.status === "PENDING" && formatYMD(new Date()) <= row.limitDate;
+            if (!canAnswer) return <span className="text-muted-foreground">—</span>;
+
+            return (
+                <Tooltip>
+                    <TooltipTrigger
+                        onClick={() => navigate(`/submission-form/${row.formUuid}/${row.uuid}`)}
+                        asChild
+                    >
+                        <PenLine className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground"/>
+                    </TooltipTrigger>
+                    <TooltipContent>Responder Formulário</TooltipContent>
+                </Tooltip>
+            );
+        }},
     ];
     const filters: FilterConfig[] = [
         {name: 'title', inputType: 'text', placeholder: 'Título', width: 25},

@@ -21,6 +21,10 @@ import br.com.ifsp.classify.utils.UuidUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import br.com.ifsp.classify.security.UserRole;
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -114,6 +118,7 @@ public class FormService {
 
         return new FormGetDTO(
                 form.getUuid().toString(),
+                form.getUuid().toString(),
                 form.getTitle(),
                 form.getDescription(),
                 form.getTeacher().getName(),
@@ -124,6 +129,17 @@ public class FormService {
                 0.0f,
                 FormStatus.PENDING
         );
+    }
+
+    public PageResponseGetDTO<FormGetDTO> getForms(AuthenticatedUser auth, Integer page, Integer size) {
+        List<FormGetDTO> forms = getForms(auth);
+        if (page == null || size == null)
+            return PageResponseGetDTO.from(new PageImpl<>(forms));
+
+        Pageable pageable = PageRequest.of(page, size);
+        int from = (int) Math.min(pageable.getOffset(), forms.size());
+        int to = Math.min(from + size, forms.size());
+        return PageResponseGetDTO.from(new PageImpl<>(forms.subList(from, to), pageable, forms.size()));
     }
 
     public List<FormGetDTO> getForms(AuthenticatedUser auth) {
@@ -141,6 +157,7 @@ public class FormService {
 
         forms.forEach(form -> {
             FormGetDTO dto = new FormGetDTO(
+                    form.getUuid().toString(),
                     form.getUuid().toString(),
                     form.getTitle(),
                     form.getDescription(),
@@ -163,6 +180,7 @@ public class FormService {
             Form form = submission.getForm();
             return new FormGetDTO(
                     submission.getUuid().toString(),
+                    form.getUuid().toString(),
                     form.getTitle(),
                     form.getDescription(),
                     form.getTeacher().getName(),
@@ -216,6 +234,7 @@ public class FormService {
 
     public List<FormSubmissionGetDTO> getFormSubmissions(String formUuid) {
         Form form = formRepository.findByUuid(UUID.fromString(formUuid)).orElseThrow();
+        requireOwnsForm(form);
         return form.getFormSubmissions().stream().map(submission -> new FormSubmissionGetDTO(
                 submission.getUuid().toString(),
                 form.getUuid().toString(),
@@ -236,6 +255,7 @@ public class FormService {
 
     public void sendFormsToStudents(AssignFormToStudentsDTO dto) {
         Form form = formRepository.findByUuid(UUID.fromString(dto.formUuid())).orElseThrow();
+        requireOwnsForm(form);
         List<byte[]> studentsUuids = dto.students()
                 .stream().map(student -> UuidUtils.convertUUIDToBytes(student.uuid())).toList();
         List<Student> students = studentRepository.findByUuidIsIn(studentsUuids);
@@ -245,9 +265,14 @@ public class FormService {
 
     public void sendFormToClass(AssignFormToClassDTO dto) {
         Form form = formRepository.findByUuid(UUID.fromString(dto.formUuid())).orElseThrow();
-        Class clazz = classRepository.findByUuid(UuidUtils.convertUUIDToBytes(dto.classUuid())).orElseThrow();
+        requireOwnsForm(form);
+        Class clazz =classRepository.findByUuid(UuidUtils.convertUUIDToBytes(dto.classUuid())).orElseThrow();
 
         createSubmissionsForStudents(form, clazz.getStudents());
+    }
+
+    public void requireOwnsForm(Form form) {
+        accessScope.requireTeacherOrAdmin(form.getTeacher(), "Esse formulário é de outro professor.");
     }
 
     private void createSubmissionsForStudents(Form form, List<Student> students) {
@@ -280,6 +305,7 @@ public class FormService {
     public void makeFormCorrection(FormCorrectionCreateDTO dto) {
         FormSubmission submission = formSubmissionRepository
                 .getByUuid(UUID.fromString(dto.formSubmissionUuid())).orElseThrow();
+        requireOwnsForm(submission.getForm());
         Map<String, FormFeedbackCreateDTO> feedbacks = dto.formFeedbacks().stream()
                 .collect(Collectors.toMap(FormFeedbackCreateDTO::questionUuid, Function.identity()));
         submission.getFormAnswer().forEach(answer -> {

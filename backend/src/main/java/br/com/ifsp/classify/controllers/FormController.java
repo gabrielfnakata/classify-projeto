@@ -5,6 +5,7 @@ import br.com.ifsp.classify.dtos.get.AnswerFileUploadDTO;
 import br.com.ifsp.classify.dtos.get.FormGetDTO;
 import br.com.ifsp.classify.dtos.get.FormInfoGetDTO;
 import br.com.ifsp.classify.dtos.get.FormSubmissionGetDTO;
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.dtos.update.FormAnswerCorrectionDTO;
 import br.com.ifsp.classify.dtos.update.FormCorrectionScoreUpdateDTO;
 import br.com.ifsp.classify.security.AuthenticatedUser;
@@ -44,8 +45,10 @@ public class FormController {
     }
 
     @GetMapping
-    public List<FormGetDTO> getMyForms(@AuthenticationPrincipal AuthenticatedUser auth) {
-        return this.formService.getForms(auth);
+    public PageResponseGetDTO<FormGetDTO> getMyForms(@AuthenticationPrincipal AuthenticatedUser auth,
+                                                     @RequestParam(required = false) Integer page,
+                                                     @RequestParam(required = false) Integer size) {
+        return this.formService.getForms(auth, page, size);
     }
 
     @GetMapping("/{uuid}")

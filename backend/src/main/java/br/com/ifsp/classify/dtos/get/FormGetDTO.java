@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 public record FormGetDTO(
             String uuid,
+            String formUuid,
             String title,
             String description,
             String teacherName,
