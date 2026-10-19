@@ -12,7 +12,8 @@ import {
 import useFetch from "@/hooks/useFetch"
 import { MetricCard } from "@/components/features/metric-card"
 import { SectionTitle } from "@/components/features/section-title"
-import { EntityCard } from "@/components/features/entity-card"
+import { Avatar } from "@/components/common/avatar"
+import { formatCpf } from "@/shared/utils/masks"
 import { ChartCard } from "@/components/features/chart-card"
 import { ColumnChart } from "@/components/features/column-chart"
 import { TrendAreaChart } from "@/components/features/trend-area-chart"
@@ -316,16 +317,29 @@ export default function AdminDashboard() {
               description="Os alunos cadastrados aparecerão aqui."
             />
           ) : (
-            <div className="grid max-h-64 grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
+            <ul className="max-h-72 divide-y divide-border overflow-y-auto pr-1 scrollbar-slim">
               {recentStudents.map((student) => (
-                <EntityCard
-                  key={student.uuid}
-                  name={student.name}
-                  subtitle={student.email}
-                  description={`CPF: ${student.cpf ?? "não informado"}`}
-                />
+                <li key={student.uuid}>
+                  <Link
+                    to={`/students/${student.uuid}`}
+                    className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-accent"
+                  >
+                    <Avatar name={student.name} seed={student.uuid} size="md" className="shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold capitalize text-foreground">
+                        {student.name.toLowerCase()}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {student.email?.toLowerCase() || "Sem e-mail"}
+                      </p>
+                    </div>
+                    <span className="hidden shrink-0 text-xs tabular-nums text-muted-foreground sm:inline">
+                      {student.cpf ? formatCpf(student.cpf) : "CPF não informado"}
+                    </span>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </ContentCard>
       </div>

@@ -17,8 +17,9 @@ export const mainNavigation: Group[] = [
     title: "Dashboard",
     icon: LayoutDashboard,
     items: [
+      { title: "Visão Geral", url: "/dashboard/admin", allowedRoles: adminRoles },
       { title: "Painel do Professor", url: "/dashboard/teacher", allowedRoles: adminRoles },
-      { title: "Painel do Aluno", url: "/dashboard/student", allowedRoles: adminRoles },
+      { title: "Painel do Aluno / Turma", url: "/dashboard/student", allowedRoles: adminRoles },
       { title: "Meu Desempenho", url: "/dashboard/student", allowedRoles: studentRoles },
     ],
   },
