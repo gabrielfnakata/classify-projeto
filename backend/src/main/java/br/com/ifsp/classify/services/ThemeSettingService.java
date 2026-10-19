@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.services;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -9,14 +10,14 @@ import br.com.ifsp.classify.dtos.update.ThemeSettingUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.ThemeSetting;
+import br.com.ifsp.classify.models.enums.ThemeAccent;
+import br.com.ifsp.classify.models.enums.ThemeMode;
 import br.com.ifsp.classify.repositories.ThemeSettingRepository;
 
 @Service
 public class ThemeSettingService {
 
     private static final int SETTING_ID = 1;
-    private static final Set<String> COLOR_MODES = Set.of("light", "dark", "system");
-    private static final Set<String> ACCENTS = Set.of("blue", "green", "red", "purple", "orange", "gray");
 
     private final ThemeSettingRepository repository;
 
@@ -41,16 +42,26 @@ public class ThemeSettingService {
         if (dto == null || dto.colorMode() == null || dto.accent() == null)
             throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o modo e a cor de destaque.");
 
-        if (!COLOR_MODES.contains(dto.colorMode()))
-            throw new DtoException(ExceptionCode.VALIDATION_ERROR, "O modo deve ser light, dark ou system.");
+        ThemeMode mode = ThemeMode.fromString(dto.colorMode());
+        if (mode == null)
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR,
+                    "O modo deve ser um destes: " + options(ThemeMode.values()) + ".");
 
-        if (!ACCENTS.contains(dto.accent()))
-            throw new DtoException(ExceptionCode.VALIDATION_ERROR, "A cor de destaque informada não existe.");
+        ThemeAccent accent = ThemeAccent.fromString(dto.accent());
+        if (accent == null)
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR,
+                    "A cor de destaque deve ser uma destas: " + options(ThemeAccent.values()) + ".");
 
         ThemeSetting setting = getSetting();
-        setting.setColorMode(dto.colorMode());
-        setting.setAccent(dto.accent());
+        setting.setColorMode(mode.value());
+        setting.setAccent(accent.value());
 
         return returnDTO(repository.save(setting));
+    }
+
+    private static <E extends Enum<E>> String options(E[] values) {
+        return Arrays.stream(values)
+                .map(value -> value.name().toLowerCase())
+                .collect(Collectors.joining(", "));
     }
 }
