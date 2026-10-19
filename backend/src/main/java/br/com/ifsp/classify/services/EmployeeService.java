@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
@@ -602,6 +603,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
     }
 
     @Override
+    @Transactional
     public ResponseEntity<Void> delete(String uuid) {
         Employee employee = getEntityById(uuid);
         if (employee == null)

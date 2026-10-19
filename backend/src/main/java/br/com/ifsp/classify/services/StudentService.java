@@ -1,4 +1,6 @@
 package br.com.ifsp.classify.services;
+import br.com.ifsp.classify.models.Class;
+import br.com.ifsp.classify.repositories.ClassRepository;
 import br.com.ifsp.classify.models.ClassSession;
 import br.com.ifsp.classify.models.enums.ClassSessionStatus;
 import br.com.ifsp.classify.repositories.ClassSessionRepository;
@@ -23,6 +25,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
@@ -53,8 +56,9 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     private final StudentRepository studentRepository;
     private final UserService userService;
     private final ClassSessionRepository classSessionRepository;
+    private final ClassRepository classRepository;
 
-    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService, ClassSessionRepository classSessionRepository) {
+    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService, ClassSessionRepository classSessionRepository, ClassRepository classRepository) {
         super(repository);
         this.studentRepository = repository;
         this.telephoneService = telephoneService;
@@ -62,6 +66,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         this.auditService = auditService;
         this.userService = userService;
         this.classSessionRepository = classSessionRepository;
+        this.classRepository = classRepository;
     }
 
     @Override
@@ -85,17 +90,27 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     }
 
     private void cancelFutureSessions(Student student) {
-    List<ClassSession> sessions = classSessionRepository
-        .findByStudentAndStatusAndStartTimeAfter(
-            student, ClassSessionStatus.SCHEDULED, LocalDateTime.now());
+        List<ClassSession> sessions = classSessionRepository
+            .findByStudentAndStatusAndStartTimeAfter(
+                student, ClassSessionStatus.SCHEDULED, LocalDateTime.now());
 
-    for (ClassSession session : sessions) {
-        session.setStatus(ClassSessionStatus.CANCELED);
-        session.setCancellationReason("Aluno inativado");
+        for (ClassSession session : sessions) {
+            session.setStatus(ClassSessionStatus.CANCELED);
+            session.setCancellationReason("Aluno inativado");
+        }
+
+        classSessionRepository.saveAll(sessions);
     }
 
-    classSessionRepository.saveAll(sessions);
-}
+    private void removeFromClasses(Student student) {
+        List<Class> classes = classRepository.findByStudentsId(student.getId());
+        
+        for (Class c : classes) {
+            c.getStudents().remove(student);
+        }
+        
+    classRepository.saveAll(classes);
+    }
 
     private List<GuardianGetDTO> returnDTO(List<Guardian> guardians) {
         if (guardians == null || guardians.isEmpty())
@@ -258,6 +273,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     }
 
     @Override
+    @Transactional
     public ResponseEntity<Void> delete(String uuid) {
         Student student = getEntityById(uuid);
         if (student == null)
@@ -269,6 +285,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         student.setIsDeleted(true);      
         repository.save(student);
         cancelFutureSessions(student);
+        removeFromClasses(student);
 
         auditService.logDelete("STUDENT", id, oldStudent);
 
