@@ -1,12 +1,15 @@
-import type { RoleDTO } from "../role/RoleDTO";
+import type { TelephoneDTO } from "../telephone/TelephoneDTO";
 
+// Espelha o EmployeeGetDTO do backend (não expõe e-mail nem cargo).
 export interface EmployeeDTO {
     uuid: string;
     name: string;
+    birthDate: string;
     cpf: string;
-    birthDate: Date;
+    hireDate: string;
+    telephones: TelephoneDTO[];
+    userUuid: string | null;
     email: string;
-    telephone: string;
-    address: string;
-    role: RoleDTO;
+    roleId: string;
+    roleDescription: string;
 }

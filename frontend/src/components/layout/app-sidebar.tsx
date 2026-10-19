@@ -3,10 +3,20 @@ import { NavMain } from "../sidebar/nav-main"
 import { NavUser } from "../sidebar/nav-user"
 import { NavHeader } from "../sidebar/nav-header"
 import { mainNavigation } from "../sidebar/sidebar-items"
+import { useAuth } from "@/hooks/useAuth"
 
 export function AppSidebar() {
-  const { state, setOpen } = useSidebar()
-  const isCollapsed = state === "collapsed"
+  const { state, setOpen } = useSidebar();
+  const { userData } = useAuth();
+  const isCollapsed = state === "collapsed";
+  
+  const navigation = mainNavigation
+    .filter((group) => !group.allowedRoles || (userData && group.allowedRoles.includes(userData.role)))
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.allowedRoles || (userData && item.allowedRoles.includes(userData.role))),
+    }))
+    .filter((group) => group.items.length > 0 || group.url);
 
   return (
     <Sidebar
@@ -21,7 +31,7 @@ export function AppSidebar() {
 
       <SidebarContent className="scrollbar-hidden">
         { 
-          mainNavigation.map((navItem) => {
+          navigation.map((navItem) => {
             return <NavMain key={navItem.title} group={navItem}/>
           }) 
         }

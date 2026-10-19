@@ -1,4 +1,4 @@
 export interface ClassSessionStudentDTO {
     uuid: string,
-    name: string
+    name: string;
 };

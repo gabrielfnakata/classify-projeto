@@ -1,5 +1,6 @@
 package br.com.ifsp.classify.models;
 
+import br.com.ifsp.classify.models.form.FormSubmission;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -13,7 +14,7 @@ import java.util.List;
 @Table(name = "STUDENT")
 public class Student implements Serializable {
 
-    @JdbcTypeCode(SqlTypes.TINYINT)
+    @JdbcTypeCode(SqlTypes.BIGINT)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -46,7 +47,10 @@ public class Student implements Serializable {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
-    @ManyToMany
+    @OneToOne(cascade = CascadeType.ALL)
+    private User user;
+
+    @ManyToMany(cascade = CascadeType.PERSIST)
     @JoinTable(
         name = "STUDENT_GUARDIAN",
         joinColumns = @JoinColumn(name = "student_id"),
@@ -62,8 +66,11 @@ public class Student implements Serializable {
     )
     private List<Class> classes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Telephone> telephones = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    private List<FormSubmission> formSubmissions = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -129,6 +136,14 @@ public class Student implements Serializable {
         this.isDeleted = isDeleted;
     }
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     public List<Guardian> getGuardians() {
         return guardians;
     }
@@ -153,8 +168,18 @@ public class Student implements Serializable {
         this.telephones = telephones;
     }
 
+    public List<FormSubmission> getFormSubmissions() {
+        return formSubmissions;
+    }
+
+    public void setFormSubmissions(List<FormSubmission> formSubmissions) {
+        this.formSubmissions = formSubmissions;
+    }
+
     public void addGuardian(Guardian guardian) {
-        if (guardians.add(guardian)) {
+        // List.add sempre devolve true; sem o contains os dois lados se chamavam para sempre (StackOverflow).
+        if (!guardians.contains(guardian)) {
+            guardians.add(guardian);
             guardian.addStudent(this);
         }
     }

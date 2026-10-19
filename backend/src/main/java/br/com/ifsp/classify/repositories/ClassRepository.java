@@ -2,4 +2,8 @@ package br.com.ifsp.classify.repositories;
 
 import br.com.ifsp.classify.models.Class;
 
-public interface ClassRepository extends AbstractRepository<Class, Integer> {}
+import java.util.Optional;
+
+public interface ClassRepository extends AbstractRepository<Class, Long> {
+    Optional<Class> findByUuid(byte[] uuid);
+}

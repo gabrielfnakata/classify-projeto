@@ -22,6 +22,7 @@
   --color-table-header: var(--table-header);
 
   --color-button-background: var(--button-background);
+  --color-button-highlight: var(--button-highlight);
 
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
@@ -58,7 +59,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  
+
   --color-sidebar-background: var(--sidebar-background-base);
   --color-sidebar-gradient: var(--sidebar-background-gradient);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -76,6 +77,8 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-check: var(--check);
+  --color-send: var(--send);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -103,6 +106,7 @@
   --table-header: rgb(255, 255, 255);
 
   --button-background: rgb(42, 92, 132);
+  --button-highlight: rgb(104, 170, 223);
 
   --popover: oklch(0.99 0.002 230);
   --popover-foreground: oklch(0.28 0.04 240);
@@ -155,6 +159,9 @@
 
   --info: oklch(0.9 0.035 230);
   --info-foreground: oklch(0.36 0.065 230);
+
+  --check: oklch(0.8 0.2 149);
+  --send: oklch(0.89 0.08 89.004);
 }
 
 .dark {
@@ -174,6 +181,7 @@
   --table-header: rgba(39, 40, 42);
 
   --button-background: rgb(214, 214, 214);
+  --button-highlight: rgb(159, 159, 159);
 
   --popover: oklch(0.21 0.014 250);
   --popover-foreground: oklch(0.95 0.004 230);
@@ -224,6 +232,9 @@
 
   --info: oklch(0.34 0.045 230);
   --info-foreground: oklch(0.93 0.02 230);
+
+  --check: oklch(0.5 0.1 149);
+  --send: oklch(0.89 0.08 89.004);
 }
 
 
@@ -259,5 +270,56 @@
 
   .scrollbar-hidden::-webkit-scrollbar {
     display: none;
+  }
+
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 30%, transparent) transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--muted-foreground) 28%, transparent);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklab, var(--muted-foreground) 50%, transparent);
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .scrollbar-themed {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-themed::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
   }
 }

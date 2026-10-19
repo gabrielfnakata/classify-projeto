@@ -9,5 +9,6 @@ public record ClassSessionCreateDTO(
         LocalDateTime endTime,
         ReportCreateDTO report,
         String classUuid,
-        String studentUuid
+        String studentUuid,
+        String recurrenceGroupUuid
 ) {}

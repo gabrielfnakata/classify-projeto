@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value = "/subject", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/subject", produces = MediaType.APPLICATION_JSON_VALUE)
 public class SubjectController extends AbstractController<SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, SubjectFilterDTO> {
 
     public SubjectController(SubjectService service) {

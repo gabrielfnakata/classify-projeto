@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from "react"
-import type { ReactNode } from "react"
-import { Funnel, ChevronDown, Check } from "lucide-react"
-import { SearchInput } from "@/components/features/search-input"
-import { cn } from "@/lib/utils"
+import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { Funnel, ChevronDown, Check } from "lucide-react";
+import { SearchInput } from "@/components/features/search-input";
+import { cn } from "@/lib/utils";
 
 interface FilterBarProps {
-  searchValue?: string
-  onSearchChange?: (value: string) => void
-  searchPlaceholder?: string
-  leftExtra?: ReactNode
-  rightExtra?: ReactNode
-  className?: string
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
+  searchPlaceholder?: string;
+  leftExtra?: ReactNode;
+  rightExtra?: ReactNode;
+  className?: string;
 }
 
 export function FilterBar({
@@ -38,14 +38,14 @@ export function FilterBar({
       {leftExtra ? <div className="md:w-[240px]">{leftExtra}</div> : null}
       {rightExtra ? <div className="md:w-[240px]">{rightExtra}</div> : null}
     </div>
-  )
+  );
 }
 
 interface FilterSelectProps {
-  value?: string
-  onChange?: (value: string) => void
+  value?: string;
+  onChange?: (value: string) => void;
   options: { label: string; value: string }[]
-  placeholder?: string
+  placeholder?: string;
 }
 
 export function FilterSelect({
@@ -54,25 +54,25 @@ export function FilterSelect({
   options,
   placeholder = "Filtrar por",
 }: FilterSelectProps) {
-  const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedOption = options.find((option) => option.value === value)
+  const selectedOption = options.find((option) => option.value === value);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (!containerRef.current) return
+      if (!containerRef.current) return;
 
       if (!containerRef.current.contains(event.target as Node)) {
-        setOpen(false)
+        setOpen(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div ref={containerRef} className="relative">
@@ -111,8 +111,8 @@ export function FilterSelect({
           <button
             type="button"
             onClick={() => {
-              onChange?.("")
-              setOpen(false)
+              onChange?.("");
+              setOpen(false);
             }}
             className={cn(
               "flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
@@ -124,15 +124,15 @@ export function FilterSelect({
           </button>
 
           {options.map((option) => {
-            const isSelected = option.value === value
+            const isSelected = option.value === value;
 
             return (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => {
-                  onChange?.(option.value)
-                  setOpen(false)
+                  onChange?.(option.value);
+                  setOpen(false);
                 }}
                 className={cn(
                   "flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
@@ -142,10 +142,10 @@ export function FilterSelect({
                 <span>{option.label}</span>
                 {isSelected ? <Check className="h-4 w-4" /> : null}
               </button>
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }

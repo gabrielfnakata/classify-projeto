@@ -33,7 +33,7 @@ public class Guardian {
     @Column(nullable = false, unique = true, length = 320)
     private String email;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "address_id", nullable = true)
     private Address address;
 
@@ -41,15 +41,11 @@ public class Guardian {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
-    @ManyToMany
-    @JoinTable(
-        name = "STUDENT_GUARDIAN",
-        joinColumns = @JoinColumn(name = "guardian_id"),
-        inverseJoinColumns = @JoinColumn(name = "student_id")
-    )
+    // Lado inverso: quem grava a STUDENT_GUARDIAN é Student.guardians.
+    @ManyToMany(mappedBy = "guardians")
     private List<Student> students = new ArrayList<>();
 
-    @OneToMany(mappedBy = "guardian")
+    @OneToMany(mappedBy = "guardian", cascade = CascadeType.ALL)
     private List<Telephone> telephones = new ArrayList<>();
 
     public Long getId() {
@@ -125,7 +121,8 @@ public class Guardian {
     }
 
     public void addStudent(Student student) {
-        if (students.add(student)) {
+        if (!students.contains(student)) {
+            students.add(student);
             student.addGuardian(this);
         }
     }

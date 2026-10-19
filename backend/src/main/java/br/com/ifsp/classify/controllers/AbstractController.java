@@ -18,8 +18,14 @@ public abstract class AbstractController<CreateDTO, GetDTO, UpdateDTO, FilterDTO
     }
 
     @GetMapping
-    public ResponseEntity<PageResponseGetDTO<GetDTO>> findAll( @PageableDefault(size = 10, sort = "id") Pageable pageable, FilterDTO filterDTO ) {
-        PageResponseGetDTO<GetDTO> responseDTO = service.findAll(pageable, filterDTO);
+    public ResponseEntity<PageResponseGetDTO<GetDTO>> findAll(
+            @PageableDefault(size = 10, sort = "id") Pageable pageable,
+            @RequestParam(name = "page", required = false) Integer pageNumber,
+            @RequestParam(name = "size", required = false) Integer pageSize,
+            FilterDTO filterDTO
+    ) {
+        Pageable effectivePageable = (pageNumber == null && pageSize == null) ? null : pageable;
+        PageResponseGetDTO<GetDTO> responseDTO = service.findAll(effectivePageable, filterDTO);
 
         return (responseDTO.content().isEmpty())
                 ? ResponseEntity.noContent().build()

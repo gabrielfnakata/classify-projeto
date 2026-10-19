@@ -24,7 +24,7 @@ export interface Field {
     key: string;
     name: string;
     label: string;
-    type: 'text' | 'number' | 'cpf' | 'date' | 'select' | 'phone';
+    type: 'text' | 'password' | 'number' | 'cpf' | 'date' | 'select' | 'phone';
     options?: {label: string, value: string}[];
     required: boolean;
 }
@@ -39,7 +39,7 @@ export default function NewEntityPage<T>({
     };
 
     return (
-        <div className="flex flex-col background h-full w-full items-center justify-center">
+        <div className="flex flex-col background h-screen w-full items-center justify-center">
             <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
                 <div className="flex flex-row w-4/5 items-center justify-between">
                     <PageHeader
@@ -51,13 +51,15 @@ export default function NewEntityPage<T>({
                         initialValues={initialFormValue}
                         onSubmit={handleSubmit}
                         validationSchema={validationSchema}
+                        validateOnMount
                     >
-                        {({ isSubmitting }) => (
+                        {({ isSubmitting, isValid }) => (
                             <Form className="flex flex-col gap-[3vh]">
-                                <FormGrid>
+                                <FormGrid className="!gap-y-8">
                                     {fields.map(field => {
                                         switch(field.type) {
                                             case 'text':
+                                            case 'password':
                                             case 'number':
                                                 return <FormikInput
                                                     key={field.key} name={field.name} label={field.label} type={field.type} required={field.required}
@@ -69,7 +71,7 @@ export default function NewEntityPage<T>({
                                             case 'select':
                                                 return <FormikSelectField
                                                     key={field.key} name={field.name} label={field.label} options={field.options ?? []}
-                                                />
+                                                />;
                                             case 'cpf':
                                                 return <CpfInput
                                                     key={field.key} name={field.name} label={field.label} required={field.required}
@@ -82,10 +84,10 @@ export default function NewEntityPage<T>({
                                     })}
                                 </FormGrid>
                                 <div className="flex flex-row justify-end gap-4">
-                                    <Button type="button" className="h-10 px-5 rounded-xl bg-red-400 text-sm font-semibold" onClick={() => {navigate(backRoute)}}>
+                                    <Button type="button" className="h-10 px-5 rounded-xl bg-red-400 text-sm font-semibold" onClick={() => {navigate(backRoute);}}>
                                         Voltar
                                     </Button>
-                                    <Button type="submit" disabled={isSubmitting} className="h-10 px-5 rounded-xl text-sm font-semibold">
+                                    <Button type="submit" disabled={isSubmitting || !isValid} className="h-10 px-5 rounded-xl text-sm font-semibold">
                                         Salvar
                                     </Button>
                                 </div>

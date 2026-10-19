@@ -1,5 +1,6 @@
 package br.com.ifsp.classify.models;
 
+import br.com.ifsp.classify.models.enums.ClassSessionStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -38,7 +39,7 @@ public class ClassSession implements Serializable {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "report_id", nullable = true)
     private Report report;
 
@@ -50,8 +51,41 @@ public class ClassSession implements Serializable {
     @JoinColumn(name = "student_id", nullable = true)
     private Student student;
 
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(name = "recurrence_group_id", nullable = true)
+    private byte[] recurrenceGroupId;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 9)
+    private ClassSessionStatus status = ClassSessionStatus.SCHEDULED;
+
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "cancellation_reason", length = 255)
+    private String cancellationReason;
+
     @OneToMany(mappedBy = "classSession")
     private List<Assessment> assessments = new ArrayList<>();
+
+    public ClassSessionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ClassSessionStatus status) {
+        this.status = status;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
+    }
+
+    public boolean isCanceled() {
+        return status == ClassSessionStatus.CANCELED;
+    }
 
     public Long getId() {
         return id;
@@ -131,5 +165,13 @@ public class ClassSession implements Serializable {
 
     public void setAssessments(List<Assessment> assessments) {
         this.assessments = assessments;
+    }
+
+    public byte[] getRecurrenceGroupId() {
+        return recurrenceGroupId;
+    }
+
+    public void setRecurrenceGroupId(byte[] recurrenceGroupId) {
+        this.recurrenceGroupId = recurrenceGroupId;
     }
 }

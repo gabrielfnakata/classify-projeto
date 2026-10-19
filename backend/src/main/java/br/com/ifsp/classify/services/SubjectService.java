@@ -5,11 +5,13 @@ import br.com.ifsp.classify.dtos.filter.SubjectFilterDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
 import br.com.ifsp.classify.dtos.update.SubjectUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Subject;
 import br.com.ifsp.classify.repositories.SubjectRepository;
 import br.com.ifsp.classify.specifications.SubjectSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.http.ResponseEntity;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -17,8 +19,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, SubjectFilterDTO, Integer> {
 
-    public SubjectService(SubjectRepository repository) {
+    private final AuditService auditService;
+
+    public SubjectService(SubjectRepository repository, AuditService auditService) {
         super(repository);
+        this.auditService = auditService;
     }
 
     @Override
@@ -38,15 +43,17 @@ public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, S
             return null;
 
         if (Utils.isNullOrEmpty(subjectDTO.description()))
-            throw new DtoException("A descrição da matéria não pode ser nula");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "A descrição da matéria não pode ser nula.");
 
         Subject newSubject = new Subject();
         newSubject.setUuid(UuidUtils.generateUUID());
         newSubject.setDescription(subjectDTO.description().trim().toUpperCase());
 
         repository.save(newSubject);
+        SubjectGetDTO createdSubject = returnDTO(newSubject);
+        auditService.logInsert("SUBJECT", Long.valueOf(newSubject.getId()), createdSubject);
 
-        return returnDTO(newSubject);
+        return createdSubject;
     }
 
     @Override
@@ -55,17 +62,38 @@ public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, S
         if (subjectDTO == null || subject == null)
             return null;
 
+        SubjectGetDTO oldSubject = returnDTO(subject);
+
         if (!Utils.isNullOrEmpty(subjectDTO.description()))
             subject.setDescription(subjectDTO.description().trim().toUpperCase());
 
         repository.save(subject);
+        SubjectGetDTO updatedSubject = returnDTO(subject);
+        auditService.logUpdate("SUBJECT", Long.valueOf(subject.getId()), oldSubject, updatedSubject);
 
-        return returnDTO(subject);
+        return updatedSubject;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        Subject subject = getEntityById(uuid);
+        if (subject == null)
+            return ResponseEntity.badRequest().build();
+
+        SubjectGetDTO oldSubject = returnDTO(subject);
+        Long id = Long.valueOf(subject.getId());
+        repository.delete(subject);
+        auditService.logDelete("SUBJECT", id, oldSubject);
+
+        return ResponseEntity.noContent().build();
     }
 
     @Override
     public Specification<Subject> createSpecificationFromFilter(SubjectFilterDTO filterDTO) {
         Specification<Subject> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
 
         if (!Utils.isNullOrEmpty(filterDTO.description())) {
             conditions = conditions.and(SubjectSpecification.getByDescription(filterDTO.description()));

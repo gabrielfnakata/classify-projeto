@@ -1,8 +1,10 @@
-import { useState } from "react"
-import { BookOpen, ChevronDown, Clock, MapPin, Pencil, Users } from "lucide-react"
+import {
+  BookOpen, CalendarCheck, CalendarSync, CalendarX, ClipboardCheck, Clock, MapPin, Pencil, Users,
+} from "lucide-react";
+import { useNavigate } from "react-router";
 
-import { StatusBadge } from "@/components/features/status-badge"
-import { Button } from "@/components/ui/button"
+import { StatusBadge } from "@/components/features/status-badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,46 +12,47 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
-import { formatYMD } from "@/shared/utils/date-formatter"
-import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+} from "@/components/ui/dialog";
+import { formatYMD } from "@/shared/utils/date-formatter";
+import { resolveClassroomName } from "@/shared/utils/class-session-helpers";
+import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping";
+import { isCanceled } from "@/shared/utils/class-session-helpers";
 
 interface ScheduleModalProps {
-  session: ClassSessionDTO | null
-  onClose: () => void
-  onEdit: () => void
+  group: SessionGroup | null;
+  classroomNames: Map<string, string>;
+  onClose: () => void;
+  onEdit: () => void;
+  onEditSeries: () => void;
+  onCancel: () => void;
+  onReactivate: () => void;
 }
 
-type SessionStatus = "info" | "success"
+type SessionStatus = "info" | "success" | "danger";
 
 const statusLabels: Record<SessionStatus, string> = {
   info: "Agendado",
   success: "Concluído",
-}
+  danger: "Cancelada",
+};
 
-const pad = (n: number) => String(n).padStart(2, "0")
+const pad = (n: number) => String(n).padStart(2, "0");
 
 function toHHMM(raw: unknown): string {
-  const d = new Date(raw as string)
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const d = new Date(raw as string);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function sessionStatus(dto: ClassSessionDTO): SessionStatus {
-  return new Date(dto.endTime as unknown as string) < new Date() ? "success" : "info"
-}
-
-function studentOrClass(dto: ClassSessionDTO): string {
-  return dto.students.length === 1
-    ? dto.students[0].name
-    : `${dto.students.length} aluno${dto.students.length !== 1 ? "s" : ""}`
+function groupStatus(group: SessionGroup): SessionStatus {
+  if (group.sessions.every(isCanceled)) return "danger";
+  return new Date(group.sessions[0].endTime as unknown as string) < new Date() ? "success" : "info";
 }
 
 function formatDisplayDate(raw: unknown): string {
-  const date = new Date(raw as string)
+  const date = new Date(raw as string);
   return new Intl.DateTimeFormat("pt-BR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
-  }).format(new Date(formatYMD(date) + "T00:00:00"))
+  }).format(new Date(formatYMD(date) + "T00:00:00"));
 }
 
 function Initials({ name }: { name: string }) {
@@ -58,31 +61,38 @@ function Initials({ name }: { name: string }) {
     .filter(Boolean)
     .slice(0, 2)
     .map((w) => w[0].toUpperCase())
-    .join("")
+    .join("");
 
   return (
     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-bold text-primary">
       {initials}
     </div>
-  )
+  );
 }
 
-export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) {
-  const [studentsOpen, setStudentsOpen] = useState(false)
-  const students = session?.students ?? []
-  const hasMultiple = students.length > 1
+export function ScheduleModal({
+  group, classroomNames, onClose, onEdit, onEditSeries, onCancel, onReactivate,
+}: ScheduleModalProps) {
+  const navigate = useNavigate();
+  const primary = group?.sessions[0] ?? null;
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      onClose()
-      setStudentsOpen(false)
-    }
-  }
+    if (!open) onClose();
+  };
 
-  const status = session ? sessionStatus(session) : "info"
+  const status = group ? groupStatus(group) : "info";
+  const canceled = status === "danger";
+  const reason = group?.sessions.find((s) => s.cancellationReason)?.cancellationReason;
+
+  const handleAttendance = () => {
+    if (!group) return;
+    const [first, ...rest] = group.sessions;
+    const query = rest.length > 0 ? `?group=${rest.map((s) => s.uuid).join(",")}` : "";
+    navigate(`/attendance/${first.uuid}${query}`);
+  };
 
   return (
-    <Dialog open={!!session} onOpenChange={handleOpenChange}>
+    <Dialog open={!!group} onOpenChange={handleOpenChange}>
       <DialogContent className="p-0">
         <DialogHeader className="border-b border-border p-5 pr-12">
           <div className="flex items-center gap-2.5">
@@ -90,8 +100,8 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
               <BookOpen className="h-4 w-4 text-primary" />
             </div>
             <div className="min-w-0">
-              <DialogTitle className="truncate">{session?.subjectTeacher.subject ?? ""}</DialogTitle>
-              {session && (
+              <DialogTitle className="truncate">{primary?.subjectTeacher.subject.description ?? ""}</DialogTitle>
+              {primary && (
                 <div className="mt-0.5">
                   <StatusBadge variant={status}>{statusLabels[status]}</StatusBadge>
                 </div>
@@ -99,19 +109,20 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
             </div>
           </div>
           <DialogDescription className="mt-1">
-            {session ? formatDisplayDate(session.startTime) : ""}
+            {primary ? formatDisplayDate(primary.startTime) : ""}
+            {canceled && reason ? ` · Motivo: ${reason}` : ""}
           </DialogDescription>
         </DialogHeader>
 
-        {session && (
+        {group && primary && (
           <div className="flex flex-col gap-4 p-5">
             <div className="space-y-1">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Professor
               </div>
               <div className="flex items-center gap-2">
-                <Initials name={session.subjectTeacher.employee} />
-                <span className="text-sm text-foreground">{session.subjectTeacher.employee}</span>
+                <Initials name={primary.subjectTeacher.employee.name} />
+                <span className="text-sm text-foreground">{primary.subjectTeacher.employee.name}</span>
               </div>
             </div>
 
@@ -123,7 +134,7 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="text-sm text-foreground">
-                    {toHHMM(session.startTime)} – {toHHMM(session.endTime)}
+                    {toHHMM(primary.startTime)} – {toHHMM(primary.endTime)}
                   </span>
                 </div>
               </div>
@@ -134,53 +145,72 @@ export function ScheduleModal({ session, onClose, onEdit }: ScheduleModalProps) 
                 </div>
                 <div className="flex items-center gap-1.5">
                   <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="text-sm text-foreground">{session.classroom.name}</span>
+                  <span className="text-sm text-foreground">
+                    {resolveClassroomName(classroomNames, primary.classroomUuid)}
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="space-y-1">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Alunos
+                {primary.classDTO ? "Turma" : group.sessions.length > 1 ? `Alunos (${group.sessions.length})` : "Aluno"}
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
-                {hasMultiple ? (
-                  <div className="flex-1">
-                    <button
-                      type="button"
-                      onClick={() => setStudentsOpen((o) => !o)}
-                      className="flex items-center gap-1 text-sm font-medium text-foreground transition-colors hover:text-primary"
-                    >
-                      {studentOrClass(session)}
-                      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", studentsOpen && "rotate-180")} />
-                    </button>
-                    {studentsOpen && (
-                      <ul className="mt-1.5 space-y-0.5 pl-0.5">
-                        {students.map((s) => (
-                          <li key={s.uuid} className="text-sm text-foreground">• {s.name}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+              <div className="flex items-start gap-2">
+                <Users className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                {primary.classDTO ? (
+                  <span className="text-sm text-foreground">{primary.classDTO.name}</span>
                 ) : (
-                  <span className="text-sm text-foreground">{studentOrClass(session)}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.sessions.map((s) => (
+                      <span
+                        key={s.uuid}
+                        className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground"
+                      >
+                        {s.student?.name}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="flex-wrap">
+          <Button
+            variant="outline"
+            className="flex-1"
+            disabled={canceled}
+            title={canceled ? "Aula cancelada não tem chamada" : undefined}
+            onClick={handleAttendance}
+          >
+            <ClipboardCheck className="h-4 w-4" />
+            Fazer Chamada
+          </Button>
           <Button className="flex-1" onClick={onEdit}>
             <Pencil className="h-4 w-4" />
             Editar Agendamento
           </Button>
-          <Button variant="outline" className="flex-1" onClick={onClose}>
-            Sair
-          </Button>
+          {canceled ? (
+            <Button variant="outline" className="flex-1" onClick={onReactivate}>
+              <CalendarCheck className="h-4 w-4" />
+              Reativar Aula
+            </Button>
+          ) : (
+            <Button variant="outline" className="flex-1" onClick={onCancel}>
+              <CalendarX className="h-4 w-4" />
+              Cancelar Aula
+            </Button>
+          )}
+          {group && groupRecurrenceUuid(group) && (
+            <Button variant="outline" className="flex-1" onClick={onEditSeries}>
+              <CalendarSync className="h-4 w-4" />
+              Editar Recorrência
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

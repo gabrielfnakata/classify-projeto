@@ -1,6 +1,8 @@
 package br.com.ifsp.classify;
 
-import br.com.ifsp.classify.security.JwtAuthFilter;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +19,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
+import br.com.ifsp.classify.security.JwtAuthFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -40,14 +41,24 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        String ESTUDANTE = "ESTUDANTE";
+        String PROFESSOR = "PROFESSOR";
+        String ADMIN = "ADMIN";
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh", "/employee").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/user/**").hasAnyRole(ESTUDANTE, PROFESSOR, ADMIN)
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/student/me", "/student/me/**").hasRole(ESTUDANTE)
+                        .requestMatchers(HttpMethod.GET, "/student/**").hasAnyRole(ADMIN, PROFESSOR)
+                        .requestMatchers("/student/**").hasRole(ADMIN)
+                        .requestMatchers("/class/**", "/classsession/**", "/attendance/**").hasAnyRole(ADMIN, PROFESSOR)
+                        .requestMatchers(HttpMethod.GET, "/subject/**", "/subjectteacher/**", "/classroom/**").hasAnyRole(ADMIN, PROFESSOR)
+                        .anyRequest().hasRole(ADMIN)
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -57,14 +68,21 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        List<String> origins = Arrays.stream(allowedOriginsProperty.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
+        List<String> origins = (allowedOriginsProperty == null || allowedOriginsProperty.isBlank())
+                ? List.of()
+                : Arrays.stream(allowedOriginsProperty.split(","))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .toList();
 
-        config.setAllowedOrigins(origins);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        if (origins.isEmpty()) {
+            config.addAllowedOriginPattern("*");
+        } else {
+            for (String o : origins) config.addAllowedOrigin(o);
+        }
+
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(false);
 

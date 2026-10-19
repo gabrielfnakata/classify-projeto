@@ -9,4 +9,8 @@ export interface StudentCreateDTO {
     registrationDate: string;
     telephones: TelephoneCreateDTO[];
     guardians: GuardianCreateDTO[];
+    account?: {
+        email: string;
+        password: string;
+    };
 }

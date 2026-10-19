@@ -1,11 +1,11 @@
-import { Search } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SearchInputProps {
-  value?: string
-  onChange?: (value: string) => void
-  placeholder?: string
-  className?: string
+  value?: string;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+  className?: string;
 }
 
 export function SearchInput({
@@ -25,5 +25,5 @@ export function SearchInput({
         className="h-12 w-full rounded-2xl border border-border bg-filter-surface px-10 text-sm text-foreground placeholder:text-muted-foreground shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring/20"
       />
     </div>
-  )
+  );
 }

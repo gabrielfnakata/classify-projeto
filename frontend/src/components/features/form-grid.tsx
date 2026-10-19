@@ -1,9 +1,9 @@
-import type { ReactNode } from "react"
-import { cn } from "@/lib/utils"
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface FormGridProps {
-  children: ReactNode
-  className?: string
+  children: ReactNode;
+  className?: string;
 }
 
 export function FormGrid({ children, className }: FormGridProps) {
@@ -16,5 +16,5 @@ export function FormGrid({ children, className }: FormGridProps) {
     >
       {children}
     </div>
-  )
+  );
 }

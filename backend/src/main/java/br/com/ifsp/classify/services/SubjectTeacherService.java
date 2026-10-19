@@ -7,16 +7,20 @@ import br.com.ifsp.classify.dtos.get.SubjectTeacherEmployeeGetDTO;
 import br.com.ifsp.classify.dtos.get.SubjectTeacherGetDTO;
 import br.com.ifsp.classify.dtos.update.SubjectTeacherUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Employee;
 import br.com.ifsp.classify.models.Subject;
 import br.com.ifsp.classify.models.SubjectTeacher;
 import br.com.ifsp.classify.repositories.AbstractRepository;
+import br.com.ifsp.classify.repositories.ClassSessionRepository;
 import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.repositories.SubjectRepository;
+import br.com.ifsp.classify.specifications.ClassSessionSpecification;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.specifications.SubjectSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.http.ResponseEntity;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -26,11 +30,30 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
 
     private final EmployeeRepository employeeRepository;
     private final SubjectRepository subjectRepository;
+    private final ClassSessionRepository classSessionRepository;
 
-    public SubjectTeacherService(AbstractRepository<SubjectTeacher, Long> repository, EmployeeRepository employeeRepository, SubjectRepository subjectRepository) {
+    public SubjectTeacherService(AbstractRepository<SubjectTeacher, Long> repository, EmployeeRepository employeeRepository,
+            SubjectRepository subjectRepository, ClassSessionRepository classSessionRepository) {
         super(repository);
         this.employeeRepository = employeeRepository;
         this.subjectRepository = subjectRepository;
+        this.classSessionRepository = classSessionRepository;
+    }
+
+    @Override
+    public ResponseEntity<Void> delete(String uuid) {
+        SubjectTeacher subjectTeacher = getEntityById(uuid);
+        if (subjectTeacher == null)
+            return ResponseEntity.badRequest().build();
+
+        long scheduledSessions = classSessionRepository
+                .count(ClassSessionSpecification.getBySubjectTeacherId(subjectTeacher.getId()));
+
+        if (scheduledSessions > 0)
+            throw new DtoException("Esse professor possui " + scheduledSessions
+                    + " aula(s) agendada(s) nessa disciplina. Exclua ou altere os agendamentos antes de desvincular.");
+
+        return super.delete(uuid);
     }
 
     @Override
@@ -57,24 +80,24 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
             return null;
 
         if (Utils.isNullOrEmpty(subjectTeacherDTO.employeeId()))
-            throw new DtoException("É necessário informar um funcionário");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar um funcionário.");
 
         if (Utils.isNullOrEmpty(subjectTeacherDTO.subjectId()))
-            throw new DtoException("É necessário informar uma disciplina");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar uma disciplina.");
 
         Employee employee = employeeRepository
                 .findOne(EmployeeSpecification.getByUUID(subjectTeacherDTO.employeeId()))
                 .orElse(null);
 
         if (employee == null)
-            throw new DtoException("O funcionário informado não existe");
+            throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O funcionário informado não existe.");
 
         Subject subject = subjectRepository
                 .findOne(SubjectSpecification.getByUUID(subjectTeacherDTO.subjectId()))
                 .orElse(null);
 
         if (subject == null)
-            throw new DtoException("A matéria informada não existe");
+            throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "A matéria informada não existe.");
 
         SubjectTeacher newSubjectTeacher = new SubjectTeacher();
         newSubjectTeacher.setUuid(UuidUtils.generateUUID());
@@ -93,7 +116,7 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
             return null;
 
         if (Utils.isNullOrEmpty(subjectTeacherDTO.employeeId()) && Utils.isNullOrEmpty(subjectTeacherDTO.subjectId()))
-            throw new DtoException("Nenhum parâmetro foi passado");
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "Nenhum parâmetro foi informado para atualização.");
 
         if (!Utils.isNullOrEmpty(subjectTeacherDTO.employeeId())) {
             Employee employee = employeeRepository
@@ -101,7 +124,7 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
                     .orElse(null);
 
             if (employee == null)
-                throw new DtoException("O funcionário informado não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O funcionário informado não existe.");
 
             subjectTeacher.setEmployee(employee);
         }
@@ -112,7 +135,7 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
                     .orElse(null);
 
             if (subject == null)
-                throw new DtoException("A matéria informada não existe");
+                throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "A matéria informada não existe.");
 
             subjectTeacher.setSubject(subject);
         }
@@ -125,6 +148,9 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
     @Override
     public Specification<SubjectTeacher> createSpecificationFromFilter(SubjectTeacherFilterDTO filterDTO) {
         Specification<SubjectTeacher> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
 
         return conditions;
     }

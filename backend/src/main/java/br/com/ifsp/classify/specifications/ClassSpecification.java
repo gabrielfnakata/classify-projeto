@@ -11,4 +11,14 @@ public class ClassSpecification {
         return (root, query, cb) ->
                 cb.equal(root.get(Class_.uuid), UuidUtils.convertUUIDToBytes(uuid));
     }
+
+    public static Specification<br.com.ifsp.classify.models.Class> getByName(String name) {
+        return (root, query, cb) ->
+                cb.like(cb.lower(root.get(Class_.name)), "%" + name.toLowerCase() + "%");
+    }
+
+    public static Specification<br.com.ifsp.classify.models.Class> getByDescription(String description) {
+        return (root, query, cb) ->
+                cb.like(cb.lower(root.get(Class_.description)), "%" + description.toLowerCase() + "%");
+    }
 }

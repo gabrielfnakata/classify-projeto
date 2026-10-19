@@ -10,7 +10,7 @@ export default function ClassRegistration() {
 
     return (
         <>
-            <RegistrationPage
+            <RegistrationPage<ClassSessionDTO>
                 columns={columns}
                 url={CLASSSESSION_URL}
                 filters={filters}

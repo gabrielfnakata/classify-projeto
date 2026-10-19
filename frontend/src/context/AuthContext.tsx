@@ -1,5 +1,5 @@
 import api from "@/services/api";
-import { jwtDecode, type JwtPayload } from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import type LoginResponseDTO  from "@/shared/dtos/auth/LoginResponseDTO";
 import type { TokenData, UserInfoDTO } from "@/shared/dtos/user/UserInfoDTO";
 import { Roles } from "@/shared/models/enums/roles";
@@ -10,7 +10,7 @@ interface AuthContextData {
     signed: boolean,
     userData: UserInfoDTO | null,
     loading: boolean,
-    login(values: LoginForm): Promise<void>,
+    login(values: LoginForm): Promise<UserInfoDTO>,
     refresh(): Promise<void>,
     logout(): void
 };
@@ -23,17 +23,26 @@ export const AuthProvider = (params: { children: ReactNode }) => {
     const [userData, setUserData] = useState<UserInfoDTO | null>(null);
     const [isLoading, setLoading] = useState(true);
 
-    async function login(values: LoginForm) {
-        const response = await api.post<LoginResponseDTO>('/auth/login', {
-            email: values.email,
-            password: values.password
-        });
+    async function login(values: LoginForm): Promise<UserInfoDTO> {
+        const response = await api.post<LoginResponseDTO>(
+            '/auth/login',
+            {
+                email: values.email,
+                password: values.password
+            },
+            { skipExceptionModal: true }
+        );
 
         setLoginData(response.data);
         api.defaults.headers.Authorization = `Bearer ${response.data?.accessToken}`;
+
+        const authenticatedUser = getUserFromToken(response.data.accessToken);
+
         if (values.rememberMe) {
             sessionStorage.setItem('refreshToken', response.data.refreshToken);
         }
+
+        return authenticatedUser;
     }
 
     const refresh = useCallback(async () => {
@@ -53,16 +62,20 @@ export const AuthProvider = (params: { children: ReactNode }) => {
     const logout = useCallback(() => {
         sessionStorage.removeItem('refreshToken');
         setLoginData(null);
+        setUserData(null);
         api.defaults.headers.Authorization = '';
-
     }, []);
 
-    const getUserFromToken = useCallback((token: string) => {
+    const getUserFromToken = useCallback((token: string): UserInfoDTO => {
         const { sub, role } = jwtDecode<TokenData>(token);
-        setUserData({
+        const user = {
             email: sub!,
             role: role as Roles
-        });
+        };
+
+        setUserData(user);
+
+        return user;
     }, []);
 
     useEffect(() => {

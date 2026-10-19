@@ -1,11 +1,11 @@
-import type { ReactNode } from "react"
-import { cn } from "@/lib/utils"
+import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 interface SectionTitleProps {
-  title: string
-  description?: string
-  action?: ReactNode
-  className?: string
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  className?: string;
 }
 
 export function SectionTitle({
@@ -31,5 +31,5 @@ export function SectionTitle({
 
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
-  )
+  );
 }
