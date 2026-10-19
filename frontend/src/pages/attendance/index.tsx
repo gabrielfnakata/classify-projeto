@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ClipboardCheck, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, ClipboardCheck, Loader2 } from "lucide-react";
 
 import api from "@/services/api";
 import { SectionTitle } from "@/components/features/section-title";
@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { ContentCard } from "@/components/layout/content-card";
 import { JUSTIFICATION_REASON_OPTIONS } from "@/lib/justification-reason-options";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
+import { attendanceBlockReason } from "@/shared/utils/class-session-helpers";
+import { apiErrorMessage } from "@/shared/utils/api-error";
 import type {
   AttendanceRosterEntryDTO,
   AttendanceStatus,
@@ -62,6 +64,8 @@ export default function AttendancePage() {
     if (!sessionUuid) return;
     api.get<ClassSessionDTO>(`/classsession/${sessionUuid}`, { data: {} }).then((res) => setSession(res.data));
   }, [sessionUuid]);
+
+  const blockReason = session ? attendanceBlockReason(session) : null;
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [roster, setRoster] = useState<RosterEntry[] | null>(null);
@@ -202,8 +206,7 @@ export default function AttendancePage() {
       const failed = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
 
       if (failed.length > 0) {
-        const reason = failed[0].reason as { response?: { data?: { mensagem?: string } } };
-        const message = reason?.response?.data?.mensagem ?? "Erro ao salvar a chamada.";
+        const message = apiErrorMessage(failed[0].reason, "Erro ao salvar a chamada.");
         setError(
           results.length > 1
             ? `${results.length - failed.length} de ${results.length} alterações salvas. Uma falhou: ${message}`
@@ -236,6 +239,13 @@ export default function AttendancePage() {
       />
 
       <ContentCard className="space-y-5">
+        {blockReason && (
+          <div className="flex items-center gap-2.5 rounded-xl border border-info/40 bg-info/10 px-4 py-3 text-sm text-info-foreground">
+            <CalendarClock className="h-4 w-4 shrink-0" />
+            <p>{blockReason}. Por enquanto, a lista de alunos fica só para consulta.</p>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-success" />
@@ -279,6 +289,7 @@ export default function AttendancePage() {
                   </div>
 
                   <AttendanceStatusToggle
+                    disabled={Boolean(blockReason)}
                     value={edit?.status ?? null}
                     onChange={(status) => setRowStatus(entry.studentUuid, status)}
                   />
@@ -319,7 +330,11 @@ export default function AttendancePage() {
         )}
 
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={submitting || loading || (roster ?? []).length === 0}>
+          <Button
+            onClick={handleSave}
+            disabled={submitting || loading || (roster ?? []).length === 0 || Boolean(blockReason)}
+            title={blockReason ?? undefined}
+          >
             {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             <ClipboardCheck className="h-4 w-4" />
             Salvar Chamada

@@ -16,6 +16,7 @@ import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type { AttendanceSessionStatusDTO } from "@/shared/dtos/attendance/AttendanceSessionStatusDTO";
 import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
+import { isAttendanceOpen, isCanceled } from "@/shared/utils/class-session-helpers";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const startOf = (s: ClassSessionDTO) => new Date(s.startTime as unknown as string);
@@ -49,7 +50,16 @@ function targetLabel(sessions: ClassSessionDTO[]): string {
   return names.length === 1 ? names[0] : `${names.length} alunos`;
 }
 
-function AttendanceStatusIndicator({ total, marked }: { total: number; marked: number }) {
+interface EntryStatus {
+  total: number;
+  marked: number;
+  open: number;
+  allCanceled: boolean;
+}
+
+function AttendanceStatusIndicator({ total, marked, open, allCanceled }: EntryStatus) {
+  if (allCanceled) return <StatusBadge variant="muted">Cancelada</StatusBadge>;
+  if (open === 0) return <StatusBadge variant="info">Agendada</StatusBadge>;
   if (marked === 0) return <StatusBadge variant="muted">Pendente</StatusBadge>;
   if (marked < total) return <StatusBadge variant="warning">Parcial</StatusBadge>;
   return <StatusBadge variant="success">Completa</StatusBadge>;
@@ -57,15 +67,16 @@ function AttendanceStatusIndicator({ total, marked }: { total: number; marked: n
 
 export default function AttendanceOverview() {
   const { data: classSessionData, loading } = useFetch<PaginationDTO<ClassSessionDTO>>("/classsession");
-  const { data: attendanceData } = useFetch<PaginationDTO<AttendanceSessionStatusDTO>>("/attendance/status");
+  const { data: attendanceData } = useFetch<AttendanceSessionStatusDTO[]>("/attendance/status");
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [now] = useState(() => Date.now());
 
   const statusBySession = useMemo(() => {
     const map = new Map<string, AttendanceSessionStatusDTO>();
-    (attendanceData?.content ?? []).forEach((s) => map.set(s.classSessionUuid, s));
+    (attendanceData ?? []).forEach((s) => map.set(s.classSessionUuid, s));
     return map;
-  }, [attendanceData?.content]);
+  }, [attendanceData]);
 
   const entries = useMemo<Entry[]>(() => {
     const all = classSessionData?.content ?? [];
@@ -99,21 +110,25 @@ export default function AttendanceOverview() {
     return [...seriesEntries, ...looseEntries];
   }, [classSessionData?.content]);
 
-  const entryStatus = (entry: Entry) =>
-    entry.sessions.reduce(
+  const entryStatus = (entry: Entry): EntryStatus =>
+    entry.sessions.reduce<EntryStatus>(
       (acc, s) => {
+        if (!isCanceled(s)) acc.allCanceled = false;
+        if (!isAttendanceOpen(s, now)) return acc;
         const st = statusBySession.get(s.uuid);
+        acc.open += 1;
         acc.total += st?.totalStudents ?? 0;
         acc.marked += st?.markedStudents ?? 0;
         return acc;
       },
-      { total: 0, marked: 0 }
+      { total: 0, marked: 0, open: 0, allCanceled: true }
     );
 
   const summary = useMemo(() => {
     return entries.reduce(
       (acc, entry) => {
-        const { total, marked } = entryStatus(entry);
+        const { total, marked, open } = entryStatus(entry);
+        if (open === 0) return acc;
         if (marked === 0) acc.pending += 1;
         else if (marked < total) acc.partial += 1;
         else acc.complete += 1;
@@ -122,16 +137,18 @@ export default function AttendanceOverview() {
       { pending: 0, partial: 0, complete: 0 }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries, statusBySession]);
+  }, [entries, statusBySession, now]);
 
   const sorted = useMemo(
     () =>
-      [...entries].sort(
-        (a, b) =>
-          startOf(b.sessions[b.sessions.length - 1]).getTime() -
-          startOf(a.sessions[a.sessions.length - 1]).getTime()
-      ),
-    [entries]
+      [...entries].sort((a, b) => {
+        const aOpen = a.sessions.some((s) => isAttendanceOpen(s, now));
+        const bOpen = b.sessions.some((s) => isAttendanceOpen(s, now));
+        if (aOpen !== bOpen) return aOpen ? -1 : 1;
+        return startOf(b.sessions[b.sessions.length - 1]).getTime() -
+          startOf(a.sessions[a.sessions.length - 1]).getTime();
+      }),
+    [entries, now]
   );
 
   const filtered = useMemo(() => {
@@ -198,7 +215,7 @@ export default function AttendanceOverview() {
             {filtered.map((entry) => {
               const primary = entry.sessions[0];
               const last = entry.sessions[entry.sessions.length - 1];
-              const { total, marked } = entryStatus(entry);
+              const status = entryStatus(entry);
               const isClass = Boolean(primary.classDTO);
               const names = targetNames(entry.sessions);
               const visible = names.slice(0, 3);
@@ -229,7 +246,7 @@ export default function AttendanceOverview() {
                         {isSeries && (
                           <StatusBadge variant="info">{entry.sessions.length} aulas</StatusBadge>
                         )}
-                        <AttendanceStatusIndicator total={total} marked={marked} />
+                        <AttendanceStatusIndicator {...status} />
                       </div>
                       <p className="truncate text-sm text-muted-foreground">
                         {isSeries
@@ -261,7 +278,18 @@ export default function AttendanceOverview() {
                         {targetLabel(entry.sessions)}
                       </span>
                     </div>
-                    <Button variant="outline" onClick={() => openAttendance(entry)}>
+                    <Button
+                      variant="outline"
+                      disabled={status.open === 0}
+                      title={
+                        status.allCanceled
+                          ? "Aula cancelada não tem chamada"
+                          : status.open === 0
+                            ? "A chamada abre quando a aula começar"
+                            : undefined
+                      }
+                      onClick={() => openAttendance(entry)}
+                    >
                       <ClipboardCheck className="h-4 w-4" />
                       Fazer Chamada
                     </Button>

@@ -9,6 +9,15 @@ export const sessionEnd = (session: ClassSessionDTO): Date => toDate(session.end
 
 export const isCanceled = (session: ClassSessionDTO): boolean => session.status === "CANCELED";
 
+export function attendanceBlockReason(session: ClassSessionDTO, now: number = Date.now()): string | null {
+  if (isCanceled(session)) return "Aula cancelada";
+  if (sessionStart(session).getTime() > now) return "A chamada abre quando a aula começar";
+  return null;
+}
+
+export const isAttendanceOpen = (session: ClassSessionDTO, now?: number): boolean =>
+  attendanceBlockReason(session, now) === null;
+
 export function isSessionActiveAt(session: ClassSessionDTO, at: number): boolean {
   if (isCanceled(session)) return false;
   return sessionStart(session).getTime() <= at && at < sessionEnd(session).getTime();
