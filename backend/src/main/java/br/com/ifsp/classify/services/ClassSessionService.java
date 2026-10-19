@@ -329,6 +329,10 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
             if (studentFound == null)
                 throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O aluno informado não foi encontrado ou não foi registrado.");
 
+            if (studentFound.getIsDeleted() != null && studentFound.getIsDeleted()) {
+                throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Não é possível criar uma aula para um aluno deletado.");
+            }
+
             newClassSession.setStudent(studentFound);
             newClassSession.setClassSessionClass(null);
         }

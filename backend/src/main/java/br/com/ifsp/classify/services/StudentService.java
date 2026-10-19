@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -245,11 +246,23 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
 
         StudentGetDTO oldStudent = returnDTO(student);
         Long id = student.getId();
-        repository.delete(student);
+
+        student.setIsDeleted(true);      
+        repository.save(student);
+
         auditService.logDelete("STUDENT", id, oldStudent);
 
         return ResponseEntity.noContent().build();
     }
+
+    @Override
+    public List<StudentGetDTO> findAll() {
+        return repository.findAll()
+                .stream()
+                .filter(student -> !Boolean.TRUE.equals(student.getIsDeleted()))
+                .map(student -> returnDTO(student))
+                .collect(Collectors.toList());
+    }    
 
     public List<GuardianGetDTO> addGuardians(String studentUuid, List<GuardianCreateDTO> guardiansDTO) {
         if (!Utils.hasElements(guardiansDTO))

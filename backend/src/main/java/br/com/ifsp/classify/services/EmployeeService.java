@@ -609,9 +609,21 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
 
         EmployeeGetDTO oldEmployee = returnDTO(employee);
         Long id = employee.getId();
-        repository.delete(employee);
+
+        employee.setIsDeleted(true);      
+        repository.save(employee);
+
         auditService.logDelete("EMPLOYEE", id, oldEmployee);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public List<EmployeeGetDTO> findAll() {
+        return repository.findAll()
+                .stream()
+                .filter(employee -> !Boolean.TRUE.equals(employee.getIsDeleted()))
+                .map(employee -> returnDTO(employee))
+                .toList();
     }
 }
