@@ -9,7 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface StudentRepository extends AbstractRepository<Student, Long> {
-    Optional<Student> findByUserEmail(String email);
+    Optional<Student> 
+    findByUserEmail(String email);
+    boolean existsByUserEmailAndIsDeletedTrue(String email);
 
     List<Student> findByUuidIsIn(List<byte[]> studentsUuids);
 }

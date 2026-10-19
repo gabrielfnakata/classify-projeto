@@ -11,6 +11,7 @@ import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.security.JwtService;
 import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.specifications.UserSpecification;
+import br.com.ifsp.classify.repositories.StudentRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,16 +27,19 @@ public class AuthController {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
     private final EmployeeRepository employeeRepository;
     private final JwtService jwtService;
-
+    
     public AuthController(
             PasswordEncoder passwordEncoder,
             UserRepository userRepository,
+            StudentRepository studentRepository,
             EmployeeRepository employeeRepository,
             JwtService jwtService) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
         this.employeeRepository = employeeRepository;
         this.jwtService = jwtService;
     }
@@ -127,6 +131,6 @@ public class AuthController {
         if (UserRole.ADMIN.name().equals(role) || UserRole.PROFESSOR.name().equals(role)) {
             return employeeRepository.findByUserEmailAndIsDeletedFalse(user.getEmail()).isPresent();
         }
-        return true;
+        return !studentRepository.existsByUserEmailAndIsDeletedTrue(user.getEmail());
     }
 }

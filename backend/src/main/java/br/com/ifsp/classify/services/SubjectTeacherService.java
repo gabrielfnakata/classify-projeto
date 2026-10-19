@@ -22,6 +22,8 @@ import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class SubjectTeacherService extends AbstractService<SubjectTeacher, SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO, Long> {
 
@@ -69,6 +71,16 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
                         subjectTeacher.getSubject().getDescription()
                 )
         );
+    }
+
+    @Override
+    public List<SubjectTeacherGetDTO> findAll() {
+        return repository.findAll()
+            .stream()
+            .filter(st -> st.getEmployee() == null
+                || !Boolean.TRUE.equals(st.getEmployee().getIsDeleted()))
+            .map(this::returnDTO)
+            .toList();
     }
 
     @Override
