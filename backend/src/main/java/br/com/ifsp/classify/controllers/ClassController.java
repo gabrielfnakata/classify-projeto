@@ -2,6 +2,7 @@ package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.AddStudentsToClassDTO;
 import br.com.ifsp.classify.dtos.create.ClassCreateDTO;
+import br.com.ifsp.classify.dtos.filter.ClassFilterDTO;
 import br.com.ifsp.classify.dtos.get.ClassGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassStudentCountDTO;
 import br.com.ifsp.classify.dtos.get.ClassStudentSummaryDTO;
@@ -23,7 +24,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/class", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-public class ClassController extends AbstractController<ClassCreateDTO, ClassGetDTO, ClassUpdateDTO> {
+public class ClassController extends AbstractController<ClassCreateDTO, ClassGetDTO, ClassUpdateDTO, ClassFilterDTO> {
 
     private final ClassService service;
 

@@ -4,11 +4,12 @@ import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import { StatusBadge } from "@/components/features/status-badge";
-import useFetch from "@/hooks/useFetch";
 import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence";
 import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
+import useFetch from "@/hooks/useFetch";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const startOf = (s: ClassSessionDTO) => new Date(s.startTime as unknown as string);
@@ -30,12 +31,12 @@ interface ScheduleInfo {
 }
 
 export default function ClassGroupRegistration() {
-    const { data } = useFetch<ClassGroupDTO>('/class');
-    const { data: sessions } = useFetch<ClassSessionDTO>('/classsession');
+    const { data } = useFetch<PaginationDTO<ClassSessionDTO>>('/classsession');
 
     const [now] = useState(() => Date.now());
 
     const scheduleByClass = useMemo(() => {
+        const sessions = data?.content ?? [];
         const map = new Map<string, ScheduleInfo>();
 
         const upcomingSessions = (sessions ?? []).filter(
@@ -80,7 +81,7 @@ export default function ClassGroupRegistration() {
         });
 
         return map;
-    }, [sessions, now]);
+    }, [data?.content, now]);
 
     const columns: DataTableColumn<ClassGroupDTO>[] = [
         {
@@ -140,12 +141,13 @@ export default function ClassGroupRegistration() {
 
     return (
         <RegistrationPage
-            data={sortedByName(data ?? [])}
+            url="/class"
             columns={columns}
             filters={filters}
             title="Turmas"
             registrationRoute="/new-class-group"
             detailRoute={(row) => `/class-groups/${row.uuid}`}
+            sortData={sortedByName}
         >
         </RegistrationPage>
     );

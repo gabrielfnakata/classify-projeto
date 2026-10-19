@@ -2,6 +2,7 @@ import NewEntityPage from "@/components/page-templates/form/NewEntityPage";
 import useFetch from "@/hooks/useFetch";
 import api from "@/services/api";
 import type { EmployeeCreateDTO } from "@/shared/dtos/employees/EmployeeCreateDTO";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import type { RoleDTO } from "@/shared/dtos/role/RoleDTO";
 import { parseTelephone } from "@/shared/utils/telephone-parser";
 import { NewEmployeeValidationSchema } from "@/validation/EmployeeSchema";
@@ -12,7 +13,7 @@ const DEFAULT_EMPLOYEE_PASSWORD = "Mudar@123";
 
 export default function NewEmployee() {
     const navigate = useNavigate();
-    const { data: roles } = useFetch<RoleDTO[]>('/role');
+    const { data: roles } = useFetch<PaginationDTO<RoleDTO>>('/role');
 
     const fields = [
         { key: 'name', name: 'name', label: 'Nome', type: 'text' as const, required: true },
@@ -22,7 +23,7 @@ export default function NewEmployee() {
         { key: 'hireDate', name: 'hireDate', label: 'Data de contratação', type: 'date' as const, required: true },
         {
             key: 'roleId', name: 'roleId', label: 'Cargo', type: 'select' as const, required: true,
-            options: (roles ?? [])
+            options: (roles?.content ?? [])
                 .filter(role => role.id !== Roles.ESTUDANTE)
                 .map(role => ({ label: role.description, value: role.id }))
         },

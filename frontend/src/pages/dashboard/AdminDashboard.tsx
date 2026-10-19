@@ -54,6 +54,7 @@ import type { SubjectDTO } from "@/shared/dtos/subject/SubjectDTO"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO"
 
 const AGE_BUCKETS = [
   { label: "Até 10 anos", min: 0, max: 10 },
@@ -73,15 +74,15 @@ function studentAge(birthDate: unknown, today: Date): number {
 }
 
 export default function AdminDashboard() {
-  const { data: students } = useFetch<StudentDTO>("/student")
-  const { data: employees } = useFetch<EmployeeDTO>("/employee")
-  const { data: subjects } = useFetch<SubjectDTO>("/subject")
-  const { data: classrooms } = useFetch<ClassroomDTO>("/classroom")
-  const { data: subjectTeachers } = useFetch<SubjectTeacherDTO>("/subjectteacher")
-  const { data: rawSessions } = useFetch<ClassSessionDTO>("/classsession")
+  const students = useFetch<PaginationDTO<StudentDTO>>("/student").data?.content
+  const employees = useFetch<PaginationDTO<EmployeeDTO>>("/employee").data?.content
+  const subjects = useFetch<PaginationDTO<SubjectDTO>>("/subject").data?.content
+  const classrooms = useFetch<PaginationDTO<ClassroomDTO>>("/classroom").data?.content
+  const subjectTeachers = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher").data?.content
+  const rawSessions = useFetch<PaginationDTO<ClassSessionDTO>>("/classsession").data?.content
   // Aula cancelada não aconteceu: fica fora de contagens, gráficos e próximas aulas.
   const sessions = useMemo(() => (rawSessions ?? []).filter((s) => !isCanceled(s)), [rawSessions])
-  const { data: classGroups } = useFetch<ClassGroupDTO>("/class")
+  const classGroups = useFetch<PaginationDTO<ClassGroupDTO>>("/class").data?.content
   const rosters = useMemo(() => buildClassRosters(classGroups ?? []), [classGroups])
 
   const [period, setPeriod] = useState<PeriodValue>("30")

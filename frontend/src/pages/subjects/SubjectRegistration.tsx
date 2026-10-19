@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-
 import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
@@ -16,17 +15,20 @@ import ConfirmDeleteDialog from "@/components/common/confirm-delete-dialog";
 import type { Field } from "@/components/page-templates/form/NewEntityPage";
 import { NewSubjectValidationSchema } from "@/validation/SubjectSchema";
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 export default function SubjectRegistration() {
+    const SUBJECT_URL = "/subject";
+    const [refreshKey, setRefreshKey] = useState(0);
     const [subjectToEdit, setSubjectToEdit] = useState<SubjectDTO | null>(null);
     const [subjectToDelete, setSubjectToDelete] = useState<SubjectDTO | null>(null);
 
-    const {data, refetch} = useFetch<SubjectDTO[]>('/subject');
-    const { data: links } = useFetch<SubjectTeacherDTO[]>('/subjectteacher');
+    const { data } = useFetch<PaginationDTO<SubjectTeacherDTO>>('/subjectteacher');
 
     const scheduleBySubject = useScheduleSummary("SUBJECT");
 
-    const teachers = useMemo(() => teachersBySubject(links ?? []), [links]);
+    const teachers = useMemo(() => teachersBySubject(data?.content ?? []), [data?.content]);
+    const handleRefresh = () => setRefreshKey((current) => current + 1);
 
     const columns: DataTableColumn<SubjectDTO>[] = [
         { key: 'description', header: 'Descrição', cell: row => <span className="font-medium text-foreground">{row.description}</span> },
@@ -61,26 +63,28 @@ export default function SubjectRegistration() {
         };
 
         await api.put(`/subject/${subjectToEdit?.uuid}`, payload);
-        await refetch();
+        handleRefresh();
         setSubjectToEdit(null);
     }
 
     async function handleDeleteSubject() {
         if (!subjectToDelete) return;
         await api.delete(`/subject/${subjectToDelete.uuid}`);
-        await refetch();
+        handleRefresh();
         setSubjectToDelete(null);
     }
 
     return (
         <>
-            <RegistrationPage
-                data={data ?? []}
+            <RegistrationPage<SubjectDTO>
                 columns={columns}
+                url={SUBJECT_URL}
                 filters={filters}
                 title="Disciplinas"
                 registrationRoute="/new-subject"
                 detailRoute={(row) => `/subjects/${row.uuid}`}
+                refreshKey={refreshKey}
+                onRefresh={handleRefresh}
             >
             </RegistrationPage>
 

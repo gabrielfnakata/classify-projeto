@@ -3,9 +3,7 @@ import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import { StatusBadge } from "@/components/features/status-badge";
 import { UpcomingSessionsBadge } from "@/components/features/schedule-summary-cells";
-import useFetch from "@/hooks/useFetch";
 import useScheduleSummary from "@/hooks/useScheduleSummary";
-import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
 import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -16,12 +14,13 @@ import type { Field } from "@/components/page-templates/form/NewEntityPage";
 import { NewClassroomValidationSchema } from "@/validation/ClassroomSchema";
 
 export default function ClassroomRegistration() {
+    const CLASSROOM_URL = "/classroom";
+    const [refreshKey, setRefreshKey] = useState(0);
     const [classroomToDelete, setClassroomToDelete] = useState<ClassroomDTO | null>(null);
     const [classroomToEdit, setClassroomToEdit] = useState<ClassroomDTO | null>(null);
 
-    const { data, refetch } = useFetch<ClassroomDTO[]>('/classroom');
-
     const scheduleByClassroom = useScheduleSummary("CLASSROOM");
+    const handleRefresh = () => setRefreshKey((cur) => cur + 1);
 
     const columns: DataTableColumn<ClassroomDTO>[] = [
         { key: 'name', header: 'Nome', cell: row => <span className="font-medium text-foreground">{row.name}</span> },
@@ -68,26 +67,28 @@ export default function ClassroomRegistration() {
         };
 
         await api.put(`/classroom/${classroomToEdit?.uuid}`, payload);
-        await refetch();
+        handleRefresh();
         setClassroomToEdit(null);
     }
 
     async function handleDeleteClassroom() {
         if (!classroomToDelete) return;
         await api.delete(`/classroom/${classroomToDelete.uuid}`);
-        await refetch();
+        handleRefresh();
         setClassroomToDelete(null);
     }
 
     return (
         <>
             <RegistrationPage
-                data={sortedByName(data ?? [])}
                 columns={columns}
+                url={CLASSROOM_URL}
                 filters={filters}
                 title="Sala de Aula"
                 registrationRoute="/new-classroom"
                 detailRoute={(row) => `/classrooms/${row.uuid}`}
+                refreshKey={refreshKey}
+                onRefresh={handleRefresh}
             >
             </RegistrationPage>
 

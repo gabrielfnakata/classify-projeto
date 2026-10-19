@@ -16,6 +16,7 @@ import { formatFullDateLabel, formatHHMM, formatYMD, toDate } from "@/shared/uti
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
 import type { AttendanceGetDTO } from "@/shared/dtos/attendance/AttendanceGetDTO"
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO"
 
 function atToday(hour: number, minute = 0, dayOffset = 0): Date {
   const d = new Date()
@@ -34,8 +35,8 @@ function sessionDateKey(session: ClassSessionDTO): string {
 }
 
 export default function StudentHomePage() {
-  const { data: rawSessions } = useFetch<ClassSessionDTO>("/student/me/schedule")
-  const { data: attendanceRecords } = useFetch<AttendanceGetDTO>("/student/me/attendance")
+  const { data: sessionsData } = useFetch<PaginationDTO<ClassSessionDTO>>("/student/me/schedule")
+  const { data: attendanceData } = useFetch<PaginationDTO<AttendanceGetDTO>>("/student/me/attendance")
   const [student, setStudent] = useState<StudentDTO | null>(null)
   const [profileError, setProfileError] = useState(false)
   const [month, setMonth] = useState(new Date())
@@ -50,7 +51,7 @@ export default function StudentHomePage() {
 
   const sessionsByDate = useMemo(() => {
     const map = new Map<string, ClassSessionDTO[]>()
-    for (const session of rawSessions ?? []) {
+    for (const session of sessionsData?.content ?? []) {
       const key = sessionDateKey(session)
       const list = map.get(key) ?? []
       list.push(session)
@@ -60,7 +61,7 @@ export default function StudentHomePage() {
       list.sort((a, b) => toDate(a.startTime).getTime() - toDate(b.startTime).getTime())
     }
     return map
-  }, [rawSessions])
+  }, [sessionsData?.content])
 
   const weekDays = useMemo(
     () => WEEK_VIEW_OFFSETS.map((offset) => atToday(0, 0, MONDAY_OFFSET + offset)),
@@ -68,8 +69,8 @@ export default function StudentHomePage() {
   )
 
   const selectedDaySessions = sessionsByDate.get(selectedDate) ?? []
-  const presences = attendanceRecords?.filter((record) => record.status === "PRESENTE").length ?? 0
-  const absences = attendanceRecords?.filter((record) => record.status === "AUSENTE").length ?? 0
+  const presences = attendanceData?.content?.filter((record) => record.status === "PRESENTE").length ?? 0
+  const absences = attendanceData?.content?.filter((record) => record.status === "AUSENTE").length ?? 0
   const attendanceCount = presences + absences
   const attendancePercent = attendanceCount === 0 ? 0 : Math.round((presences / attendanceCount) * 100)
   const activeSession =

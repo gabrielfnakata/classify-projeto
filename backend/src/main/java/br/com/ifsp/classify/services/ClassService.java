@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.ClassCreateDTO;
+import br.com.ifsp.classify.dtos.filter.ClassFilterDTO;
 import br.com.ifsp.classify.dtos.get.ClassGetDTO;
 import br.com.ifsp.classify.dtos.get.AuditGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassStudentCountDTO;
@@ -12,6 +13,7 @@ import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Class;
 import br.com.ifsp.classify.models.Student;
+import br.com.ifsp.classify.specifications.ClassSpecification;
 import br.com.ifsp.classify.repositories.ClassRepository;
 import br.com.ifsp.classify.repositories.ClassSessionRepository;
 import br.com.ifsp.classify.utils.Utils;
@@ -20,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Service
-public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGetDTO, ClassUpdateDTO, Long> {
+public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGetDTO, ClassUpdateDTO, ClassFilterDTO, Long> {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -106,15 +109,11 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
 
     /** Professor só lista as turmas que têm aula com ele. */
     @Override
-    public List<ClassGetDTO> findAll() {
+    protected Specification<Class> accessSpecification() {
         if (!accessScope.isProfessor())
-            return super.findAll();
+            return Specification.unrestricted();
 
-        java.util.Set<Long> linked = accessScope.linkedClassIds(accessScope.currentEmployee());
-        return repository.findAll().stream()
-            .filter(classModel -> linked.contains(classModel.getId()))
-            .map(this::returnDTO)
-            .toList();
+        return AccessScopeService.idIn(accessScope.linkedClassIds(accessScope.currentEmployee()));
     }
 
     @Override
@@ -250,5 +249,23 @@ public class ClassService extends AbstractService<Class, ClassCreateDTO, ClassGe
 
         auditService.logUpdate("CLASS", classModel.getId(), oldClass, updatedClass);
         return updatedClass.students();
+    }
+
+    @Override
+    public Specification<Class> createSpecificationFromFilter(ClassFilterDTO filterDTO) {
+        Specification<Class> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        if (!Utils.isNullOrEmpty(filterDTO.name())) {
+            conditions = conditions.and(ClassSpecification.getByName(filterDTO.name()));
+        }
+
+        if (!Utils.isNullOrEmpty(filterDTO.description())) {
+            conditions = conditions.and(ClassSpecification.getByDescription(filterDTO.name()));
+        }
+
+        return conditions;
     }
 }

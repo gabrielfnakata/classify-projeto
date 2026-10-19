@@ -8,7 +8,6 @@ import useFetch from "@/hooks/useFetch";
 import useScheduleSummary from "@/hooks/useScheduleSummary";
 import { subjectsByTeacher } from "@/shared/utils/subject-teacher-index";
 import { formatTelephone, parseTelephone } from "@/shared/utils/telephone-parser";
-import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO";
 import { Roles } from "@/shared/models/enums/roles";
 import { Pencil, Trash2 } from "lucide-react";
@@ -19,21 +18,25 @@ import EditEntityDialog from "@/components/page-templates/edit-dialog/EditEntity
 import ConfirmDeleteDialog from "@/components/common/confirm-delete-dialog";
 import type { Field } from "@/components/page-templates/form/NewEntityPage";
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 export default function EmployeeRegistration() {
+    const EMPLOYEE_URL: string = '/employee';
     const [refreshKey, setRefreshKey] = useState(0);
     const [employeeToEdit, setEmployeeToEdit] = useState<EmployeeDTO | null>(null);
     const [employeeToDelete, setEmployeeToDelete] = useState<EmployeeDTO | null>(null);
 
-    const { data: roles } = useFetch<RoleDTO[]>('/role');
-    const { data, refetch } = useFetch<EmployeeDTO[]>(`/employee?r=${refreshKey}`);
-    const { data: links } = useFetch<SubjectTeacherDTO[]>('/subjectteacher');
+    const { data: dataRole } = useFetch<PaginationDTO<RoleDTO>>('/role');
+    const { data: dataSubjectTeacher } = useFetch<PaginationDTO<SubjectTeacherDTO>>('/subjectteacher');
+
+    const roles = dataRole?.content ?? [];
     
     const scheduleByEmployee = useScheduleSummary("EMPLOYEE");
     
-    const subjects = useMemo(() => subjectsByTeacher(links ?? []), [links]);
+    const subjects = useMemo(() => subjectsByTeacher(dataSubjectTeacher?.content ?? []), [dataSubjectTeacher?.content]);
     
     const handleRefresh = () => setRefreshKey(k => k + 1);
+    
     const columns: DataTableColumn<EmployeeDTO>[] = [
         { key: 'name', header: 'Nome', cell: row => <span className="font-medium text-foreground">{row.name}</span> },
         { key: 'cpf', header: 'CPF', cell: row => row.cpf },
@@ -98,26 +101,27 @@ export default function EmployeeRegistration() {
         };
 
     await api.put(`/employee/${employeeToEdit?.uuid}`, payload);
-    await refetch();
+    handleRefresh();
     setEmployeeToEdit(null);
 }
 
 async function handleDeleteEmployee() {
     if (!employeeToDelete) return;
     await api.delete(`/employee/${employeeToDelete.uuid}`);
-    await refetch();
+    handleRefresh();
     setEmployeeToDelete(null);
 }
 
     return (
         <>
-            <RegistrationPage
-                data={sortedByName(data ?? [])}
+            <RegistrationPage<EmployeeDTO>
                 columns={columns}
+                url={EMPLOYEE_URL}
                 filters={filters}
                 title="Funcionários"
                 registrationRoute="/new-employee"
                 detailRoute={(row) => `/employees/${row.uuid}`}
+                refreshKey={refreshKey}
                 onRefresh={handleRefresh}
             >
             </RegistrationPage>

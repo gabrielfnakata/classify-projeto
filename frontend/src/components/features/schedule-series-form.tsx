@@ -33,6 +33,7 @@ import {
   generateRecurringDates,
   weekdaysOfDates,
 } from "@/shared/utils/recurrence";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 function toHHMM(raw: unknown): string {
@@ -77,13 +78,13 @@ interface ScheduleSeriesFormProps {
 export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: ScheduleSeriesFormProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO>("/subjectteacher");
-  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO>("/classroom");
-  const { data: classGroupsData, loading: loadingCG } = useFetch<ClassGroupDTO>("/class");
+  const { data: subjectTeachersData, loading: loadingST } = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher");
+  const { data: classroomsData, loading: loadingCR } = useFetch<PaginationDTO<ClassroomDTO>>("/classroom");
+  const { data: classGroupsData, loading: loadingCG } = useFetch<PaginationDTO<ClassGroupDTO>>("/class");
 
-  const subjectTeachers = subjectTeachersData ?? [];
-  const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled);
-  const classGroups = classGroupsData ?? [];
+  const subjectTeachers = subjectTeachersData?.content ?? [];
+  const classrooms = (classroomsData?.content ?? []).filter((c) => !c.isDisabled);
+  const classGroups = classGroupsData?.content ?? [];
   const loading = loadingST !== false || loadingCR !== false || loadingCG !== false;
 
   const primary = sessions?.[0] ?? null;

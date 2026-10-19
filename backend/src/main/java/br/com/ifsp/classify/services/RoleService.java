@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.RoleCreateDTO;
+import br.com.ifsp.classify.dtos.filter.RoleFilterDTO;
 import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.dtos.update.RoleUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
@@ -9,12 +10,14 @@ import br.com.ifsp.classify.models.Role;
 import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.utils.Utils;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO, RoleUpdateDTO, String> {
+public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO, RoleUpdateDTO, RoleFilterDTO, String> {
 
     public RoleService(RoleRepository repository) {
         super(repository);
@@ -42,7 +45,6 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
         return returnDTO(role);
     }
 
-    @Override
     public List<RoleGetDTO> findAll() {
         return repository.findAll()
                 .stream()
@@ -88,5 +90,15 @@ public class RoleService extends AbstractService<Role, RoleCreateDTO, RoleGetDTO
         repository.save(role);
 
         return returnDTO(role);
+    }
+
+    @Override
+    public Specification<Role> createSpecificationFromFilter(RoleFilterDTO filterDTO) {
+        Specification<Role> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        return conditions;
     }
 }

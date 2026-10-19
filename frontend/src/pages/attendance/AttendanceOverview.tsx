@@ -15,6 +15,7 @@ import { groupSessions } from "@/shared/utils/session-grouping";
 import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type { AttendanceSessionStatusDTO } from "@/shared/dtos/attendance/AttendanceSessionStatusDTO";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const startOf = (s: ClassSessionDTO) => new Date(s.startTime as unknown as string);
@@ -55,19 +56,19 @@ function AttendanceStatusIndicator({ total, marked }: { total: number; marked: n
 }
 
 export default function AttendanceOverview() {
-  const { data: sessions, loading } = useFetch<ClassSessionDTO>("/classsession");
-  const { data: statuses } = useFetch<AttendanceSessionStatusDTO>("/attendance/status");
+  const { data: classSessionData, loading } = useFetch<PaginationDTO<ClassSessionDTO>>("/classsession");
+  const { data: attendanceData } = useFetch<PaginationDTO<AttendanceSessionStatusDTO>>("/attendance/status");
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
 
   const statusBySession = useMemo(() => {
-    const map = new Map<string, AttendanceSessionStatusDTO>()
-    ;(statuses ?? []).forEach((s) => map.set(s.classSessionUuid, s));
+    const map = new Map<string, AttendanceSessionStatusDTO>();
+    (attendanceData?.content ?? []).forEach((s) => map.set(s.classSessionUuid, s));
     return map;
-  }, [statuses]);
+  }, [attendanceData?.content]);
 
   const entries = useMemo<Entry[]>(() => {
-    const all = sessions ?? [];
+    const all = classSessionData?.content ?? [];
     const series = new Map<string, ClassSessionDTO[]>();
     const loose: ClassSessionDTO[] = [];
 
@@ -96,7 +97,7 @@ export default function AttendanceOverview() {
     }));
 
     return [...seriesEntries, ...looseEntries];
-  }, [sessions]);
+  }, [classSessionData?.content]);
 
   const entryStatus = (entry: Entry) =>
     entry.sessions.reduce(

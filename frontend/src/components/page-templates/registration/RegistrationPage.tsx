@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Search, Download, Upload, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import type { FilterConfig } from "../../filter-row/FilterRow";
 import FilterRow from "../../filter-row/FilterRow";
@@ -7,18 +7,23 @@ import { useNavigate } from "react-router";
 import { Button } from "../../ui/button";
 import { ContentCard } from "../../layout/content-card";
 import { PageHeader } from "../../layout/page-header";
+import useFetch from "@/hooks/useFetch";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../../ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../ui/dialog";
 import api from "@/services/api";
 
 interface registrationPageProps<T> {
     title: string;
-    data: T[];
+    url: string | null;
     filters: FilterConfig[];
     columns: DataTableColumn<T>[];
     registrationRoute?: string;
     detailRoute?: (row: T) => string;
     onRefresh?: () => void;
+    refreshKey?: number;
+    sortData?: (rows: T[]) => T[];
+    onDataChange?: (rows: T[]) => void;
 }
 
 interface dataType {
@@ -35,16 +40,44 @@ interface ImportResult {
     errors: ImportError[];
 }
 
+function getPaginationSize(key: string | null): number {
+    const allowedSizes = [5, 10, 15, 20];
+    const storedSize = key ? Number(sessionStorage.getItem(key)) : 10;
+
+    return allowedSizes.includes(storedSize)
+        ? storedSize
+        : 10;
+}
+
 export default function RegistrationPage<T extends dataType>({
-    title, data, filters, columns, registrationRoute, detailRoute, onRefresh
+    title, url, filters, columns, registrationRoute, detailRoute, onRefresh, refreshKey = 0,
+    sortData, onDataChange
 }: registrationPageProps<T>) {
-    const [filterValues, setFilterValues] = useState<Record<string,string>>({});
+    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [importDialogOpen, setImportDialogOpen] = useState(false);
     const [previewRows, setPreviewRows] = useState<Record<string,string>[]>([]);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
     const [importLoading, setImportLoading] = useState(false);
     const [importResult, setImportResult] = useState<ImportResult | null>(null);
+    const [size, setSize] = useState<number>(() => getPaginationSize(url));
+    const [page, setPage] = useState<number>(0);
+
+    const previousRefreshkey = useRef<number>(refreshKey);
+
+    const { data, refetch } = useFetch<PaginationDTO<T>>(url, page, size, filterValues);
+    console.log("data", data);
+
+    useEffect(() => {
+        if (previousRefreshkey.current === refreshKey) return;
+
+        previousRefreshkey.current = refreshKey;
+        void refetch();
+    }, [refreshKey, refetch]);
+
+    useEffect(() => {
+        onDataChange?.(data?.content ?? []);
+    }, [data?.content, onDataChange]);
 
     const navigate = useNavigate();
 
@@ -77,12 +110,21 @@ export default function RegistrationPage<T extends dataType>({
         : columns;
 
     const handleFilterSubmit = (values: Record<string, string>) => {
-        setFilterValues(values);
+        const activeFilters = Object.fromEntries(
+            Object.entries(values).filter(([, value]) => value.trim() !== "")
+        );
+
+        setPage(0);
+        setFilterValues(activeFilters);
     };
 
-    useEffect(() => {
-        // TODO: Chamada à API com a filtragem dos dados
-    }, [filterValues]);
+    const handleSizeChange = (newSize: number): void => {
+        if (url)
+            sessionStorage.setItem(url, newSize.toString());
+        
+        setSize(newSize);
+        setPage(0);
+    };
 
     const downloadBlob = (blob: Blob, filename: string) => {
         const url = window.URL.createObjectURL(blob);
@@ -217,14 +259,18 @@ export default function RegistrationPage<T extends dataType>({
                             </div> 
                     <ContentCard className="flex flex-col w-9/10 h-[70vh] p-8 gap-[4vh]">
                             <FilterRow
-                            filters={filters}
-                            onSubmit={() => {}}
-                            onValuesChange={handleFilterSubmit}
+                                filters={filters}
+                                onSubmit={handleFilterSubmit}
                             />
                             <DataTable
-                                data={data}
+                                data={sortData ? sortData(data?.content ?? []) : data?.content ?? []}
                                 columns={tableColumns}
                                 rowKey={(row) => row.uuid}
+                                totalPages={data?.totalPages ?? 1}
+                                page={page}
+                                size={size}
+                                onPageChange={setPage}
+                                onSizeChange={handleSizeChange}
                             />
                     </ContentCard>
                 </div>

@@ -1,3 +1,5 @@
+import { useState } from "react"
+
 import { SectionTitle } from "@/components/features/section-title"
 import { ContentCard } from "@/components/layout/content-card"
 import { DataTable } from "@/components/common/data-table"
@@ -23,6 +25,12 @@ function AttendanceMeter({ rate }: { rate: number | null }) {
 }
 
 export function ClassStudentsTable({ rows, className }: ClassStudentsTableProps) {
+  // A lista já vem completa; a paginação é feita aqui mesmo.
+  const [page, setPage] = useState(0)
+  const [size, setSize] = useState(10)
+  const totalPages = Math.max(1, Math.ceil((rows?.length ?? 0) / size))
+  const pageRows = rows?.slice(page * size, (page + 1) * size) ?? []
+
   return (
     <ContentCard className={cn("flex flex-col", className)}>
       <SectionTitle title="Alunos da Turma" description="Nota média e frequência de cada aluno." className="mb-5" />
@@ -31,7 +39,15 @@ export function ClassStudentsTable({ rows, className }: ClassStudentsTableProps)
         <p className="text-sm text-muted-foreground">Carregando desempenho dos alunos...</p>
       ) : (
         <DataTable
-          data={rows}
+          data={pageRows}
+          totalPages={totalPages}
+          page={page}
+          size={size}
+          onPageChange={setPage}
+          onSizeChange={(newSize) => {
+            setSize(newSize)
+            setPage(0)
+          }}
           rowKey={(row) => row.uuid}
           emptyTitle="Turma sem alunos"
           emptyDescription="Adicione alunos a essa turma para ver o desempenho."

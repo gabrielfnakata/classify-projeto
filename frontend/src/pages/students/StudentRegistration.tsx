@@ -6,7 +6,6 @@ import RegistrationPage from "@/components/page-templates/registration/Registrat
 import { NamesCell } from "@/components/features/schedule-summary-cells";
 import useFetch from "@/hooks/useFetch";
 import { formatTelephone, parseTelephone } from "@/shared/utils/telephone-parser";
-import { sortedByName } from "@/shared/utils/sort-by-name";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
 import { Pencil, Trash2 } from "lucide-react";
 import { NewStudentValidationSchema } from "@/validation/StudentSchema";
@@ -16,31 +15,40 @@ import ConfirmDeleteDialog from "@/components/common/confirm-delete-dialog";
 import EditEntityDialog from "@/components/page-templates/edit-dialog/EditEntityDialog";
 import type { Field } from "@/components/page-templates/form/NewEntityPage";
 import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 const collator = new Intl.Collator("pt-BR", { sensitivity: "base" });
 
 export default function StudentRegistration() {
-    const [refreshKey, setRefreshKey] = useState(0);
+    const STUDENT_URL = "/student";
+    const [refreshKey, setRefreshKey] = useState<number>(0);
     const [studentToEdit, setStudentToEdit] = useState<StudentDTO | null>(null);
     const [studentToDelete, setStudentToDelete] = useState<StudentDTO | null>(null);
 
-    const { data, refetch } = useFetch<StudentDTO[]>(`/student?r=${refreshKey}`);
-    const { data: classGroups } = useFetch<ClassGroupDTO[]>('/class');
+    const { data } = useFetch<PaginationDTO<ClassGroupDTO>>('/class');
 
-    const handleRefresh = () => setRefreshKey(k => k + 1);
+    const handleRefresh = () => setRefreshKey(cur => cur + 1);
 
     const classGroupsByStudent = useMemo(() => {
+        const classGroups = data?.content ?? [];
         const map = new Map<string, string[]>();
+        
         for (const classGroup of classGroups ?? []) {
             for (const student of classGroup.students) {
                 const list = map.get(student.uuid);
-                if (list) list.push(classGroup.name);
-                else map.set(student.uuid, [classGroup.name]);
+                if (list)
+                    list.push(classGroup.name);
+                else
+                    map.set(student.uuid, [classGroup.name]);
             }
         }
-        for (const list of map.values()) list.sort(collator.compare);
+
+        for (const list of map.values()) {
+            list.sort(collator.compare);
+        }
+
         return map;
-    }, [classGroups]);
+    }, [data?.content]);
 
     const columns: DataTableColumn<StudentDTO>[] = [
         { key: 'name', header: 'Nome', cell: row => <span className="font-medium text-foreground">{row.name}</span> },
@@ -95,26 +103,28 @@ export default function StudentRegistration() {
         };
 
         await api.put(`/student/${studentToEdit?.uuid}`, payload);
-        await refetch();
+        handleRefresh();
         setStudentToEdit(null);
     }
 
     async function handleDeleteStudent() {
         if (!studentToDelete) return;
+
         await api.delete(`/student/${studentToDelete.uuid}`);
-        await refetch();
+        handleRefresh();
         setStudentToDelete(null);
     }
 
     return (
         <>
-            <RegistrationPage
-                data={sortedByName(data ?? [])}
+            <RegistrationPage<StudentDTO>
                 columns={columns}
+                url={STUDENT_URL}
                 filters={filters}
                 title="Alunos"
                 registrationRoute="/new-student"
                 detailRoute={(row) => `/students/${row.uuid}`}
+                refreshKey={refreshKey}
                 onRefresh={handleRefresh}
             >
             </RegistrationPage>

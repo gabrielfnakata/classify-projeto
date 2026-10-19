@@ -2,6 +2,7 @@ package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.dtos.create.ClassSessionCreateDTO;
 import br.com.ifsp.classify.dtos.get.BatchResultDTO;
+import br.com.ifsp.classify.dtos.filter.ClasssessionFilterDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionSummaryDTO;
 import br.com.ifsp.classify.dtos.update.ClassSessionBatchDeleteDTO;
@@ -50,7 +51,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
-public class ClassSessionService extends AbstractService<ClassSession, ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, Long> {
+public class ClassSessionService extends AbstractService<ClassSession, ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, ClasssessionFilterDTO, Long> {
 
     private final ClassSessionRepository repository;
     private final SubjectTeacherRepository subjectTeacherRepository;
@@ -266,9 +267,8 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
     }
 
     @Override
-    public List<ClassSessionGetDTO> findAll() {
-        Predicate<ClassSession> visible = accessScope.sessionVisibility();
-        return repository.findAll().stream().filter(visible).map(this::returnDTO).toList();
+    protected Specification<ClassSession> accessSpecification() {
+        return accessScope.sessionVisibilitySpec(root -> root);
     }
 
     @Override
@@ -564,6 +564,16 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
             discardAttendanceOutsideRoster(classSession);
 
         return returnDTO(classSession);
+    }
+
+    @Override
+    public Specification<ClassSession> createSpecificationFromFilter(ClasssessionFilterDTO filterDTO) {
+        Specification<ClassSession> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        return conditions;
     }
 
     /**

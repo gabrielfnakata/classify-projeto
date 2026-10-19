@@ -19,6 +19,7 @@ import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.create.UserCreateDTO;
 import br.com.ifsp.classify.dtos.get.ClassGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassroomGetDTO;
 import br.com.ifsp.classify.dtos.get.EmployeeGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
@@ -188,7 +189,8 @@ public class DemoDataSeeder implements CommandLineRunner {
         List<EmployeeGetDTO> teachers = new ArrayList<>();
 
         // Já existem ADMINISTRADOR (admin) e GLAUCO (professor), criados pelo DataInitializer.
-        List<EmployeeGetDTO> existingEmployees = employeeService.findAll();
+        PageResponseGetDTO<EmployeeGetDTO> page = employeeService.findAll(null, null);
+        List<EmployeeGetDTO> existingEmployees = page.content();
         for (EmployeeGetDTO existing : existingEmployees) {
             usedCpfs.add(existing.cpf());
             if ("GLAUCO".equals(existing.name()))
@@ -198,7 +200,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         int remaining = EMPLOYEE_COUNT - existingEmployees.size();
         for (int i = 0; i < remaining; i++) {
             // 2 secretárias, 1 admin extra, o resto professores.
-            String role = i < 2 ? "SECRE" : i == 2 ? "ADMIN" : "PROFE";
+            String role = i < 2 ? "ADMIN"  : "PROFESSOR";
             String name = fullName();
             String email = emailFor(name, "classify.com");
 
@@ -211,7 +213,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 List.of(telephone())
             )));
 
-            if (employee != null && role.equals("PROFE"))
+            if (employee != null && role.equals("PROFESSOR"))
                 teachers.add(employee);
         }
 
@@ -221,7 +223,8 @@ public class DemoDataSeeder implements CommandLineRunner {
     // ---------------------------------------------------------------- disciplinas
 
     private List<SubjectGetDTO> seedSubjects() {
-        Set<String> existing = subjectService.findAll().stream()
+        PageResponseGetDTO<SubjectGetDTO> page = subjectService.findAll(null, null);
+        Set<String> existing = page.content().stream()
             .map(s -> s.description().toUpperCase())
             .collect(Collectors.toSet());
 
@@ -230,11 +233,12 @@ public class DemoDataSeeder implements CommandLineRunner {
                 attempt("disciplina " + subject, () -> subjectService.create(new SubjectCreateDTO(subject)));
         }
 
-        return subjectService.findAll();
+        return subjectService.findAll(null, null).content();
     }
 
     private List<SubjectTeacherGetDTO> seedSubjectTeachers(List<EmployeeGetDTO> teachers, List<SubjectGetDTO> subjects) {
-        Set<String> existing = subjectTeacherService.findAll().stream()
+        PageResponseGetDTO<SubjectTeacherGetDTO> page = subjectTeacherService.findAll(null, null);
+        Set<String> existing = page.content().stream()
             .map(link -> link.employee().uuid() + "|" + link.subject().uuid())
             .collect(Collectors.toSet());
 
@@ -248,7 +252,7 @@ public class DemoDataSeeder implements CommandLineRunner {
                 link(teacher, pick(subjects), existing);
         }
 
-        return subjectTeacherService.findAll();
+        return subjectTeacherService.findAll(null, null).content();
     }
 
     private void link(EmployeeGetDTO teacher, SubjectGetDTO subject, Set<String> existing) {
@@ -269,7 +273,7 @@ public class DemoDataSeeder implements CommandLineRunner {
             attempt("sala " + name, () -> classroomService.create(new ClassroomCreateDTO(name, capacity, disabled)));
         }
 
-        return classroomService.findAll();
+        return classroomService.findAll(null, null).content();
     }
 
     // ---------------------------------------------------------------- alunos

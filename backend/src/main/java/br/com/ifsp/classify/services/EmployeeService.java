@@ -17,6 +17,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.create.UserCreateDTO;
+import br.com.ifsp.classify.dtos.filter.EmployeeFilterDTO;
 import br.com.ifsp.classify.dtos.get.EmployeeGetDTO;
 import br.com.ifsp.classify.dtos.get.ProfileGetDTO;
 import br.com.ifsp.classify.dtos.get.RoleGetDTO;
@@ -36,6 +38,7 @@ import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.repositories.RoleRepository;
+import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 
@@ -44,7 +47,7 @@ import java.util.List;
 import java.time.LocalDate;
 
 @Service
-public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO, Long> {
+public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO, EmployeeFilterDTO, Long> {
 
     private final TelephoneService telephoneService;
     private final UserService userService;
@@ -396,7 +399,11 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
     }
 
     public List<EmployeeGetDTO> findAllFiltered(Map<String,String> filters) {
-        List<EmployeeGetDTO> all = this.findAll();
+        List<EmployeeGetDTO> all = repository.findAll()
+            .stream()
+            .map(this::returnDTO)
+            .toList();
+            
         if (filters == null || filters.isEmpty()) return all;
 
         String name = filters.getOrDefault("name", "").trim().toLowerCase();
@@ -613,5 +620,27 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         auditService.logDelete("EMPLOYEE", id, oldEmployee);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public Specification<Employee> createSpecificationFromFilter(EmployeeFilterDTO filterDTO) {
+        Specification<Employee> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        if (!Utils.isNullOrEmpty(filterDTO.name())) {
+            conditions = conditions.and(EmployeeSpecification.getByName(filterDTO.name()));
+        }
+
+        if (!Utils.isNullOrEmpty(filterDTO.cpf())) {
+            conditions = conditions.and(EmployeeSpecification.getByCpf(Utils.removeAllNonDigits(filterDTO.cpf())));
+        }
+
+        if (!Utils.isNullOrEmpty(filterDTO.email())) {
+            conditions = conditions.and(EmployeeSpecification.getByEmail(filterDTO.email()));
+        }
+
+        return conditions;
     }
 }

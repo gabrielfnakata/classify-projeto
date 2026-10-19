@@ -22,6 +22,7 @@ import { SelectField } from "@/components/common/select-field"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO"
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO"
 import type { AttendanceGetDTO } from "@/shared/dtos/attendance/AttendanceGetDTO"
 import type { FormDTO } from "@/shared/dtos/form/FormDTO"
 import { formatYMD } from "@/shared/utils/date-formatter"
@@ -59,11 +60,11 @@ export default function StudentDashboard() {
   // O professor não usa este painel: o desempenho dos alunos dele fica no Painel do Professor.
   const isAdmin = userData?.role === Roles.ADMIN
 
-  const { data: rawAllSessions } = useFetch<ClassSessionDTO>(isAdmin ? "/classsession" : null)
+  const rawAllSessions = useFetch<PaginationDTO<ClassSessionDTO>>(isAdmin ? "/classsession" : null).data?.content
   // Aula cancelada não aconteceu: fica fora de contagens, gráficos e próximas aulas.
   const allSessions = useMemo(() => (rawAllSessions ?? []).filter((s) => !isCanceled(s)), [rawAllSessions])
-  const { data: classGroups } = useFetch<ClassGroupDTO>(isAdmin ? "/class" : null)
-  const { data: allStudents } = useFetch<StudentDTO>(isAdmin ? "/student" : null)
+  const classGroups = useFetch<PaginationDTO<ClassGroupDTO>>(isAdmin ? "/class" : null).data?.content
+  const allStudents = useFetch<PaginationDTO<StudentDTO>>(isAdmin ? "/student" : null).data?.content
 
   const scope = useMemo<{ students: ScopeOption[]; classes: ScopeOption[] }>(
     () => ({
@@ -93,12 +94,12 @@ export default function StudentDashboard() {
 
   const studentBaseUrl = isClassView ? null : isAdmin ? (student ? `/student/${student.uuid}` : null) : "/student/me"
 
-  const { data: rawStudentSessions } = useFetch<ClassSessionDTO>(studentBaseUrl && `${studentBaseUrl}/schedule`)
+  const { data: rawStudentSessions } = useFetch<ClassSessionDTO[]>(studentBaseUrl && `${studentBaseUrl}/schedule`)
   const studentSessions = useMemo(() => (rawStudentSessions ?? []).filter((s) => !isCanceled(s)), [rawStudentSessions])
-  const { data: attendance } = useFetch<AttendanceGetDTO>(studentBaseUrl && `${studentBaseUrl}/attendance`)
-  const { data: forms } = useFetch<FormDTO>(isAdmin ? studentBaseUrl && `${studentBaseUrl}/forms` : "/form")
+  const { data: attendance } = useFetch<AttendanceGetDTO[]>(studentBaseUrl && `${studentBaseUrl}/attendance`)
+  const { data: forms } = useFetch<FormDTO[]>(isAdmin ? studentBaseUrl && `${studentBaseUrl}/forms` : "/form")
   // /classroom é restrito a admin/professor; para o aluno a sala simplesmente não é exibida.
-  const { data: classrooms } = useFetch<ClassroomDTO>(isAdmin ? "/classroom" : null)
+  const classrooms = useFetch<PaginationDTO<ClassroomDTO>>(isAdmin ? "/classroom" : null).data?.content
 
   const allMySessions = useMemo(
     () =>

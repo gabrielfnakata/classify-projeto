@@ -2,6 +2,7 @@ package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.AttendanceBulkSaveDTO;
 import br.com.ifsp.classify.dtos.create.AttendanceCreateDTO;
+import br.com.ifsp.classify.dtos.filter.AttendanceFilterDTO;
 import br.com.ifsp.classify.dtos.get.AttendanceGetDTO;
 import br.com.ifsp.classify.dtos.get.AttendanceRosterEntryDTO;
 import br.com.ifsp.classify.dtos.get.AttendanceSessionStatusDTO;
@@ -20,7 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/attendance", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-public class AttendanceController extends AbstractController<AttendanceCreateDTO, AttendanceGetDTO, AttendanceUpdateDTO> {
+public class AttendanceController extends AbstractController<AttendanceCreateDTO, AttendanceGetDTO, AttendanceUpdateDTO, AttendanceFilterDTO> {
 
     private final AttendanceService service;
 

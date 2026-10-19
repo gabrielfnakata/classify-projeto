@@ -28,6 +28,7 @@ import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSes
 import { DEFAULT_REPORT_CONTENT, generateRecurringDates } from "@/shared/utils/recurrence";
 import { sortedByName } from "@/shared/utils/sort-by-name";
 import { NewClassGroupValidationSchema } from "@/validation/ClassGroupSchema";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 interface FormValues {
     name: string;
@@ -63,12 +64,12 @@ const INITIAL_VALUES: FormValues = {
 
 export default function NewClassGroup() {
     const navigate = useNavigate();
-    const { data: studentsData } = useFetch<StudentDTO>("/student");
-    const { data: subjectTeachersData } = useFetch<SubjectTeacherDTO>("/subjectteacher");
-    const { data: classroomsData } = useFetch<ClassroomDTO>("/classroom");
-    const students = studentsData ?? [];
-    const subjectTeachers = subjectTeachersData ?? [];
-    const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled);
+    const { data: studentsData } = useFetch<PaginationDTO<StudentDTO>>("/student");
+    const { data: subjectTeachersData } = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher");
+    const { data: classroomsData } = useFetch<PaginationDTO<ClassroomDTO>>("/classroom");
+    const students = studentsData?.content ?? [];
+    const subjectTeachers = subjectTeachersData?.content ?? [];
+    const classrooms = (classroomsData?.content ?? []).filter((c) => !c.isDisabled);
     const [error, setError] = useState<string | null>(null);
 
     async function handleSubmit(values: FormValues, helpers: FormikHelpers<FormValues>) {

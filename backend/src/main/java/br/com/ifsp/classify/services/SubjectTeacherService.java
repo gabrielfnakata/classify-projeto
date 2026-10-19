@@ -2,6 +2,7 @@ package br.com.ifsp.classify.services;
 
 import java.util.List;
 import br.com.ifsp.classify.dtos.create.SubjectTeacherCreateDTO;
+import br.com.ifsp.classify.dtos.filter.SubjectTeacherFilterDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
 import br.com.ifsp.classify.dtos.get.SubjectTeacherEmployeeGetDTO;
 import br.com.ifsp.classify.dtos.get.SubjectTeacherGetDTO;
@@ -21,10 +22,12 @@ import br.com.ifsp.classify.specifications.SubjectSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.http.ResponseEntity;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SubjectTeacherService extends AbstractService<SubjectTeacher, SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO, Long> {
+public class SubjectTeacherService extends AbstractService<SubjectTeacher, SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO, SubjectTeacherFilterDTO, Long> {
 
     private final EmployeeRepository employeeRepository;
     private final SubjectRepository subjectRepository;
@@ -43,15 +46,12 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
 
     /** O professor agenda só como ele mesmo, então só enxerga os próprios vínculos com disciplinas. */
     @Override
-    public List<SubjectTeacherGetDTO> findAll() {
+    protected Specification<SubjectTeacher> accessSpecification() {
         if (!accessScope.isProfessor())
-            return super.findAll();
+            return Specification.unrestricted();
 
         Long employeeId = accessScope.currentEmployee().getId();
-        return repository.findAll().stream()
-            .filter(subjectTeacher -> subjectTeacher.getEmployee().getId().equals(employeeId))
-            .map(this::returnDTO)
-            .toList();
+        return (root, query, cb) -> cb.equal(root.get("employee").get("id"), employeeId);
     }
 
     @Override
@@ -157,5 +157,15 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
         repository.save(subjectTeacher);
 
         return returnDTO(subjectTeacher);
+    }
+
+    @Override
+    public Specification<SubjectTeacher> createSpecificationFromFilter(SubjectTeacherFilterDTO filterDTO) {
+        Specification<SubjectTeacher> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        return conditions;
     }
 }

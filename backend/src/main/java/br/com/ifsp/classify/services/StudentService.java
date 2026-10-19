@@ -24,6 +24,7 @@ import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
+import br.com.ifsp.classify.dtos.filter.StudentFilterDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.OptionGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
@@ -37,12 +38,15 @@ import br.com.ifsp.classify.models.Guardian;
 import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.repositories.StudentRepository;
+import br.com.ifsp.classify.specifications.StudentSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 
 @Service
-public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, Long> {
+public class StudentService extends AbstractService<Student, StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, StudentFilterDTO, Long> {
 
     private final TelephoneService telephoneService;
     private final AddressService addressService;
@@ -345,6 +349,32 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         return newGuardian;
     }
 
+    @Override
+    public Specification<Student> createSpecificationFromFilter(StudentFilterDTO filterDTO) {
+        Specification<Student> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        if (!Utils.isNullOrEmpty(filterDTO.name())) {
+            conditions = conditions.and(StudentSpecification.getByName(filterDTO.name()));
+        }
+
+        if (!Utils.isNullOrEmpty(filterDTO.cpf())) {
+            conditions = conditions.and(StudentSpecification.getByCpf(Utils.removeAllNonDigits(filterDTO.cpf())));
+        }
+
+        if (!Utils.isNullOrEmpty(filterDTO.email())) {
+            conditions = conditions.and(StudentSpecification.getByEmail(filterDTO.email()));
+        }
+
+        if (!Utils.isNullOrEmpty(filterDTO.telephone())) {
+            conditions = conditions.and(StudentSpecification.getByTelephone(Utils.removeAllNonDigits(filterDTO.telephone())));
+        }
+
+        return conditions;
+    }
+
     public record ImportError(int row, String reason) {}
     public record ImportResult(List<StudentGetDTO> created, List<ImportError> errors) {}
 
@@ -601,15 +631,11 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
 
     /** Professor só lista os alunos com quem tem vínculo (aula individual ou turma dele). */
     @Override
-    public List<StudentGetDTO> findAll() {
+    protected Specification<Student> accessSpecification() {
         if (!accessScope.isProfessor())
-            return super.findAll();
+            return Specification.unrestricted();
 
-        Set<Long> linked = accessScope.linkedStudentIds(accessScope.currentEmployee());
-        return studentRepository.findAll().stream()
-            .filter(student -> linked.contains(student.getId()))
-            .map(this::returnDTO)
-            .toList();
+        return AccessScopeService.idIn(accessScope.linkedStudentIds(accessScope.currentEmployee()));
     }
 
     @Override
@@ -631,7 +657,10 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     }
 
     public List<StudentGetDTO> findAllFiltered(Map<String,String> filters) {
-        List<StudentGetDTO> all = this.findAll();
+        List<StudentGetDTO> all = repository.findAll()
+            .stream()
+            .map(this::returnDTO)
+            .toList();
         if (filters == null || filters.isEmpty()) return all;
 
         String name = filters.getOrDefault("name", "").trim().toLowerCase();

@@ -3,7 +3,9 @@ package br.com.ifsp.classify.services;
 import br.com.ifsp.classify.dtos.AttendanceBulkSaveDTO;
 import br.com.ifsp.classify.dtos.AttendanceRecordInputDTO;
 import br.com.ifsp.classify.dtos.create.AttendanceCreateDTO;
+import br.com.ifsp.classify.dtos.filter.AttendanceFilterDTO;
 import br.com.ifsp.classify.dtos.get.AttendanceGetDTO;
+import br.com.ifsp.classify.dtos.filter.AttendanceFilterDTO;
 import br.com.ifsp.classify.dtos.get.AttendanceRosterEntryDTO;
 import br.com.ifsp.classify.dtos.get.AttendanceSessionStatusDTO;
 import br.com.ifsp.classify.dtos.update.AttendanceUpdateDTO;
@@ -16,6 +18,7 @@ import br.com.ifsp.classify.repositories.ClassSessionRepository;
 import br.com.ifsp.classify.specifications.AttendanceSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,7 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class AttendanceService extends AbstractService<Attendance, AttendanceCreateDTO, AttendanceGetDTO, AttendanceUpdateDTO, Long> {
+public class AttendanceService extends AbstractService<Attendance, AttendanceCreateDTO, AttendanceGetDTO, AttendanceUpdateDTO, AttendanceFilterDTO, Long> {
 
     private static final List<String> VALID_STATUSES = List.of("PRESENTE", "AUSENTE");
     private static final List<String> VALID_JUSTIFICATION_REASONS = List.of(
@@ -110,12 +113,8 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
     }
 
     @Override
-    public List<AttendanceGetDTO> findAll() {
-        java.util.function.Predicate<ClassSession> visible = accessScope.sessionVisibility();
-        return repository.findAll().stream()
-                .filter(attendance -> visible.test(attendance.getClassSession()))
-                .map(this::returnDTO)
-                .toList();
+    protected Specification<Attendance> accessSpecification() {
+        return accessScope.sessionVisibilitySpec(root -> root.join("classSession"));
     }
 
     @Override
@@ -275,5 +274,15 @@ public class AttendanceService extends AbstractService<Attendance, AttendanceCre
             return session.getClassSessionClass().getStudents();
 
         return List.of();
+    }
+
+    @Override
+    public Specification<Attendance> createSpecificationFromFilter(AttendanceFilterDTO filterDTO) {
+        Specification<Attendance> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        return conditions;
     }
 }

@@ -1,9 +1,9 @@
+import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import type { DataTableColumn } from "@/components/common/data-table.tsx";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import { StatusBadge } from "@/components/features/status-badge";
-import useFetch from "@/hooks/useFetch";
 import { formatDateLabel } from "@/shared/utils/date-formatter";
 import type { FormSubmissionDTO } from "@/shared/dtos/form-submission/FormSubmissionDTO";
 import { statusLabel, statusVariant } from "@/shared/models/enums/form-status.ts";
@@ -15,10 +15,11 @@ export default function FormAnswers() {
     const navigate = useNavigate();
     const location = useLocation();
     const formTitle = location.state?.formTitle as string | undefined;
+    const [submissions, setSubmissions] = useState<FormSubmissionDTO[]>([]);
 
     const goToSubmission = (submission: FormSubmissionDTO) =>
         navigate(`/form-answers/${submission.formUuid}/${submission.studentUuid}`, {
-            state: { submission, submissions: data ?? [] },
+            state: { submission, submissions },
     });
 
 
@@ -57,14 +58,13 @@ export default function FormAnswers() {
         },
     ];
 
-    const { data } = useFetch<FormSubmissionDTO[]>(id ? `/form/${id}/submissions` : null);
-
     return (
         <RegistrationPage
-            data={data ?? []}
+            url={id ? `/form/${id}/submissions` : null}
             columns={columns}
             filters={filters}
             title={formTitle ? `Respostas - ${formTitle}` : "Respostas do Formulário"}
+            onDataChange={setSubmissions}
         />
     );
 }

@@ -1,6 +1,7 @@
 package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
+import br.com.ifsp.classify.dtos.filter.EmployeeFilterDTO;
 import br.com.ifsp.classify.dtos.create.TeacherAvailabilityCreateDTO;
 import br.com.ifsp.classify.dtos.get.EmployeeGetDTO;
 import br.com.ifsp.classify.dtos.get.TeacherAvailabilityGetDTO;
@@ -33,7 +34,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/employee", produces = MediaType.APPLICATION_JSON_VALUE)
-public class EmployeeController extends AbstractController<EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO> {
+public class EmployeeController extends AbstractController<EmployeeCreateDTO, EmployeeGetDTO, EmployeeUpdateDTO, EmployeeFilterDTO> {
 
     private static final String EXCEL_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
@@ -145,7 +146,7 @@ public class EmployeeController extends AbstractController<EmployeeCreateDTO, Em
         try {
             List<EmployeeGetDTO> employees = (filters != null && !filters.isEmpty())
                     ? service.findAllFiltered(filters)
-                    : service.findAll();
+                    : service.findAll(null, null).content();
 
             return excelResponse(service.exportToExcel(employees), "employees-export.xlsx");
         } catch (Exception ex) {

@@ -14,8 +14,8 @@ interface StudentPerformanceSummaryProps {
 }
 
 export function StudentPerformanceSummary({ studentUuid, studentName }: StudentPerformanceSummaryProps) {
-  const { data: attendance } = useFetch<AttendanceGetDTO>(`/student/${studentUuid}/attendance`)
-  const { data: forms } = useFetch<FormDTO>(`/student/${studentUuid}/forms`)
+  const { data: attendance } = useFetch<AttendanceGetDTO[]>(`/student/${studentUuid}/attendance`)
+  const { data: forms } = useFetch<FormDTO[]>(`/student/${studentUuid}/forms`)
 
   const gradedForms = useMemo(() => getGradedForms(forms ?? []), [forms])
   const averageGrade = useMemo(() => averageScore(gradedForms), [gradedForms])

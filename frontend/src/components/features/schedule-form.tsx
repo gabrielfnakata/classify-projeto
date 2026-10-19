@@ -40,6 +40,7 @@ import { DEFAULT_REPORT_CONTENT, generateRecurringDates } from "@/shared/utils/r
 import { formatYMD } from "@/shared/utils/date-formatter";
 import { sortedByName } from "@/shared/utils/sort-by-name";
 import { ScheduleFormSchema } from "@/validation/ScheduleSchema";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 function toHHMM(raw: unknown): string {
@@ -59,15 +60,15 @@ interface ScheduleFormProps {
 export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset }: ScheduleFormProps) {
   const [error, setError] = useState<string | null>(null);
 
-  const { data: subjectTeachersData, loading: loadingST } = useFetch<SubjectTeacherDTO[]>("/subjectteacher");
-  const { data: classroomsData, loading: loadingCR } = useFetch<ClassroomDTO[]>("/classroom");
-  const { data: studentsData, loading: loadingStu } = useFetch<StudentDTO[]>("/student");
-  const { data: classGroupsData, loading: loadingCG } = useFetch<ClassGroupDTO[]>("/class");
+  const { data: subjectTeachersData, loading: loadingST } = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher");
+  const { data: classroomsData, loading: loadingCR } = useFetch<PaginationDTO<ClassroomDTO>>("/classroom");
+  const { data: studentsData, loading: loadingStu } = useFetch<PaginationDTO<StudentDTO>>("/student");
+  const { data: classGroupsData, loading: loadingCG } = useFetch<PaginationDTO<ClassGroupDTO>>("/class");
 
-  const subjectTeachers = subjectTeachersData ?? [];
-  const classrooms = (classroomsData ?? []).filter((c) => !c.isDisabled);
-  const students = studentsData ?? [];
-  const classGroups = classGroupsData ?? [];
+  const subjectTeachers = subjectTeachersData?.content ?? [];
+  const classrooms = (classroomsData?.content ?? []).filter((c) => !c.isDisabled);
+  const students = studentsData?.content ?? [];
+  const classGroups = classGroupsData?.content ?? [];
   const loading = loadingST !== false || loadingCR !== false || loadingStu !== false || loadingCG !== false;
   const isEditing = Boolean(editingSessions?.length);
   const editingPrimary = editingSessions?.[0] ?? null;

@@ -9,17 +9,22 @@ import br.com.ifsp.classify.repositories.ClassSessionRepository;
 import br.com.ifsp.classify.repositories.UserRepository;
 import br.com.ifsp.classify.security.AuthenticatedUser;
 import br.com.ifsp.classify.security.UserRole;
+import jakarta.persistence.criteria.From;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -152,6 +157,41 @@ public class AccessScopeService {
         }
 
         return session -> false;
+    }
+
+    /**
+     * Mesma regra do {@link #sessionVisibility()}, como Specification para as listagens paginadas.
+     * {@code session} leva da raiz da consulta até a aula (a própria raiz, ou um join a partir dela).
+     */
+    public <T> Specification<T> sessionVisibilitySpec(Function<Root<T>, From<?, ClassSession>> session) {
+        if (isUnrestricted())
+            return Specification.unrestricted();
+
+        if (isProfessor()) {
+            Long employeeId = currentEmployee().getId();
+            return (root, query, cb) -> cb.equal(
+                    session.apply(root).get("subjectTeacher").get("employee").get("id"), employeeId);
+        }
+
+        if (isStudent()) {
+            Student student = currentStudent();
+            Set<Long> classIds = student.getClasses().stream().map(Class::getId).collect(Collectors.toSet());
+            return (root, query, cb) -> {
+                From<?, ClassSession> sessionPath = session.apply(root);
+                jakarta.persistence.criteria.Predicate own = cb.equal(
+                        sessionPath.join("student", JoinType.LEFT).get("id"), student.getId());
+                return classIds.isEmpty()
+                        ? own
+                        : cb.or(own, sessionPath.join("classSessionClass", JoinType.LEFT).get("id").in(classIds));
+            };
+        }
+
+        return (root, query, cb) -> cb.disjunction();
+    }
+
+    /** Restringe a listagem aos ids informados (nenhum id, nenhum resultado). */
+    public static <T> Specification<T> idIn(Collection<?> ids) {
+        return (root, query, cb) -> ids.isEmpty() ? cb.disjunction() : root.get("id").in(ids);
     }
 
     public void requireCanViewSession(ClassSession session) {

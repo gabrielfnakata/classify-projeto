@@ -19,6 +19,7 @@ import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
 import { formatDateLabel, formatMonthYearLabel, formatYMD } from "@/shared/utils/date-formatter";
 import { classroomNameMap, resolveClassroomName } from "@/shared/utils/class-session-helpers";
 import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -28,9 +29,9 @@ function sessionDate(dto: ClassSessionDTO): string {
 
 export default function SchedulePage() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const { data: rawSessions, loading: loadingData } = useFetch<ClassSessionDTO[]>(`/classsession?r=${refreshKey}`);
-  const { data: classrooms } = useFetch<ClassroomDTO[]>("/classroom");
-  const classroomNames = useMemo(() => classroomNameMap(classrooms ?? []), [classrooms]);
+  const { data: classSessionData, loading: loadingData } = useFetch<PaginationDTO<ClassSessionDTO>>(`/classsession?r=${refreshKey}`);
+  const { data: classroomData } = useFetch<PaginationDTO<ClassroomDTO>>("/classroom");
+  const classroomNames = useMemo(() => classroomNameMap(classroomData?.content ?? []), [classroomData?.content]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroup, setSelectedGroup] = useState<SessionGroup | null>(null);
@@ -43,7 +44,7 @@ export default function SchedulePage() {
 
   const fetchSessions = () => setRefreshKey((k) => k + 1);
 
-  const sessions = useMemo(() => rawSessions ?? [], [rawSessions]);
+  const sessions = useMemo(() => classSessionData?.content ?? [], [classSessionData?.content]);
 
   const metrics = useMemo(() => {
     const todayStr = formatYMD(new Date());

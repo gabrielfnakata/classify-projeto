@@ -12,11 +12,12 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "@/components/ui/tooltip.t
 import SendFormDialog from "@/components/dialogs/SendFormDialog.tsx";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
 import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 export default function TeacherForms() {
     const navigate = useNavigate();
-    const {data: studentData} = useFetch<StudentDTO[]>('/student');
-    const {data: classData} = useFetch<ClassGroupDTO[]>('/class');
+    const { data: studentData } = useFetch<PaginationDTO<StudentDTO>>('/student');
+    const { data: classData } = useFetch<PaginationDTO<ClassGroupDTO>>('/class');
     const columns: DataTableColumn<FormDTO>[] = [
         {key: 'title', header: 'Título', cell: row => row.title},
         {key: 'createdAt', header: 'Data', cell: row => formatDateLabel(new Date(row.createdAt))},
@@ -40,8 +41,8 @@ export default function TeacherForms() {
                 </Tooltip>
                 <SendFormDialog
                     formId={row.uuid}
-                    studentData={studentData ?? []}
-                    classData={classData ?? []}
+                    studentData={studentData?.content ?? []}
+                    classData={classData?.content ?? []}
                 />
                 <Tooltip>
                     <TooltipTrigger
@@ -73,11 +74,10 @@ export default function TeacherForms() {
             ]
         },
     ];
-    const {data} = useFetch<FormDTO[]>('/form');
     return (
         <>
             <RegistrationPage
-                data={data ?? []}
+                url="/form"
                 columns={columns}
                 filters={filters}
                 title="Meus Formulários"

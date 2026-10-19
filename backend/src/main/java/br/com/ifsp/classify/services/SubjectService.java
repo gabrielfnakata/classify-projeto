@@ -2,34 +2,36 @@ package br.com.ifsp.classify.services;
 
 import br.com.ifsp.classify.repositories.SubjectTeacherRepository;
 import br.com.ifsp.classify.dtos.create.SubjectCreateDTO;
+import br.com.ifsp.classify.dtos.filter.SubjectFilterDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
 import br.com.ifsp.classify.dtos.update.SubjectUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Subject;
 import br.com.ifsp.classify.repositories.SubjectRepository;
+import br.com.ifsp.classify.specifications.SubjectSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.http.ResponseEntity;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, Integer> {
+public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, SubjectFilterDTO, Integer> {
 
     /** Professor só lista as disciplinas que leciona. */
     @Override
-    public java.util.List<SubjectGetDTO> findAll() {
+    protected Specification<Subject> accessSpecification() {
         if (!accessScope.isProfessor())
-            return super.findAll();
+            return Specification.unrestricted();
 
         Long employeeId = accessScope.currentEmployee().getId();
-        return subjectTeacherRepository
+        return AccessScopeService.idIn(subjectTeacherRepository
             .findAll((root, query, cb) -> cb.equal(root.get("employee").get("id"), employeeId))
             .stream()
-            .map(subjectTeacher -> subjectTeacher.getSubject())
-            .distinct()
-            .map(this::returnDTO)
-            .toList();
+            .map(subjectTeacher -> subjectTeacher.getSubject().getId())
+            .collect(java.util.stream.Collectors.toSet()));
     }
 
     private final AuditService auditService;
@@ -105,5 +107,19 @@ public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, S
         auditService.logDelete("SUBJECT", id, oldSubject);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public Specification<Subject> createSpecificationFromFilter(SubjectFilterDTO filterDTO) {
+        Specification<Subject> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        if (!Utils.isNullOrEmpty(filterDTO.description())) {
+            conditions = conditions.and(SubjectSpecification.getByDescription(filterDTO.description()));
+        }
+
+        return conditions;
     }
 }

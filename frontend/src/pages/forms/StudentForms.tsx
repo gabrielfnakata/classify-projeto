@@ -2,7 +2,6 @@ import type { DataTableColumn } from "@/components/common/data-table";
 import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import { StatusBadge } from "@/components/features/status-badge";
-import useFetch from "@/hooks/useFetch";
 import { formatDateLabel } from "@/shared/utils/date-formatter";
 import type { FormDTO } from "@/shared/dtos/form/FormDTO";
 import { statusLabel, statusVariant } from "@/shared/models/enums/form-status";
@@ -39,11 +38,10 @@ export default function StudentForms() {
             ]
         },
     ];
-    const {data} = useFetch<FormDTO[]>('/form');
     return (
         <>
             <RegistrationPage
-                data={data ?? []}
+                url="/form"
                 columns={columns}
                 filters={filters}
                 title="Meus Formulários"

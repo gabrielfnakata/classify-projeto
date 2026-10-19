@@ -2,6 +2,7 @@ package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
+import br.com.ifsp.classify.dtos.filter.StudentFilterDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
@@ -27,7 +28,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/student", produces = MediaType.APPLICATION_JSON_VALUE)
-public class StudentController extends AbstractController<StudentCreateDTO, StudentGetDTO, StudentUpdateDTO> {
+public class StudentController extends AbstractController<StudentCreateDTO, StudentGetDTO, StudentUpdateDTO, StudentFilterDTO> {
 
     private final StudentService service;
     private final ClassSessionService classSessionService;
@@ -170,7 +171,7 @@ public class StudentController extends AbstractController<StudentCreateDTO, Stud
         try {
             List<StudentGetDTO> students = (filters != null && !filters.isEmpty())
                     ? service.findAllFiltered(filters)
-                    : service.findAll();
+                    : service.findAll(null, null).content();
             byte[] content = service.exportToExcel(students);
 
             return ResponseEntity.ok()

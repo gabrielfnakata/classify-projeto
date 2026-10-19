@@ -2,6 +2,7 @@ package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.ClassSessionCreateDTO;
 import br.com.ifsp.classify.dtos.get.BatchResultDTO;
+import br.com.ifsp.classify.dtos.filter.ClasssessionFilterDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
 import br.com.ifsp.classify.dtos.get.ClassSessionSummaryDTO;
 import br.com.ifsp.classify.dtos.update.ClassSessionBatchDeleteDTO;
@@ -26,7 +27,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/classsession", produces = MediaType.APPLICATION_JSON_VALUE)
-public class ClassSessionController extends AbstractController<ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO> {
+public class ClassSessionController extends AbstractController<ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, ClasssessionFilterDTO> {
 
     private final ClassSessionService service;
 

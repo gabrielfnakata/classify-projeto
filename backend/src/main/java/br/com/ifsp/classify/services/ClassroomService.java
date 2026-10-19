@@ -3,19 +3,23 @@ package br.com.ifsp.classify.services;
 import org.springframework.stereotype.Service;
 
 import br.com.ifsp.classify.dtos.create.ClassroomCreateDTO;
+import br.com.ifsp.classify.dtos.filter.ClassroomFilterDTO;
 import br.com.ifsp.classify.dtos.get.ClassroomGetDTO;
 import br.com.ifsp.classify.dtos.update.ClassroomUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.Classroom;
 import br.com.ifsp.classify.repositories.ClassroomRepository;
+import br.com.ifsp.classify.specifications.ClassroomSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.http.ResponseEntity;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ClassroomService extends AbstractService<Classroom, ClassroomCreateDTO, ClassroomGetDTO, ClassroomUpdateDTO, Integer> {
+public class ClassroomService extends AbstractService<Classroom, ClassroomCreateDTO, ClassroomGetDTO, ClassroomUpdateDTO, ClassroomFilterDTO, Integer> {
 
     private final String CAPACITY_ZERO_OR_LESS_MESSAGE = "A capacidade da sala deve ser maior do que 0";
     private final AuditService auditService;
@@ -104,5 +108,27 @@ public class ClassroomService extends AbstractService<Classroom, ClassroomCreate
         auditService.logDelete("CLASSROOM", id, oldClassroom);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public Specification<Classroom> createSpecificationFromFilter(ClassroomFilterDTO filterDTO) {
+        Specification<Classroom> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        if (!Utils.isNullOrEmpty(filterDTO.name())) {
+            conditions = conditions.and(ClassroomSpecification.getByName(filterDTO.name()));
+        }
+
+        if (filterDTO.capacity() != null) {
+            conditions = conditions.and(ClassroomSpecification.getByCapacity(filterDTO.capacity()));
+        }
+
+        if (filterDTO.isDisabled() != null) {
+            conditions = conditions.and(ClassroomSpecification.getByDisponibility(filterDTO.isDisabled()));
+        }
+
+        return conditions;
     }
 }

@@ -3,12 +3,14 @@ package br.com.ifsp.classify.services;
 import java.time.LocalDateTime;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import br.com.ifsp.classify.dtos.create.UserCreateDTO;
 import br.com.ifsp.classify.dtos.get.CurrentUserGetDTO;
 import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
+import br.com.ifsp.classify.dtos.filter.UserFilterDTO;
 import br.com.ifsp.classify.dtos.get.RoleGetDTO;
 import br.com.ifsp.classify.dtos.get.UserGetDTO;
 import br.com.ifsp.classify.dtos.update.PasswordUpdateDTO;
@@ -28,7 +30,7 @@ import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 
 @Service
-public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO, UserUpdateDTO, Long> {
+public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO, UserUpdateDTO, UserFilterDTO, Long> {
 
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
@@ -266,6 +268,16 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         }
 
         return user;
+    }
+
+    @Override
+    public Specification<User> createSpecificationFromFilter(UserFilterDTO filterDTO) {
+        Specification<User> conditions = Specification.unrestricted();
+
+        if (filterDTO == null)
+            return conditions;
+
+        return conditions;
     }
 
     private void validateRole(Role role) {
