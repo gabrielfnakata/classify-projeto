@@ -230,7 +230,7 @@ export default function RegistrationPage<T extends dataType>({
                                         {entityPath ? (
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button className="h-10 px-4 rounded-xl text-sm font-semibold flex items-center gap-2">
+                                                    <Button variant="secondary" className="h-10 px-4 rounded-xl text-sm font-semibold flex items-center gap-2">
                                                         <FileText />
                                                         Importar / Exportar
                                                     </Button>
@@ -249,7 +249,7 @@ export default function RegistrationPage<T extends dataType>({
                                             </DropdownMenu>
                                         ) : null}
 
-                                        <Button className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
+                                        <Button className="h-10 px-5 rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
                                             <Plus></Plus>
                                             Criar novo registro
                                         </Button>
