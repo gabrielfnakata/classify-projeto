@@ -54,10 +54,13 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     private final StudentRepository studentRepository;
     private final UserService userService;
     private final AccessScopeService accessScope;
+    private final WelcomeMailService welcomeMailService;
 
-    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService, AccessScopeService accessScope) {
+    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService, AccessScopeService accessScope,
+            WelcomeMailService welcomeMailService) {
         super(repository);
         this.accessScope = accessScope;
+        this.welcomeMailService = welcomeMailService;
         this.studentRepository = repository;
         this.telephoneService = telephoneService;
         this.addressService = addressService;
@@ -81,7 +84,8 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             student.getTelephones()
                 .stream()
                 .map(telephone -> telephoneService.returnDTO(telephone))
-                .toList()
+                .toList(),
+            null
         );
     }
 
@@ -164,10 +168,11 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         }
 
         repository.save(newStudent);
+        Boolean welcomeEmailSent = welcomeMailService.sendIfPendingFirstAccess(newStudent.getUser(), newStudent.getName());
         StudentGetDTO createdStudent = returnDTO(newStudent);
         auditService.logInsert("STUDENT", newStudent.getId(), createdStudent);
 
-        return createdStudent;
+        return createdStudent.withWelcomeEmailSent(welcomeEmailSent);
     }
 
     public StudentGetDTO getForUser(String email) {
@@ -524,9 +529,9 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                             cpf,
                             registrationDate,
                             telephones,
-                                    null,
-                                    null
-                            );
+                            null,
+                            Utils.isNullOrEmpty(email) ? null : new StudentAccountCreateDTO(email, null)
+                    );
 
                     StudentGetDTO created = create(studentDTO);
                     if (created != null) imported.add(created);

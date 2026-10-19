@@ -121,9 +121,6 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         if (Utils.isNullOrEmpty(userDTO.email()))
             throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail do usuário.");
 
-        if (Utils.isNullOrEmpty(userDTO.password()))
-            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha do usuário.");
-
         Role role;
         if (Utils.isNullOrEmpty(userDTO.roleId())) {
             throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o cargo do usuário.");
@@ -142,7 +139,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         User newUser = new User();
         newUser.setUuid(UuidUtils.generateUUID());
         newUser.setEmail(Utils.trimAndUpper(userDTO.email()));
-        newUser.setPassword(passwordEncoder.encode(userDTO.password()));
+        newUser.setPassword(initialPassword(userDTO.password()));
         newUser.setRole(role);
         newUser.setCreatedAt(LocalDateTime.now());
 
@@ -175,10 +172,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
             throw new DtoException(ExceptionCode.INVALID_CREDENTIALS, "A senha atual está incorreta.");
 
         String newPassword = passwordDTO.newPassword();
-        if (newPassword.length() < 8 || !newPassword.matches(".*[a-z].*")
-                || !newPassword.matches(".*[A-Z].*") || !newPassword.matches(".*\\d.*"))
-            throw new DtoException(ExceptionCode.VALIDATION_ERROR,
-                    "A nova senha deve ter ao menos 8 caracteres, com letra maiúscula, letra minúscula e número.");
+        validatePasswordRules(newPassword);
 
         if (passwordEncoder.matches(newPassword, user.getPassword()))
             throw new DtoException(ExceptionCode.VALIDATION_ERROR, "A nova senha deve ser diferente da senha atual.");
@@ -187,12 +181,51 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         repository.save(user);
     }
 
+    public User defineFirstAccessPassword(String email, String password, String confirmPassword) {
+        if (Utils.isNullOrEmpty(email))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "Informe o e-mail cadastrado.");
+
+        if (Utils.isNullOrEmpty(password) || Utils.isNullOrEmpty(confirmPassword))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "Informe a senha e a confirmação.");
+
+        User user = repository.findOne(UserSpecification.getByEmail(Utils.trimAndUpper(email))).orElse(null);
+        if (user == null)
+            throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "Não encontramos um cadastro com esse e-mail.");
+
+        if (user.hasPassword())
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR,
+                    "Esse cadastro já tem senha. Entre pela tela de login.");
+
+        return applyNewPassword(user, password, confirmPassword);
+    }
+
+    public User applyNewPassword(User user, String password, String confirmPassword) {
+        if (Utils.isNullOrEmpty(password) || Utils.isNullOrEmpty(confirmPassword))
+            throw new DtoException(ExceptionCode.MISSING_FIELD, "Informe a senha e a confirmação.");
+
+        validatePasswordRules(password);
+
+        if (!password.equals(confirmPassword))
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR, "As senhas não coincidem.");
+
+        user.setPassword(passwordEncoder.encode(password));
+        return repository.save(user);
+    }
+
+    private void validatePasswordRules(String password) {
+        if (password.length() < 8 || !password.matches(".*[a-z].*")
+                || !password.matches(".*[A-Z].*") || !password.matches(".*\\d.*"))
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR,
+                    "A senha deve ter ao menos 8 caracteres, com letra maiúscula, letra minúscula e número.");
+    }
+
+    private String initialPassword(String password) {
+        return Utils.isNullOrEmpty(password) ? User.NO_PASSWORD : passwordEncoder.encode(password);
+    }
+
     public User createUserForStudent(StudentAccountCreateDTO accountDTO) {
         if (Utils.isNullOrEmpty(accountDTO.email()))
             throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar o e-mail de acesso do aluno.");
-
-        if (Utils.isNullOrEmpty(accountDTO.password()))
-            throw new DtoException(ExceptionCode.MISSING_FIELD, "É necessário informar a senha de acesso do aluno.");
 
         Role role = roleRepository
                 .findById(UserRole.ESTUDANTE.name())
@@ -201,7 +234,7 @@ public class UserService extends AbstractService<User, UserCreateDTO, UserGetDTO
         User newUser = new User();
         newUser.setUuid(UuidUtils.generateUUID());
         newUser.setEmail(Utils.trimAndUpper(accountDTO.email()));
-        newUser.setPassword(passwordEncoder.encode(accountDTO.password()));
+        newUser.setPassword(initialPassword(accountDTO.password()));
         newUser.setRole(role);
         newUser.setCreatedAt(LocalDateTime.now());
 

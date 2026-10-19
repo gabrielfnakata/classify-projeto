@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Bem-vindo ao Classify</title>
+</head>
+<body style="margin:0;padding:0;background-color:#eef4f8;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2d3a;">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Seu cadastro no Classify está pronto. Faça o primeiro acesso para criar sua senha.</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eef4f8;">
+<tr>
+<td align="center" style="padding:32px 16px;">
+
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(17,76,116,0.10);">
+
+  <tr>
+    <td align="center" style="padding:32px 32px 24px 32px;">
+      <img src="cid:classifyLogo" width="180" alt="Classify" style="display:block;width:180px;max-width:180px;height:auto;border:0;">
+    </td>
+  </tr>
+
+  <tr>
+    <td style="height:4px;line-height:4px;font-size:0;background-color:#1a9a96;background-image:linear-gradient(90deg,#1a9a96 0%,#118aa0 50%,#114c74 100%);">&nbsp;</td>
+  </tr>
+
+  <tr>
+    <td style="padding:32px 40px 8px 40px;">
+      <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#1a9a96;">Cadastro realizado</p>
+      <h1 style="margin:0;font-size:24px;line-height:32px;font-weight:700;color:#114c74;">Bem-vindo(a) ao Classify, {{firstName}}!</h1>
+      <p style="margin:12px 0 0 0;font-size:15px;line-height:23px;color:#4a5b6b;">A escola criou o seu cadastro como <strong style="color:#1f2d3a;">{{roleLabel}}</strong>. Falta só um passo: criar a sua senha no primeiro acesso.</p>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:24px 40px 0 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f9fb;border:1px solid #dbe8ef;border-radius:12px;">
+        <tr>
+          <td style="padding:18px 22px;">
+            <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6b7c8c;">Seu e-mail de acesso</p>
+            <p style="margin:0;font-size:17px;line-height:24px;font-weight:700;color:#114c74;word-break:break-all;">{{email}}</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:28px 40px 0 40px;">
+      <p style="margin:0 0 14px 0;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6b7c8c;">Como fazer o primeiro acesso</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td width="40" valign="top" style="padding:0 0 14px 0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+              <td align="center" valign="middle" width="28" height="28" style="width:28px;height:28px;border-radius:14px;background-color:#1a9a96;color:#ffffff;font-size:14px;font-weight:700;">1</td>
+            </tr></table>
+          </td>
+          <td valign="top" style="padding:3px 0 14px 0;font-size:15px;line-height:22px;color:#1f2d3a;">Acesse o Classify pelo botão abaixo.</td>
+        </tr>
+        <tr>
+          <td width="40" valign="top" style="padding:0 0 14px 0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+              <td align="center" valign="middle" width="28" height="28" style="width:28px;height:28px;border-radius:14px;background-color:#118aa0;color:#ffffff;font-size:14px;font-weight:700;">2</td>
+            </tr></table>
+          </td>
+          <td valign="top" style="padding:3px 0 14px 0;font-size:15px;line-height:22px;color:#1f2d3a;">Na tela de login, clique em <strong>Primeiro acesso</strong> e informe o e-mail acima.</td>
+        </tr>
+        <tr>
+          <td width="40" valign="top" style="padding:0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+              <td align="center" valign="middle" width="28" height="28" style="width:28px;height:28px;border-radius:14px;background-color:#114c74;color:#ffffff;font-size:14px;font-weight:700;">3</td>
+            </tr></table>
+          </td>
+          <td valign="top" style="padding:3px 0 0 0;font-size:15px;line-height:22px;color:#1f2d3a;">Crie sua senha (ao menos 8 caracteres, com letra maiúscula, letra minúscula e número) e pronto: você já entra no sistema.</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding:32px 40px 8px 40px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="center" bgcolor="#114c74" style="border-radius:10px;background-color:#114c74;">
+            <a href="{{firstAccessUrl}}" style="display:inline-block;padding:14px 34px;font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;">Fazer meu primeiro acesso</a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:12px 0 0 0;font-size:13px;line-height:19px;color:#6b7c8c;">Se o botão não funcionar, acesse <a href="{{appUrl}}" style="color:#118aa0;text-decoration:none;">{{appUrl}}</a></p>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:28px 40px 32px 40px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="border-top:1px solid #e3edf2;padding-top:20px;font-size:12px;line-height:18px;color:#8a9aa8;text-align:center;">
+            Você recebeu este e-mail porque a escola criou um cadastro com este endereço no <strong style="color:#114c74;">Classify</strong>.<br>
+            Se não reconhece este cadastro, ignore esta mensagem.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+</body>
+</html>

@@ -5,6 +5,8 @@ import { parseTelephone } from "@/shared/utils/telephone-parser";
 import { NewStudentValidationSchema } from "@/validation/StudentSchema";
 import { useNavigate } from "react-router";
 import type { StudentCreateDTO } from "@/shared/dtos/student/StudentCreateDTO";
+import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
+import { welcomeEmailNotice } from "@/shared/utils/welcome-email-notice";
 
 export default function NewStudent() {
     const navigate = useNavigate();
@@ -16,8 +18,6 @@ export default function NewStudent() {
         {key: 'registrationDate', name: 'registrationDate', label: 'Data de matrícula', type: 'date' as const, required: true},
         {key: 'telephone1', name: 'telephone1', label: 'Telefone 1', type: 'phone' as const, required: true},
         {key: 'telephone2', name: 'telephone2', label: 'Telefone 2', type: 'phone' as const, required: false},
-        {key: 'accountEmail', name: 'accountEmail', label: 'E-mail de acesso (opcional)', type: 'text' as const, required: false},
-        {key: 'accountPassword', name: 'accountPassword', label: 'Senha de acesso (opcional)', type: 'password' as const, required: false},
     ];
 
     const initialFormValue = {
@@ -27,9 +27,7 @@ export default function NewStudent() {
         cpf: '',
         registrationDate: '',
         telephone1: '',
-        telephone2: '',
-        accountEmail: '',
-        accountPassword: ''
+        telephone2: ''
     };
 
     function buildPayload(values: Record<string, unknown>): StudentCreateDTO {
@@ -45,15 +43,13 @@ export default function NewStudent() {
             registrationDate: values.registrationDate as string,
             telephones: telephones,
             guardians: [],
-            ...(values.accountEmail && values.accountPassword
-                ? { account: { email: values.accountEmail as string, password: values.accountPassword as string } }
-                : {})
+            account: { email: values.email as string, password: null }
         };
     }
 
     async function handleSubmit(payload: StudentCreateDTO) {
-        await api.post('/student', payload);
-        navigate('/students');
+        const { data } = await api.post<StudentDTO>('/student', payload);
+        navigate('/students', { state: { notice: welcomeEmailNotice(data.name, data.email, data.welcomeEmailSent) } });
     }
 
     return (
