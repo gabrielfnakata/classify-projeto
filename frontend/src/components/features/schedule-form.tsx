@@ -19,6 +19,7 @@ import { TimeSelect } from "@/components/common/time-select";
 import { WeekdayPicker } from "@/components/features/weekday-picker";
 import { RecurrencePreview } from "@/components/features/recurrence-preview";
 import { TeacherAvailabilityHint } from "@/components/features/teacher-availability-hint";
+import { OwnTeacherField } from "@/components/features/own-teacher-field";
 import api from "@/services/api";
 import type { ClassroomDTO } from "@/shared/dtos/classroom/ClassroomDTO";
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO";
@@ -31,6 +32,8 @@ import type { TeacherAvailabilityDTO } from "@/shared/dtos/employees/TeacherAvai
 import { availableJsDays } from "@/shared/utils/weekdays";
 import useFetch from "@/hooks/useFetch";
 import useFetchList from "@/hooks/useFetchList";
+import { useAuth } from "@/hooks/useAuth";
+import { Roles } from "@/shared/models/enums/roles";
 import {
   type ScheduleFormState,
   type ScheduleTargetType,
@@ -59,6 +62,7 @@ interface ScheduleFormProps {
 
 export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset }: ScheduleFormProps) {
   const [error, setError] = useState<string | null>(null);
+  const isProfessor = useAuth().userData?.role === Roles.PROFESSOR;
 
   const { data: subjectTeachersData, loading: loadingST } = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher");
   const { data: classroomsData, loading: loadingCR } = useFetch<PaginationDTO<ClassroomDTO>>("/classroom");
@@ -73,6 +77,8 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset
   const isEditing = Boolean(editingSessions?.length);
   const editingPrimary = editingSessions?.[0] ?? null;
   const originalTargetType: ScheduleTargetType = editingPrimary?.student ? "student" : "class";
+  const ownTeacher = isProfessor ? subjectTeachers[0]?.employee ?? null : null;
+  const ownTeacherUuid = ownTeacher?.uuid ?? "";
 
   useEffect(() => {
     if (!open) return;
@@ -98,8 +104,12 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset
             recurringWeekdays: [],
             recurringUntil: "",
           }
-        : { ...EMPTY_SCHEDULE_FORM, ...preset },
-    [editingSessions, editingPrimary, open, preset]
+        : {
+            ...EMPTY_SCHEDULE_FORM,
+            ...preset,
+            ...(ownTeacherUuid ? { teacherId: ownTeacherUuid } : {}),
+          },
+    [editingSessions, editingPrimary, open, preset, ownTeacherUuid]
   );
 
   // Professor selecionado, espelhado fora do Formik para buscar a disponibilidade dele.
@@ -421,6 +431,9 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset
                         <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                           Professor
                         </Label>
+                        {ownTeacher ? (
+                          <OwnTeacherField name={ownTeacher.name} />
+                        ) : (
                         <div className="flex gap-1.5">
                           <Select
                             value={values.teacherId}
@@ -455,6 +468,7 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset
                             </Button>
                           )}
                         </div>
+                        )}
                         {values.teacherId && (
                           <TeacherAvailabilityHint
                             blocks={availability}

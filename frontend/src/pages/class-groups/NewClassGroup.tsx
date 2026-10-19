@@ -29,6 +29,9 @@ import { DEFAULT_REPORT_CONTENT, generateRecurringDates } from "@/shared/utils/r
 import { sortedByName } from "@/shared/utils/sort-by-name";
 import { NewClassGroupValidationSchema } from "@/validation/ClassGroupSchema";
 import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
+import { useAuth } from "@/hooks/useAuth";
+import { Roles } from "@/shared/models/enums/roles";
+import { OwnTeacherField } from "@/components/features/own-teacher-field";
 
 interface FormValues {
     name: string;
@@ -71,6 +74,8 @@ export default function NewClassGroup() {
     const subjectTeachers = subjectTeachersData?.content ?? [];
     const classrooms = (classroomsData?.content ?? []).filter((c) => !c.isDisabled);
     const [error, setError] = useState<string | null>(null);
+    const isProfessor = useAuth().userData?.role === Roles.PROFESSOR;
+    const ownTeacher = isProfessor ? subjectTeachers[0]?.employee ?? null : null;
 
     async function handleSubmit(values: FormValues, helpers: FormikHelpers<FormValues>) {
         setError(null);
@@ -249,7 +254,10 @@ export default function NewClassGroup() {
                                                 id="scheduleEnabled"
                                                 className="border-muted-foreground/50 bg-card"
                                                 checked={values.scheduleEnabled}
-                                                onCheckedChange={(checked) => setFieldValue("scheduleEnabled", checked === true)}
+                                                onCheckedChange={(checked) => {
+                                                    setFieldValue("scheduleEnabled", checked === true);
+                                                    if (checked === true && ownTeacher) setFieldValue("teacherId", ownTeacher.uuid);
+                                                }}
                                             />
                                             <Label htmlFor="scheduleEnabled" className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                                                 <CalendarPlus className="h-4 w-4 text-muted-foreground" />
@@ -262,6 +270,9 @@ export default function NewClassGroup() {
                                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                                     <div className="space-y-1.5">
                                                         <Label className="text-xs text-muted-foreground">Professor</Label>
+                                                        {ownTeacher ? (
+                                                            <OwnTeacherField name={ownTeacher.name} />
+                                                        ) : (
                                                         <div className="flex gap-1.5">
                                                             <Select
                                                                 value={values.teacherId}
@@ -293,6 +304,7 @@ export default function NewClassGroup() {
                                                                 </Button>
                                                             )}
                                                         </div>
+                                                        )}
                                                     </div>
 
                                                     <div className="space-y-1.5">
