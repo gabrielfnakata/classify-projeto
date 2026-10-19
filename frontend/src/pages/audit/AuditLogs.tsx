@@ -13,6 +13,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { auditService } from "@/services/auditService";
+import useClientPagination from "@/hooks/useClientPagination";
 import type { AuditDTO, AuditFilterParams } from "@/shared/dtos/audit/AuditDTO";
 import FilterRow, { type FilterConfig } from "@/components/filter-row/FilterRow";
 import {AuditTables, normalizeTableName, TABLE_NAMES} from "@/shared/models/enums/audit-tables.ts";
@@ -52,6 +53,7 @@ export default function AuditLogs() {
     const [loading, setLoading] = useState<boolean>(false);
     const [selectedAudit, setSelectedAudit] = useState<AuditDTO | null>(null);
     const [filterValues, setFilterValues] = useState<AuditFilterParams>({});
+    const pagination = useClientPagination(logs);
 
     const fetchLogs = async (params?: AuditFilterParams) => {
         setLoading(true);
@@ -206,7 +208,7 @@ export default function AuditLogs() {
 
                     <div className="flex-1 overflow-hidden">
                         <DataTable
-                            data={logs}
+                            {...pagination}
                             columns={columns}
                             rowKey={(row) => row.id}
                             emptyTitle="Nenhum registro de auditoria encontrado"

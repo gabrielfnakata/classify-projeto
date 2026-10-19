@@ -24,7 +24,6 @@ public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, Filte
     public abstract GetDTO update(String uuid, UpdateDTO entity);
     public abstract Specification<Model> createSpecificationFromFilter(FilterDTO filterDTO);
 
-    /** Restringe a listagem ao que o usuário logado pode ver; por padrão, não restringe. */
     protected Specification<Model> accessSpecification() {
         return Specification.unrestricted();
     }

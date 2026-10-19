@@ -2,7 +2,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 import api from "@/services/api";
+import useFetch from "@/hooks/useFetch";
 import useFetchList from "@/hooks/useFetchList";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import useFetchOne from "@/hooks/useFetchOne";
 import useApiAction from "@/hooks/useApiAction";
 import { EntityDetailLayout } from "@/components/features/entity-detail-layout";
@@ -27,13 +29,13 @@ export default function SubjectDetail() {
   const { uuid = "" } = useParams<{ uuid: string }>();
 
   const { data: subject, loading } = useFetchOne<SubjectDTO>(`/subject/${uuid}`);
-  const { data: linksData, refetch: refetchLinks } = useFetchList<SubjectTeacherDTO>("/subjectteacher");
-  const { data: employeesData } = useFetchList<EmployeeDTO>("/employee");
+  const { data: linksPage, refetch: refetchLinks } = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher");
+  const { data: employeesPage } = useFetch<PaginationDTO<EmployeeDTO>>("/employee");
   const { data: sessionsData, refetch: refetchSessions } = useFetchList<ClassSessionDTO>(
     `/classsession/filter?subjectUuid=${uuid}&${scheduleWindowQuery()}`
   );
-  const links = linksData ?? EMPTY_LINKS;
-  const employees = employeesData ?? EMPTY_EMPLOYEES;
+  const links = linksPage?.content ?? EMPTY_LINKS;
+  const employees = employeesPage?.content ?? EMPTY_EMPLOYEES;
   const sessions = sessionsData ?? EMPTY_SESSIONS;
 
   const [editing, setEditing] = useState(false);

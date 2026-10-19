@@ -1,9 +1,8 @@
-import { useState } from "react"
-
 import { SectionTitle } from "@/components/features/section-title"
 import { ContentCard } from "@/components/layout/content-card"
 import { DataTable } from "@/components/common/data-table"
 import { cn } from "@/lib/utils"
+import useClientPagination from "@/hooks/useClientPagination"
 import type { StudentPerformanceRow } from "@/hooks/useClassPerformance"
 
 interface ClassStudentsTableProps {
@@ -25,11 +24,7 @@ function AttendanceMeter({ rate }: { rate: number | null }) {
 }
 
 export function ClassStudentsTable({ rows, className }: ClassStudentsTableProps) {
-  // A lista já vem completa; a paginação é feita aqui mesmo.
-  const [page, setPage] = useState(0)
-  const [size, setSize] = useState(10)
-  const totalPages = Math.max(1, Math.ceil((rows?.length ?? 0) / size))
-  const pageRows = rows?.slice(page * size, (page + 1) * size) ?? []
+  const pagination = useClientPagination(rows)
 
   return (
     <ContentCard className={cn("flex flex-col", className)}>
@@ -39,15 +34,7 @@ export function ClassStudentsTable({ rows, className }: ClassStudentsTableProps)
         <p className="text-sm text-muted-foreground">Carregando desempenho dos alunos...</p>
       ) : (
         <DataTable
-          data={pageRows}
-          totalPages={totalPages}
-          page={page}
-          size={size}
-          onPageChange={setPage}
-          onSizeChange={(newSize) => {
-            setSize(newSize)
-            setPage(0)
-          }}
+          {...pagination}
           rowKey={(row) => row.uuid}
           emptyTitle="Turma sem alunos"
           emptyDescription="Adicione alunos a essa turma para ver o desempenho."

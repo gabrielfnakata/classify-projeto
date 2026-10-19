@@ -2,7 +2,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 import api from "@/services/api";
+import useFetch from "@/hooks/useFetch";
 import useFetchList from "@/hooks/useFetchList";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import useFetchOne from "@/hooks/useFetchOne";
 import useApiAction from "@/hooks/useApiAction";
 import { EntityDetailLayout } from "@/components/features/entity-detail-layout";
@@ -29,15 +31,15 @@ export default function EmployeeDetail() {
   const { uuid = "" } = useParams<{ uuid: string }>();
 
   const { data: employee, loading } = useFetchOne<EmployeeDTO>(`/employee/${uuid}`);
-  const { data: linksData, refetch: refetchLinks } = useFetchList<SubjectTeacherDTO>("/subjectteacher");
-  const { data: subjectsData } = useFetchList<SubjectDTO>("/subject");
-  const { data: classroomsData } = useFetchList<ClassroomDTO>("/classroom");
+  const { data: linksPage, refetch: refetchLinks } = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher");
+  const { data: subjectsPage } = useFetch<PaginationDTO<SubjectDTO>>("/subject");
+  const { data: classroomsPage } = useFetch<PaginationDTO<ClassroomDTO>>("/classroom");
   const { data: sessionsData, refetch: refetchSessions } = useFetchList<ClassSessionDTO>(
     `/classsession/filter?employeeUuid=${uuid}&${scheduleWindowQuery()}`
   );
-  const links = linksData ?? EMPTY_LINKS;
-  const subjects = subjectsData ?? EMPTY_SUBJECTS;
-  const classrooms = classroomsData ?? EMPTY_CLASSROOMS;
+  const links = linksPage?.content ?? EMPTY_LINKS;
+  const subjects = subjectsPage?.content ?? EMPTY_SUBJECTS;
+  const classrooms = classroomsPage?.content ?? EMPTY_CLASSROOMS;
   const sessions = sessionsData ?? EMPTY_SESSIONS;
 
   const [editing, setEditing] = useState(false);

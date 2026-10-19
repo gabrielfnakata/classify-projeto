@@ -2,7 +2,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import { ArrowLeft, Check, Loader2, Pencil, Trash2, TriangleAlert, X } from "lucide-react";
 
+import useFetch from "@/hooks/useFetch";
 import useFetchList from "@/hooks/useFetchList";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import useFetchOne from "@/hooks/useFetchOne";
 import useApiAction from "@/hooks/useApiAction";
 import api from "@/services/api";
@@ -38,11 +40,11 @@ export default function ClassGroupDetail() {
   const location = useLocation();
 
   const { data: classGroup, refetch: refetchClassGroup } = useFetchOne<ClassGroupDTO>(`/class/${uuid}`);
-  const { data: studentsData } = useFetchList<StudentDTO>("/student");
+  const { data: studentsPage } = useFetch<PaginationDTO<StudentDTO>>("/student");
   const { data: sessionsData, refetch: refetchSessions } = useFetchList<ClassSessionDTO>(
     `/classsession/filter?classUuid=${uuid}&${scheduleWindowQuery()}`
   );
-  const students = studentsData ?? EMPTY_STUDENTS;
+  const students = studentsPage?.content ?? EMPTY_STUDENTS;
   const sessions = sessionsData ?? EMPTY_SESSIONS;
 
   const [warning, setWarning] = useState<string | null>(
