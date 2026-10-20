@@ -34,6 +34,7 @@ import {Tooltip, TooltipContent, TooltipTrigger} from "../ui/tooltip";
 import {useState} from "react";
 import type {AssignFormToClassDTO} from "@/shared/dtos/form-assign/AssignFormToClassDTO.ts";
 import type {AssignFormToStudentsDTO} from "@/shared/dtos/form-assign/AssignFormToStudentsDTO.ts";
+import ConfirmationDialog from "@/components/dialogs/ConfirmationDialog.tsx";
 
 interface SendFormDialogProps {
     formId: string;
@@ -62,8 +63,8 @@ const toOption = (entity: StudentDTO | ClassGroupDTO): Option => {
 
 export default function SendFormDialog({formId, studentData, classData}: SendFormDialogProps) {
     const [open, setOpen] = useState(false);
+    const [confirmationOpen, setConfirmationOpen] = useState(false);
     const anchor = useComboboxAnchor();
-    // TODO: adicionar dialog de confirmação (depende do context)
 
     const handleTabChange = (value: string) => {
         setValues({
@@ -93,13 +94,11 @@ export default function SendFormDialog({formId, studentData, classData}: SendFor
             const url = values.type === FormAssignType.CLASS
                 ? '/form/send/class'
                 : '/form/send/students';
-            await api.post(url, payload).then(() => {
-                alert('Formulário enviado com sucesso.');
-                setOpen(false);
-            });
+            await api.post(url, payload);
+            setOpen(false);
+            setConfirmationOpen(true);
         } catch (error) {
             console.error(error);
-            alert("Não foi possível enviar o formulário");
         } finally {
             helpers.setSubmitting(false);
         }
@@ -237,6 +236,11 @@ export default function SendFormDialog({formId, studentData, classData}: SendFor
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <ConfirmationDialog
+                open={confirmationOpen}
+                onOpenChange={setConfirmationOpen}
+                message="Formulário enviado com sucesso."
+            />
         </>
     );
 }
