@@ -24,12 +24,14 @@ import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -216,10 +218,28 @@ public class FormService {
         );
     }
 
-    public List<FormSubmissionGetDTO> getFormSubmissions(String formUuid) {
+    public PageResponseGetDTO<FormSubmissionGetDTO> getFormSubmissions(String formUuid, String studentName, FormStatus status, Pageable pageable) {
         Form form = formRepository.findByUuid(UUID.fromString(formUuid)).orElseThrow();
         requireOwnsForm(form);
-        return form.getFormSubmissions().stream().map(submission -> new FormSubmissionGetDTO(
+
+        String name = studentName == null ? "" : studentName.trim().toLowerCase();
+        List<FormSubmission> filtered = form.getFormSubmissions().stream()
+                .filter(submission -> name.isEmpty() || submission.getStudent().getName().toLowerCase().contains(name))
+                .filter(submission -> status == null || submission.getStatus() == status)
+                .sorted(Comparator.comparing(submission -> submission.getStudent().getName(), String.CASE_INSENSITIVE_ORDER))
+                .toList();
+
+        int from = (int) Math.min(pageable.getOffset(), filtered.size());
+        int to = Math.min(from + pageable.getPageSize(), filtered.size());
+        List<FormSubmissionGetDTO> content = filtered.subList(from, to).stream()
+                .map(submission -> toFormSubmissionGetDTO(form, submission))
+                .toList();
+
+        return PageResponseGetDTO.from(new PageImpl<>(content, pageable, filtered.size()));
+    }
+
+    private FormSubmissionGetDTO toFormSubmissionGetDTO(Form form, FormSubmission submission) {
+        return new FormSubmissionGetDTO(
                 submission.getUuid().toString(),
                 form.getUuid().toString(),
                 form.getTitle(),
@@ -233,7 +253,7 @@ public class FormService {
                 submission.getSubmittedAt(),
                 submission.getCorrectedAt(),
                 submission.getScore()
-        )).toList();
+        );
     }
 
 
