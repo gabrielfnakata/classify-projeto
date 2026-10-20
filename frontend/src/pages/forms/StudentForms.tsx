@@ -3,7 +3,7 @@ import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import { StatusBadge } from "@/components/features/status-badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatDateLabel, formatYMD } from "@/shared/utils/date-formatter";
+import { formatDateLabel, formatYMD, toDate } from "@/shared/utils/date-formatter";
 import { PenLine } from "lucide-react";
 import { useNavigate } from "react-router";
 import type { FormDTO } from "@/shared/dtos/form/FormDTO";
@@ -14,8 +14,8 @@ export default function StudentForms() {
 
     const columns: DataTableColumn<FormDTO>[] = [
         {key: 'title', header: 'Título', cell: row => row.title},
-        {key: 'createdAt', header: 'Data', cell: row => formatDateLabel(new Date(row.createdAt))},
-        {key: 'limitDate', header: 'Data Limite', cell: row => formatDateLabel(new Date(row.limitDate))},
+        {key: 'createdAt', header: 'Data', cell: row => formatDateLabel(toDate(row.createdAt))},
+        {key: 'limitDate', header: 'Data Limite', cell: row => formatDateLabel(toDate(row.limitDate))},
         {key: 'teacherName', header: 'Postado Por', cell: row => row.teacherName},
         {key: 'hasScore', header: 'Tipo', cell: row => row.hasScore ? "Avaliativo" : "Sem nota"},
         {key: 'questions', header: 'Questões', cell: row => row.questions},
