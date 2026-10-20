@@ -1,7 +1,11 @@
 package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.get.AuditGetDTO;
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.services.AuditService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,15 +24,17 @@ public class AuditController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AuditGetDTO>> findAll(
+    public ResponseEntity<PageResponseGetDTO<AuditGetDTO>> findAll(
             @RequestParam(required = false) String tableName,
             @RequestParam(required = false) Long registerId,
             @RequestParam(required = false) String operation,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @PageableDefault(size = 10, sort = "date", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        List<AuditGetDTO> logs = auditService.findAll(tableName, registerId, operation, startDate, endDate);
-        return logs.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(logs);
+        PageResponseGetDTO<AuditGetDTO> logs = auditService.findAll(
+                tableName, registerId, operation, startDate, endDate, pageable);
+        return logs.content().isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(logs);
     }
 
     @GetMapping("/{tableName}")

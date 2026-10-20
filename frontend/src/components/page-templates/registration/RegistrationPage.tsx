@@ -66,6 +66,7 @@ export default function RegistrationPage<T extends dataType>({
     const previousRefreshkey = useRef<number>(refreshKey);
 
     const { data, refetch } = useFetch<PaginationDTO<T>>(url, page, size, filterValues);
+    console.log(data);
 
     useEffect(() => {
         if (previousRefreshkey.current === refreshKey) return;
