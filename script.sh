@@ -33,6 +33,8 @@ askUser() {
 	echo "- - - Backend - - -"
     read -rp "Digite a porta para rodar o backend (Em branco para rodar a padrão: 8080): " backPort
 	read -rp "Digite um JWT (Em branco para gerar aleatóriamente): " backJwtSecret
+    read -rp "Digite um e-mail para que a aplicação envie notificações:" mailUsername
+    read -rsp "Digite a senha para esse e-mail:" mailPassword
 
     echo ""
     echo "- - - Frontend - - -"
@@ -48,6 +50,8 @@ MYSQL_PORT=${dbPort:-3306}
 # Backend
 JWT_SECRET=${backJwtSecret:-$(generate_jwt)}
 BACK_PORT=${backPort:-8080}
+MAIL_USERNAME=${mailUsername}
+MAIL_PASSWORD=${mailPassword}
 
 # Frontend
 FRONT_PORT=${frontPort:-5173}
