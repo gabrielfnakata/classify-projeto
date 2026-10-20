@@ -3,9 +3,6 @@ import { useParams } from "react-router";
 import { BookOpen } from "lucide-react";
 
 import api from "@/services/api";
-import useFetch from "@/hooks/useFetch";
-import useFetchList from "@/hooks/useFetchList";
-import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import useFetchOne from "@/hooks/useFetchOne";
 import useApiAction from "@/hooks/useApiAction";
 import { EntityDetailLayout } from "@/components/features/entity-detail-layout";
@@ -23,6 +20,9 @@ import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type { AddStudentsToClassGroupDTO } from "@/shared/dtos/class-group/AddStudentsToClassGroupDTO";
 import type { ScheduleFormState } from "@/shared/models/forms/ScheduleFormState";
+import useFetch from "@/hooks/useFetch";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
+import useFetchList from "@/hooks/useFetchList";
 
 const EMPTY_CLASS_GROUPS: ClassGroupDTO[] = [];
 const EMPTY_SESSIONS: ClassSessionDTO[] = [];
@@ -37,11 +37,11 @@ export default function StudentDetail() {
   const { uuid = "" } = useParams<{ uuid: string }>();
 
   const { data: student, loading } = useFetchOne<StudentDTO>(`/student/${uuid}`);
-  const { data: classGroupsPage, refetch: refetchClassGroups } = useFetch<PaginationDTO<ClassGroupDTO>>("/class");
+  const { data: classGroupsData, refetch: refetchClassGroups } = useFetch<PaginationDTO<ClassGroupDTO>>("/class");
   const { data: sessionsData, refetch: refetchSessions } = useFetchList<ClassSessionDTO>(
     `/classsession/filter?studentUuid=${uuid}&${scheduleWindowQuery()}`
   );
-  const classGroups = classGroupsPage?.content ?? EMPTY_CLASS_GROUPS;
+  const classGroups = classGroupsData?.content ?? EMPTY_CLASS_GROUPS;
   const sessions = sessionsData ?? EMPTY_SESSIONS;
 
   const [editingClassGroups, setEditingClassGroups] = useState(false);

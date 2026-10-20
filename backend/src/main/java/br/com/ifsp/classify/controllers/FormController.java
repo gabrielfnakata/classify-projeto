@@ -13,6 +13,8 @@ import br.com.ifsp.classify.services.form.FormService;
 import br.com.ifsp.classify.services.form.FormSubmissionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -46,9 +48,8 @@ public class FormController {
 
     @GetMapping
     public PageResponseGetDTO<FormGetDTO> getMyForms(@AuthenticationPrincipal AuthenticatedUser auth,
-                                                     @RequestParam(required = false) Integer page,
-                                                     @RequestParam(required = false) Integer size) {
-        return this.formService.getForms(auth, page, size);
+            @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        return this.formService.getForms(auth, pageable);
     }
 
     @GetMapping("/{uuid}")

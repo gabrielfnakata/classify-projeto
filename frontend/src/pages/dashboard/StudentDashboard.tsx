@@ -98,7 +98,7 @@ export default function StudentDashboard() {
   const studentSessions = useMemo(() => (rawStudentSessions ?? []).filter((s) => !isCanceled(s)), [rawStudentSessions])
   const { data: attendance } = useFetch<AttendanceGetDTO[]>(studentBaseUrl && `${studentBaseUrl}/attendance`)
   const { data: studentForms } = useFetch<FormDTO[]>(isAdmin ? studentBaseUrl && `${studentBaseUrl}/forms` : null)
-  const ownForms = useFetch<PaginationDTO<FormDTO>>(isAdmin ? null : "/form").data?.content
+  const ownForms = useFetch<PaginationDTO<FormDTO>>(isAdmin ? null : "/form", 0, 1000).data?.content
   const forms = isAdmin ? studentForms : ownForms
   // /classroom é restrito a admin/professor; para o aluno a sala simplesmente não é exibida.
   const classrooms = useFetch<PaginationDTO<ClassroomDTO>>(isAdmin ? "/classroom" : null).data?.content

@@ -27,6 +27,7 @@ interface registrationPageProps<T> {
     refreshKey?: number;
     sortData?: (rows: T[]) => T[];
     onDataChange?: (rows: T[]) => void;
+    rowKey?: (row: T) => string | number;
 }
 
 interface dataType {
@@ -52,9 +53,9 @@ function getPaginationSize(key: string | null): number {
         : 10;
 }
 
-export default function RegistrationPage<T extends dataType>({
+export default function RegistrationPage<T extends object>({
     title, url, filters, columns, registrationRoute, detailRoute, onRefresh, refreshKey = 0,
-    sortData, onDataChange
+    sortData, onDataChange, rowKey
 }: registrationPageProps<T>) {
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -141,7 +142,9 @@ export default function RegistrationPage<T extends dataType>({
 
     const handleFilterSubmit = (values: Record<string, string>) => {
         const activeFilters = Object.fromEntries(
-            Object.entries(values).filter(([, value]) => value.trim() !== "")
+            Object.entries(values)
+                .map(([key, value]) => [key, String(value)])
+                .filter(([, value]) => value.trim() !== "")
         );
 
         setPage(0);
@@ -313,7 +316,7 @@ export default function RegistrationPage<T extends dataType>({
                             <DataTable
                                 data={sortData ? sortData(data?.content ?? []) : data?.content ?? []}
                                 columns={tableColumns}
-                                rowKey={(row) => row.uuid}
+                                rowKey={rowKey ?? ((row) => (row as dataType).uuid)}
                                 totalPages={data?.totalPages ?? 1}
                                 page={page}
                                 size={size}

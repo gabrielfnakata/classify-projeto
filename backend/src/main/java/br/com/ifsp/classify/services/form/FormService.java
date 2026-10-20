@@ -22,10 +22,9 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -131,32 +130,18 @@ public class FormService {
         );
     }
 
-    public PageResponseGetDTO<FormGetDTO> getForms(AuthenticatedUser auth, Integer page, Integer size) {
-        List<FormGetDTO> forms = getForms(auth);
-        if (page == null || size == null)
-            return PageResponseGetDTO.from(new PageImpl<>(forms));
-
-        Pageable pageable = PageRequest.of(page, size);
-        int from = (int) Math.min(pageable.getOffset(), forms.size());
-        int to = Math.min(from + size, forms.size());
-        return PageResponseGetDTO.from(new PageImpl<>(forms.subList(from, to), pageable, forms.size()));
-    }
-
-    public List<FormGetDTO> getForms(AuthenticatedUser auth) {
+    public PageResponseGetDTO<FormGetDTO> getForms(AuthenticatedUser auth, Pageable pageable) {
         User user = userRepository.findByEmail(auth.username()).orElseThrow();
         return switch (auth.role()) {
-            case "PROFESSOR", "ADMIN" -> getPostedForms(user.getEmployee());
-            case "ESTUDANTE" -> getAvailableForms(user.getStudent());
+            case "PROFESSOR", "ADMIN" -> getPostedForms(user.getEmployee(), pageable);
+            case "ESTUDANTE" -> getAvailableForms(user.getStudent(), pageable);
             default -> throw new IllegalStateException("Role não suportada: " + auth.role());
         };
     }
 
-    public List<FormGetDTO> getPostedForms(Employee employee) {
-        List<Form> forms = formRepository.getAllFromEmployee(employee);
-        List<FormGetDTO> formGetDTOs = new ArrayList<>();
-
-        forms.forEach(form -> {
-            FormGetDTO dto = new FormGetDTO(
+    public PageResponseGetDTO<FormGetDTO> getPostedForms(Employee employee, Pageable pageable) {
+        Page<FormGetDTO> forms = formRepository.getAllFromEmployee(employee, pageable).map(form ->
+                new FormGetDTO(
                     form.getUuid().toString(),
                     form.getUuid().toString(),
                     form.getTitle(),
@@ -168,15 +153,13 @@ public class FormService {
                     form.getHasScore(),
                     0.0f,
                     FormStatus.PENDING
-            );
-            formGetDTOs.add(dto);
-        });
-        return formGetDTOs;
+                )
+        );
+        return PageResponseGetDTO.from(forms);
     }
 
-    public List<FormGetDTO> getAvailableForms(Student student) {
-        List<FormSubmission> availableSubmissions = student.getFormSubmissions();
-        return availableSubmissions.stream().map(submission -> {
+    public PageResponseGetDTO<FormGetDTO> getAvailableForms(Student student, Pageable pageable) {
+        Page<FormGetDTO> forms = formSubmissionRepository.findAllByStudent(student, pageable).map(submission -> {
             Form form = submission.getForm();
             return new FormGetDTO(
                     submission.getUuid().toString(),
@@ -191,7 +174,8 @@ public class FormService {
                     submission.getScore() != null ? submission.getScore().floatValue() : null,
                     submission.getStatus()
             );
-        }).toList();
+        });
+        return PageResponseGetDTO.from(forms);
     }
 
     public List<FormGetDTO> getFormsForStudent(String studentUuid) {
@@ -203,7 +187,7 @@ public class FormService {
             return null;
 
         accessScope.requireCanViewStudent(student);
-        return getAvailableForms(student);
+        return getAvailableForms(student, Pageable.unpaged()).content();
     }
 
     public FormInfoGetDTO getFormInfo(String uuid) {

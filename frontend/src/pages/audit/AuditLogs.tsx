@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
-import { Eye, History, RotateCcw } from "lucide-react";
-import { DataTable, type DataTableColumn } from "@/components/common/data-table";
-import { ContentCard } from "@/components/layout/content-card";
-import { PageHeader } from "@/components/layout/page-header";
+import { useState } from "react";
+import { Eye, History } from "lucide-react";
+import { type DataTableColumn } from "@/components/common/data-table";
+import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import { StatusBadge } from "@/components/features/status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,14 +11,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { auditService } from "@/services/auditService";
-import useClientPagination from "@/hooks/useClientPagination";
-import type { AuditDTO, AuditFilterParams } from "@/shared/dtos/audit/AuditDTO";
-import FilterRow, { type FilterConfig } from "@/components/filter-row/FilterRow";
+import type { AuditDTO } from "@/shared/dtos/audit/AuditDTO";
+import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import {AuditTables, normalizeTableName, TABLE_NAMES} from "@/shared/models/enums/audit-tables.ts";
 
 const OPERATION_OPTIONS: { value: string; label: string }[] = [
-    { value: "ALL", label: "Todas as operações" },
     { value: "INSERT", label: "INSERT (Criação)" },
     { value: "UPDATE", label: "UPDATE (Edição)" },
     { value: "DELETE", label: "DELETE (Exclusão)" },
@@ -30,7 +26,7 @@ const filtersConfig: FilterConfig[] = [
         name: "tableName",
         inputType: "select",
         placeholder: "Selecione a tabela",
-        options: TABLE_NAMES,
+        options: TABLE_NAMES.filter((table) => table.value !== "ALL"),
         width: 33,
     },
     {
@@ -49,47 +45,7 @@ const filtersConfig: FilterConfig[] = [
 ];
 
 export default function AuditLogs() {
-    const [logs, setLogs] = useState<AuditDTO[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
     const [selectedAudit, setSelectedAudit] = useState<AuditDTO | null>(null);
-    const [filterValues, setFilterValues] = useState<AuditFilterParams>({});
-    const pagination = useClientPagination(logs);
-
-    const fetchLogs = async (params?: AuditFilterParams) => {
-        setLoading(true);
-        try {
-            const data = await auditService.getLogs(params);
-            setLogs(data);
-        } catch (error) {
-            console.error("Erro ao carregar logs de auditoria:", error);
-            setLogs([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        const cleanParams: AuditFilterParams = {};
-        if (filterValues.tableName && filterValues.tableName !== "ALL") {
-            cleanParams.tableName = filterValues.tableName;
-        }
-        if (filterValues.operation && filterValues.operation !== "ALL") {
-            cleanParams.operation = filterValues.operation;
-        }
-        if (filterValues.registerId) {
-            cleanParams.registerId = filterValues.registerId;
-        }
-
-        fetchLogs(cleanParams);
-    }, [filterValues]);
-
-    const handleFilterSubmit = (values: Record<string, string>) => {
-        setFilterValues({
-            tableName: values.tableName && values.tableName !== "ALL" ? values.tableName : undefined,
-            operation: values.operation && values.operation !== "ALL" ? values.operation as AuditFilterParams['operation'] : undefined,
-            registerId: values.registerId ? Number(values.registerId) : undefined,
-        });
-    };
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return "-";
@@ -180,43 +136,14 @@ export default function AuditLogs() {
     ];
 
     return (
-        <div className="flex flex-col background h-full w-full items-center justify-center p-6">
-            <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
-                <div className="flex flex-row w-9/10 items-center justify-between">
-                    <PageHeader
-                        title="Histórico de Auditoria"
-                        action={
-                            <Button
-                                variant="outline"
-                                className="h-10 px-4 rounded-xl text-sm font-semibold flex items-center gap-2"
-                                onClick={() => fetchLogs(filterValues)}
-                                disabled={loading}
-                            >
-                                <RotateCcw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                                Atualizar
-                            </Button>
-                        }
-                    />
-                </div>
-
-                <ContentCard className="flex flex-col w-9/10 h-[70vh] p-8 gap-[4vh]">
-                    <FilterRow
-                        filters={filtersConfig}
-                        onSubmit={handleFilterSubmit}
-                        onValuesChange={handleFilterSubmit}
-                    />
-
-                    <div className="flex-1 overflow-hidden">
-                        <DataTable
-                            {...pagination}
-                            columns={columns}
-                            rowKey={(row) => row.id}
-                            emptyTitle="Nenhum registro de auditoria encontrado"
-                            emptyDescription="As alterações realizadas nas entidades da aplicação serão registradas e exibidas aqui."
-                        />
-                    </div>
-                </ContentCard>
-            </div>
+        <>
+            <RegistrationPage<AuditDTO>
+                title="Auditoria"
+                url="/audit"
+                filters={filtersConfig}
+                columns={columns}
+                rowKey={(row) => row.id}
+            />
 
             <Dialog open={!!selectedAudit} onOpenChange={(open) => !open && setSelectedAudit(null)}>
                 <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-6 overflow-hidden">
@@ -231,7 +158,7 @@ export default function AuditLogs() {
                             Registro de {selectedAudit?.operation} na tabela <strong>{selectedAudit?.tableName}</strong> (ID #{selectedAudit?.registerId}) em {selectedAudit && formatDate(selectedAudit.date)} por <strong>{selectedAudit?.userEmail || "Sistema"}</strong>.
                         </DialogDescription>
                     </DialogHeader>
-
+        
                     <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                         <div className="flex flex-col gap-2 rounded-xl border border-border p-4 bg-muted/20">
                             <div className="flex items-center justify-between">
@@ -246,7 +173,7 @@ export default function AuditLogs() {
                                 {formatJsonData(selectedAudit?.oldData ?? null)}
                             </pre>
                         </div>
-
+        
                         <div className="flex flex-col gap-2 rounded-xl border border-border p-4 bg-muted/20">
                             <div className="flex items-center justify-between">
                                 <span className="font-semibold text-xs text-muted-foreground uppercase tracking-wider">
@@ -263,6 +190,6 @@ export default function AuditLogs() {
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
+        </>
     );
 }
