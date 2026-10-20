@@ -1,5 +1,6 @@
 import {DataTable, type DataTableColumn} from "@/components/common/data-table.tsx";
-import type { AuditDTO, AuditFilterParams } from "@/shared/dtos/audit/AuditDTO";
+import type { AuditDTO } from "@/shared/dtos/audit/AuditDTO";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import {AuditTables, normalizeTableName, TABLE_NAMES} from "@/shared/models/enums/audit-tables.ts";
 import {PageHeader} from "@/components/layout/page-header.tsx";
 import {Button} from "@/components/ui/button.tsx";
@@ -13,12 +14,6 @@ import type {EmployeeDTO} from "@/shared/dtos/employees/EmployeeDTO.ts";
 import type {StudentDTO} from "@/shared/dtos/student/StudentDTO.ts";
 import type {ClassSessionDTO} from "@/shared/dtos/class-session/ClassSessionDTO.ts";
 import UndoDeleteButton from "@/pages/deleted-entities/UndoDeleteButton.tsx";
-
-const emptyFilterValues: AuditFilterParams = {
-    startDate: undefined,
-    tableName: undefined,
-    registerId: undefined
-}
 
 export default function DeletedEntities() {
     const filtersConfig: FilterConfig[] = [
@@ -67,29 +62,21 @@ export default function DeletedEntities() {
         }
     ];
 
-    const [appliedFilters, setAppliedFilters] = useState<AuditFilterParams>(emptyFilterValues);
+    const [tableName, setTableName] = useState<string | undefined>(undefined);
+    const [page, setPage] = useState(0);
+    const [size, setSize] = useState(10);
 
     const fetchFilters = useMemo(
-        () => ({ tableName: appliedFilters.tableName, operation: "DELETE" }),
-        [appliedFilters.tableName]
+        () => ({ tableName, operation: "DELETE" }),
+        [tableName]
     );
 
-    const { data, loading, refetch } = useFetch<AuditDTO[]>(
+    const { data, loading, refetch } = useFetch<PaginationDTO<AuditDTO>>(
         'audit',
-        undefined,
-        undefined,
+        page,
+        size,
         fetchFilters
     );
-
-    const logs = useMemo(() => {
-        let result = data ?? [];
-        if (appliedFilters.registerId) {
-            result = result.filter((log) => log.registerId === Number(appliedFilters.registerId));
-        }
-        return [...result].sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-    }, [data, appliedFilters.registerId]);
 
     const getEntityData = (row: AuditDTO) => {
         if (!row.oldData) return "-";
@@ -114,11 +101,13 @@ export default function DeletedEntities() {
     };
 
     const handleFilterSubmit = (values: Record<string, string>) => {
-        setAppliedFilters({
-            ...emptyFilterValues,
-            tableName: values.tableName || undefined,
-            registerId: values.registerId || undefined,
-        });
+        setPage(0);
+        setTableName(values.tableName || undefined);
+    };
+
+    const handleSizeChange = (newSize: number) => {
+        setSize(newSize);
+        setPage(0);
     };
 
     return (
@@ -149,13 +138,16 @@ export default function DeletedEntities() {
 
                         <div className="flex-1 overflow-hidden">
                             <DataTable
-                                data={logs}
+                                data={data?.content ?? []}
                                 columns={columns}
                                 rowKey={(row) => row.id}
                                 emptyTitle="Nenhum registro de auditoria encontrado"
                                 emptyDescription="As entidades deletadas da aplicação serão registradas e exibidas aqui."
-                                onPageChange={() => {}}
-                                onSizeChange={() => {}}
+                                totalPages={data?.totalPages ?? 1}
+                                page={page}
+                                size={size}
+                                onPageChange={setPage}
+                                onSizeChange={handleSizeChange}
                             />
                         </div>
                     </ContentCard>
