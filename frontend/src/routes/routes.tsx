@@ -34,6 +34,7 @@ import ClassroomDetail from "@/pages/classrooms/ClassroomDetail";
 import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import { Roles } from "@/shared/models/enums/roles";
+import DeletedEntities from "@/pages/deleted-entities/DeletedEntities.tsx";
 
 const adminRoles = [Roles.ADMIN];
 const studentRoles = [Roles.ESTUDANTE];
@@ -166,6 +167,10 @@ export default function AppRoutes() {
             }/>
             <Route path="/audit-logs" element={
                 <ProtectedRoute allowedRoles={adminRoles} children={<AuditLogs />} />
+            }/>
+
+            <Route path="/deleted-entities" element={
+               <ProtectedRoute allowedRoles={adminRoles} children={<DeletedEntities />} />
             }/>
 
             {/* Rotas para todos os usuários autenticados */}

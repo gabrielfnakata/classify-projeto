@@ -178,8 +178,8 @@ export default function AuditLogs() {
     ];
 
     return (
-        <div className="flex flex-col background h-full w-full items-center justify-center p-6">
-            <div className="flex flex-col w-full h-full gap-[2vh] justify-center items-center">
+        <div className="flex flex-col background h-full w-full items-center justify-center">
+            <div className="flex flex-col w-full h-full py-17 gap-[2vh] justify-start items-center">
                 <div className="flex flex-row w-9/10 items-center justify-between">
                     <PageHeader
                         title="Histórico de Auditoria"
@@ -190,7 +190,7 @@ export default function AuditLogs() {
                                 onClick={() => fetchLogs(filterValues)}
                                 disabled={loading}
                             >
-                                <RotateCcw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                                <RotateCcw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}/>
                                 Atualizar
                             </Button>
                         }
@@ -220,13 +220,15 @@ export default function AuditLogs() {
                 <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col p-6 overflow-hidden">
                     <DialogHeader>
                         <div className="flex items-center gap-2">
-                            <History className="w-5 h-5 text-primary" />
+                            <History className="w-5 h-5 text-primary"/>
                             <DialogTitle>
                                 Detalhes da Auditoria #{selectedAudit?.id}
                             </DialogTitle>
                         </div>
                         <DialogDescription>
-                            Registro de {selectedAudit?.operation} na tabela <strong>{selectedAudit?.tableName}</strong> (ID #{selectedAudit?.registerId}) em {selectedAudit && formatDate(selectedAudit.date)} por <strong>{selectedAudit?.userEmail || "Sistema"}</strong>.
+                            Registro de {selectedAudit?.operation} na
+                            tabela <strong>{selectedAudit?.tableName}</strong> (ID #{selectedAudit?.registerId})
+                            em {selectedAudit && formatDate(selectedAudit.date)} por <strong>{selectedAudit?.userEmail || "Sistema"}</strong>.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -240,7 +242,8 @@ export default function AuditLogs() {
                                     <span className="text-[10px] text-muted-foreground italic">(Novo registro)</span>
                                 )}
                             </div>
-                            <pre className="text-xs font-mono bg-background p-3 rounded-lg border border-border overflow-x-auto whitespace-pre-wrap max-h-80">
+                            <pre
+                                className="text-xs font-mono bg-background p-3 rounded-lg border border-border overflow-x-auto whitespace-pre-wrap max-h-80">
                                 {formatJsonData(selectedAudit?.oldData ?? null)}
                             </pre>
                         </div>
@@ -254,7 +257,8 @@ export default function AuditLogs() {
                                     <span className="text-[10px] text-destructive italic">(Registro excluído)</span>
                                 )}
                             </div>
-                            <pre className="text-xs font-mono bg-background p-3 rounded-lg border border-border overflow-x-auto whitespace-pre-wrap max-h-80">
+                            <pre
+                                className="text-xs font-mono bg-background p-3 rounded-lg border border-border overflow-x-auto whitespace-pre-wrap max-h-80">
                                 {formatJsonData(selectedAudit?.newData ?? null)}
                             </pre>
                         </div>

@@ -1,4 +1,4 @@
-import { Calendar, File, Home, Users } from "lucide-react"
+import { Calendar, File, Home, ScrollText, Users } from "lucide-react"
 import type { Group } from "./sidebar-item"
 import { Roles } from "@/shared/models/enums/roles"
 
@@ -37,12 +37,20 @@ export const mainNavigation: Group[] = [
     allowedRoles: teachingRoles
   },
   {
-    title: 'Relatórios',
+    title: 'Formulários',
     icon: File,
     items: [
-      { title: 'Todos os relatórios', url: '/posted-forms', allowedRoles: adminRoles },
-      { title: 'Relatório alunos', url: '/pending-forms', allowedRoles: teachingRoles },
-      { title: 'Auditoria', url: '/audit-logs', allowedRoles: adminRoles }
+      { title: 'Meus formulários', url: '/posted-forms', allowedRoles: teachingRoles },
+      { title: 'Meus formulários', url: '/pending-forms', allowedRoles: studentRoles },
+    ],
+    allowedRoles: adminRoles
+  },
+  {
+    title: 'Auditoria',
+    icon: ScrollText,
+    items: [
+      { title: 'Auditoria', url: '/audit-logs', allowedRoles: adminRoles },
+      { title: 'Registros Apagados', url: '/deleted-entities', allowedRoles: adminRoles },
     ],
     allowedRoles: adminRoles
   }
