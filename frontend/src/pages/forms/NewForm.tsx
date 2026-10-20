@@ -4,6 +4,7 @@ import { Formik, type FormikHelpers } from "formik";
 import { formatYMD } from "@/shared/utils/date-formatter.ts";
 import FormHeaderActions from "@/pages/forms/new-form/FormHeaderActions.tsx";
 import FormHeaderFields from "./new-form/FormHeaderFields";
+import FormIssues from "./new-form/FormIssues";
 import QuestionList from "./new-form/QuestionList";
 import api from "@/services/api.ts";
 import { FormValidationSchema } from "@/validation/FormSchema.ts";
@@ -33,10 +34,16 @@ export default function NewForm() {
     }
 
     return (
-        <Formik initialValues={initialValues} onSubmit={handleSubmit} validationSchema={FormValidationSchema}>
+        <Formik
+            initialValues={initialValues}
+            onSubmit={handleSubmit}
+            validationSchema={FormValidationSchema}
+            validateOnMount
+        >
             <div className="flex flex-col background h-full w-full items-center justify-center">
                 <div className="flex flex-col w-full h-full py-17 gap-[2vh] justify-start items-center">
                     <FormHeaderActions type="create"/>
+                    <FormIssues />
                     <FormHeaderFields />
                     <QuestionList />
                 </div>

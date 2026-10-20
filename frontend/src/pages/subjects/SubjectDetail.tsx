@@ -18,6 +18,8 @@ import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import type { SubjectTeacherCreateDTO } from "@/shared/dtos/teacher/SubjectTeacherCreateDTO";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type { ScheduleFormState } from "@/shared/models/forms/ScheduleFormState";
+import useFetch from "@/hooks/useFetch";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 const EMPTY_LINKS: SubjectTeacherDTO[] = [];
 const EMPTY_EMPLOYEES: EmployeeDTO[] = [];
@@ -27,13 +29,13 @@ export default function SubjectDetail() {
   const { uuid = "" } = useParams<{ uuid: string }>();
 
   const { data: subject, loading } = useFetchOne<SubjectDTO>(`/subject/${uuid}`);
-  const { data: linksData, refetch: refetchLinks } = useFetchList<SubjectTeacherDTO>("/subjectteacher");
-  const { data: employeesData } = useFetchList<EmployeeDTO>("/employee");
+  const { data: linksData, refetch: refetchLinks } = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher");
+  const { data: employeesData } = useFetch<PaginationDTO<EmployeeDTO>>("/employee");
   const { data: sessionsData, refetch: refetchSessions } = useFetchList<ClassSessionDTO>(
     `/classsession/filter?subjectUuid=${uuid}&${scheduleWindowQuery()}`
   );
-  const links = linksData ?? EMPTY_LINKS;
-  const employees = employeesData ?? EMPTY_EMPLOYEES;
+  const links = linksData?.content ?? EMPTY_LINKS;
+  const employees = employeesData?.content ?? EMPTY_EMPLOYEES;
   const sessions = sessionsData ?? EMPTY_SESSIONS;
 
   const [editing, setEditing] = useState(false);

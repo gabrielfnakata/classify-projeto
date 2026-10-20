@@ -17,6 +17,9 @@ import type {
 } from "@/shared/dtos/attendance/AttendanceRosterEntryDTO";
 import type { AttendanceRecordInputDTO } from "@/shared/dtos/attendance/AttendanceRecordInputDTO";
 import { describeWeekdays, weekdaysOfDates } from "@/shared/utils/recurrence";
+import { attendanceBlockReason, isCanceled } from "@/shared/utils/class-session-helpers";
+import { apiErrorMessage } from "@/shared/utils/api-error";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 interface CellState {
   status: AttendanceStatus | null;
@@ -44,6 +47,8 @@ export default function AttendanceSeriesPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [now] = useState(() => Date.now());
+  const blockReasonOf = (s: ClassSessionDTO) => attendanceBlockReason(s, now);
 
   useEffect(() => {
     if (!recurrenceUuid) return;
@@ -51,9 +56,9 @@ export default function AttendanceSeriesPage() {
     setLoading(true);
 
     api
-      .get<ClassSessionDTO[]>("/classsession", { data: {} })
+      .get<PaginationDTO<ClassSessionDTO>>("/classsession", { data: {} })
       .then(async (res) => {
-        const series = (res.data ?? [])
+        const series = (res.data?.content ?? [])
           .filter((s) => s.recurrenceGroupUuid === recurrenceUuid)
           .sort(
             (a, b) =>
@@ -118,7 +123,9 @@ export default function AttendanceSeriesPage() {
     }));
   };
 
-  const markColumn = (sessionUuid: string, status: AttendanceStatus) => {
+  const markColumn = (session: ClassSessionDTO, status: AttendanceStatus) => {
+    if (blockReasonOf(session)) return;
+    const sessionUuid = session.uuid;
     setCells((prev) => {
       const next = { ...prev }
       ;(rosters.get(sessionUuid) ?? []).forEach((e) => {
@@ -135,7 +142,7 @@ export default function AttendanceSeriesPage() {
 
   const summary = useMemo(() => {
     let present = 0, absent = 0, unmarked = 0
-    ;(sessions ?? []).forEach((s) =>
+    ;(sessions ?? []).filter((s) => !blockReasonOf(s)).forEach((s) =>
       (rosters.get(s.uuid) ?? []).forEach((e) => {
         const st = cells[cellKey(s.uuid, e.studentUuid)]?.status ?? null;
         if (st === "PRESENTE") present += 1;
@@ -144,7 +151,8 @@ export default function AttendanceSeriesPage() {
       })
     );
     return { present, absent, unmarked };
-  }, [sessions, rosters, cells]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessions, rosters, cells, now]);
 
   const handleSave = async () => {
     if (!sessions || sessions.length === 0) return;
@@ -155,6 +163,7 @@ export default function AttendanceSeriesPage() {
     const toClear: string[] = [];
 
     const perSession = sessions
+      .filter((s) => !blockReasonOf(s))
       .map((s) => {
         const records: AttendanceRecordInputDTO[] = []
         ;(rosters.get(s.uuid) ?? []).forEach((entry) => {
@@ -187,8 +196,7 @@ export default function AttendanceSeriesPage() {
       ]);
       const failed = results.filter((r) => r.status === "rejected") as PromiseRejectedResult[];
       if (failed.length > 0) {
-        const reason = failed[0].reason as { response?: { data?: { mensagem?: string } } };
-        const message = reason?.response?.data?.mensagem ?? "Erro ao salvar a chamada.";
+        const message = apiErrorMessage(failed[0].reason, "Erro ao salvar a chamada.");
         setError(`${results.length - failed.length} de ${results.length} alterações salvas. Uma falhou: ${message}`);
       } else {
         setSuccessMessage(
@@ -292,17 +300,20 @@ export default function AttendanceSeriesPage() {
                   </th>
                   {sessions.map((s) => {
                     const d = new Date(s.startTime as unknown as string);
+                    const blockReason = blockReasonOf(s);
                     return (
                       <th key={s.uuid} className="border-b border-border bg-card p-1 align-bottom">
                         <button
                           type="button"
-                          onClick={() => markColumn(s.uuid, "PRESENTE")}
+                          disabled={Boolean(blockReason)}
+                          onClick={() => markColumn(s, "PRESENTE")}
                           title={
-                            mixedTargets
-                              ? `${targetOf(s)} — marcar todos presentes nesta data`
-                              : "Marcar todos presentes nesta data"
+                            blockReason
+                              ?? (mixedTargets
+                                ? `${targetOf(s)} — marcar todos presentes nesta data`
+                                : "Marcar todos presentes nesta data")
                           }
-                          className="mx-auto flex w-14 flex-col items-center rounded-md px-1 py-1 transition-colors hover:bg-accent"
+                          className="mx-auto flex w-14 flex-col items-center rounded-md px-1 py-1 transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                         >
                           <span className="text-[10px] uppercase text-muted-foreground">
                             {DAY_SHORT[d.getDay()]}
@@ -310,6 +321,11 @@ export default function AttendanceSeriesPage() {
                           <span className="text-xs font-semibold text-foreground">
                             {pad(d.getDate())}/{pad(d.getMonth() + 1)}
                           </span>
+                          {blockReason && (
+                            <span className="text-[9px] text-muted-foreground">
+                              {isCanceled(s) ? "cancelada" : "em breve"}
+                            </span>
+                          )}
                         </button>
                       </th>
                     );
@@ -327,17 +343,20 @@ export default function AttendanceSeriesPage() {
                     </td>
                     {sessions.map((s) => {
                       const belongs = inSession(s.uuid, student.uuid);
+                      const blockReason = blockReasonOf(s);
                       const status = cells[cellKey(s.uuid, student.uuid)]?.status ?? null;
                       return (
                         <td key={s.uuid} className="border-b border-border p-1 text-center">
                           <AttendanceStatusCell
                             value={status}
-                            disabled={!belongs}
+                            disabled={!belongs || Boolean(blockReason)}
                             onChange={(next) => setCellStatus(s.uuid, student.uuid, next)}
                             title={
-                              belongs
-                                ? `${student.name} — clique para alternar`
-                                : `${student.name} não está em ${targetOf(s)}, que é a turma dessa data`
+                              blockReason
+                                ? blockReason
+                                : belongs
+                                  ? `${student.name} — clique para alternar`
+                                  : `${student.name} não está em ${targetOf(s)}, que é a turma dessa data`
                             }
                             className="mx-auto"
                           />

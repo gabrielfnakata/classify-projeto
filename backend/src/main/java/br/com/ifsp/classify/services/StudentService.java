@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -32,6 +33,7 @@ import br.com.ifsp.classify.dtos.create.StudentAccountCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
 import br.com.ifsp.classify.dtos.filter.StudentFilterDTO;
 import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
+import br.com.ifsp.classify.dtos.get.OptionGetDTO;
 import br.com.ifsp.classify.dtos.get.StudentGetDTO;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
@@ -54,11 +56,16 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     private final AuditService auditService;
     private final StudentRepository studentRepository;
     private final UserService userService;
+    private final AccessScopeService accessScope;
+    private final WelcomeMailService welcomeMailService;
     private final ClassSessionRepository classSessionRepository;
     private final ClassRepository classRepository;
 
-    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService, ClassSessionRepository classSessionRepository, ClassRepository classRepository) {
+    public StudentService(StudentRepository repository, TelephoneService telephoneService, AddressService addressService, AuditService auditService, UserService userService, AccessScopeService accessScope,
+            WelcomeMailService welcomeMailService, ClassSessionRepository classSessionRepository, ClassRepository classRepository) {
         super(repository);
+        this.accessScope = accessScope;
+        this.welcomeMailService = welcomeMailService;
         this.studentRepository = repository;
         this.telephoneService = telephoneService;
         this.addressService = addressService;
@@ -84,7 +91,8 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
             student.getTelephones()
                 .stream()
                 .map(telephone -> telephoneService.returnDTO(telephone))
-                .toList()
+                .toList(),
+            null
         );
     }
 
@@ -103,11 +111,11 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
 
     private void removeFromClasses(Student student) {
         List<Class> classes = classRepository.findByStudentsId(student.getId());
-        
+
         for (Class c : classes) {
             c.getStudents().remove(student);
         }
-        
+
     classRepository.saveAll(classes);
     }
 
@@ -190,10 +198,11 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         }
 
         repository.save(newStudent);
+        Boolean welcomeEmailSent = welcomeMailService.sendIfPendingFirstAccess(newStudent.getUser(), newStudent.getName());
         StudentGetDTO createdStudent = returnDTO(newStudent);
         auditService.logInsert("STUDENT", newStudent.getId(), createdStudent);
 
-        return createdStudent;
+        return createdStudent.withWelcomeEmailSent(welcomeEmailSent);
     }
 
     public StudentGetDTO getForUser(String email) {
@@ -281,7 +290,7 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         StudentGetDTO oldStudent = returnDTO(student);
         Long id = student.getId();
 
-        student.setIsDeleted(true);      
+        student.setIsDeleted(true);
         repository.save(student);
         cancelFutureSessions(student);
         removeFromClasses(student);
@@ -571,9 +580,9 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
                             cpf,
                             registrationDate,
                             telephones,
-                                    null,
-                                    null
-                            );
+                            null,
+                            Utils.isNullOrEmpty(email) ? null : new StudentAccountCreateDTO(email, null)
+                    );
 
                     StudentGetDTO created = create(studentDTO);
                     if (created != null) imported.add(created);
@@ -674,6 +683,33 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         } catch (Exception ex) {
             throw new RuntimeException("Erro ao exportar alunos para planilha", ex);
         }
+    }
+
+    /** Professor só lista os alunos com quem tem vínculo (aula individual ou turma dele). */
+    @Override
+    protected Specification<Student> accessSpecification() {
+        if (!accessScope.isProfessor())
+            return Specification.unrestricted();
+
+        return AccessScopeService.idIn(accessScope.linkedStudentIds(accessScope.currentEmployee()));
+    }
+
+    @Override
+    public StudentGetDTO getById(String uuid) {
+        Student student = Utils.isNullOrEmpty(uuid) ? null : getEntityById(uuid);
+        if (student == null)
+            return null;
+
+        accessScope.requireCanViewStudent(student);
+        return returnDTO(student);
+    }
+
+    /** Todos os alunos, só com nome: é o que o agendamento precisa para criar um vínculo novo. */
+    public List<OptionGetDTO> findOptions() {
+        return studentRepository.findAll().stream()
+            .map(student -> new OptionGetDTO(UuidUtils.convertBytesToString(student.getUuid()), student.getName()))
+            .sorted(java.util.Comparator.comparing(OptionGetDTO::name))
+            .toList();
     }
 
     public List<StudentGetDTO> findAllFiltered(Map<String,String> filters) {

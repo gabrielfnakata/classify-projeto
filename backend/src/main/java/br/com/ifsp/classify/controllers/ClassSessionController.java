@@ -9,7 +9,10 @@ import br.com.ifsp.classify.dtos.update.ClassSessionBatchDeleteDTO;
 import br.com.ifsp.classify.dtos.update.ClassSessionBatchStatusDTO;
 import br.com.ifsp.classify.dtos.update.ClassSessionStatusUpdateDTO;
 import br.com.ifsp.classify.dtos.update.ClassSessionUpdateDTO;
+import br.com.ifsp.classify.dtos.get.ScheduleRequestPreviewDTO;
+import br.com.ifsp.classify.dtos.update.ScheduleRequestAnswerDTO;
 import br.com.ifsp.classify.services.ClassSessionService;
+import br.com.ifsp.classify.services.ScheduleRequestService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,10 +33,30 @@ import java.util.List;
 public class ClassSessionController extends AbstractController<ClassSessionCreateDTO, ClassSessionGetDTO, ClassSessionUpdateDTO, ClasssessionFilterDTO> {
 
     private final ClassSessionService service;
+    private final ScheduleRequestService scheduleRequestService;
 
-    public ClassSessionController(ClassSessionService service) {
+    public ClassSessionController(ClassSessionService service, ScheduleRequestService scheduleRequestService) {
         super(service);
         this.service = service;
+        this.scheduleRequestService = scheduleRequestService;
+    }
+
+
+    @GetMapping("/requests/preview")
+    public ResponseEntity<ScheduleRequestPreviewDTO> previewRequest(@RequestParam String token) {
+        return ResponseEntity.ok(scheduleRequestService.preview(token));
+    }
+
+    @PostMapping(value = "/requests/accept", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> acceptRequest(@RequestBody ScheduleRequestAnswerDTO body) {
+        scheduleRequestService.accept(body);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/requests/decline", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> declineRequest(@RequestBody ScheduleRequestAnswerDTO body) {
+        scheduleRequestService.decline(body);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{uuid}/status")

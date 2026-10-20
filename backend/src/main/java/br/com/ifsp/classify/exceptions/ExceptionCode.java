@@ -17,6 +17,7 @@ public enum ExceptionCode {
     DUPLICATE_RECORD("DUPLICATE_RECORD"),
     RESOURCE_IN_USE("RESOURCE_IN_USE"),
     UNAUTHORIZED("UNAUTHORIZED"),
+    FORBIDDEN("FORBIDDEN"),
     INTERNAL_ERROR("INTERNAL_ERROR");
 
     private final String code;

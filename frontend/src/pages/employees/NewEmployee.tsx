@@ -2,14 +2,14 @@ import NewEntityPage from "@/components/page-templates/form/NewEntityPage";
 import useFetch from "@/hooks/useFetch";
 import api from "@/services/api";
 import type { EmployeeCreateDTO } from "@/shared/dtos/employees/EmployeeCreateDTO";
+import type { EmployeeDTO } from "@/shared/dtos/employees/EmployeeDTO";
+import { welcomeEmailNotice } from "@/shared/utils/welcome-email-notice";
 import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import type { RoleDTO } from "@/shared/dtos/role/RoleDTO";
 import { parseTelephone } from "@/shared/utils/telephone-parser";
 import { NewEmployeeValidationSchema } from "@/validation/EmployeeSchema";
 import { useNavigate } from "react-router";
 import { Roles } from "@/shared/models/enums/roles";
-
-const DEFAULT_EMPLOYEE_PASSWORD = "Mudar@123";
 
 export default function NewEmployee() {
     const navigate = useNavigate();
@@ -54,7 +54,7 @@ export default function NewEmployee() {
             hireDate: values.hireDate as string,
             user: {
                 email: values.email as string,
-                password: DEFAULT_EMPLOYEE_PASSWORD,
+                password: null,
                 roleId: values.roleId as string,
                 employeeUuid: null
             },
@@ -63,8 +63,8 @@ export default function NewEmployee() {
     }
 
     async function handleSubmit(payload: EmployeeCreateDTO) {
-        await api.post('/employee', payload);
-        navigate('/employees');
+        const { data } = await api.post<EmployeeDTO>('/employee', payload);
+        navigate('/employees', { state: { notice: welcomeEmailNotice(data.name, data.email, data.welcomeEmailSent) } });
     }
 
     return (

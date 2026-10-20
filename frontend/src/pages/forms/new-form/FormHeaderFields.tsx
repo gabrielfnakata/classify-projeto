@@ -12,6 +12,7 @@ export default function FormHeaderFields({ readOnly = false }: FormHeaderFieldsP
         <div className="flex flex-col w-8/10 gap-12 mb-8 items-start justify-center">
             <div className="flex flex-row w-full items-center">
                 <input
+                    id="form-title"
                     name="title"
                     value={values.title}
                     readOnly={readOnly}
@@ -25,6 +26,7 @@ export default function FormHeaderFields({ readOnly = false }: FormHeaderFieldsP
             </div>
             <div className="flex flex-row w-full justify-start items-center">
                 <TextareaAutosize
+                    id="form-description"
                     name="description"
                     value={values.description}
                     readOnly={readOnly}

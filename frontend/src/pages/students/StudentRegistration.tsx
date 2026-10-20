@@ -16,11 +16,14 @@ import EditEntityDialog from "@/components/page-templates/edit-dialog/EditEntity
 import type { Field } from "@/components/page-templates/form/NewEntityPage";
 import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
 import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
+import { useAuth } from "@/hooks/useAuth";
+import { Roles } from "@/shared/models/enums/roles";
 
 const collator = new Intl.Collator("pt-BR", { sensitivity: "base" });
 
 export default function StudentRegistration() {
     const STUDENT_URL = "/student";
+    const isAdmin = useAuth().userData?.role === Roles.ADMIN;
     const [refreshKey, setRefreshKey] = useState<number>(0);
     const [studentToEdit, setStudentToEdit] = useState<StudentDTO | null>(null);
     const [studentToDelete, setStudentToDelete] = useState<StudentDTO | null>(null);
@@ -56,9 +59,9 @@ export default function StudentRegistration() {
         {key: 'cpf', header: 'CPF', cell: row => formatCpf(row.cpf)},
         { key: 'telephone', header: 'Telefone', cell: row => row.telephones.length ? formatTelephone(row.telephones[0]) : <span className="text-muted-foreground">—</span> },
         { key: 'classGroups', header: 'Turmas', cell: row => <NamesCell names={classGroupsByStudent.get(row.uuid)} emptyText="Nenhuma" /> },
-        {key: 'actions', header: 'Ações', cell: row => (
+        ...(isAdmin ? [{key: 'actions', header: 'Ações', cell: (row: StudentDTO) => (
             <div className="flex gap-2">
-                <Pencil 
+                <Pencil
                     className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground"
                     onClick={() => setStudentToEdit(row) }
                 />
@@ -67,7 +70,7 @@ export default function StudentRegistration() {
                     onClick={() => setStudentToDelete(row)}
                 />
             </div> )
-        },
+        }] : []),
     ];
 
     const filters: FilterConfig[] = [
@@ -122,7 +125,7 @@ export default function StudentRegistration() {
                 url={STUDENT_URL}
                 filters={filters}
                 title="Alunos"
-                registrationRoute="/new-student"
+                registrationRoute={isAdmin ? "/new-student" : undefined}
                 detailRoute={(row) => `/students/${row.uuid}`}
                 refreshKey={refreshKey}
                 onRefresh={handleRefresh}

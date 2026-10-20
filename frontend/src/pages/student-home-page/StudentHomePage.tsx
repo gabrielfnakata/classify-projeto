@@ -16,7 +16,8 @@ import { formatFullDateLabel, formatHHMM, formatYMD, toDate } from "@/shared/uti
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO"
 import type { StudentDTO } from "@/shared/dtos/student/StudentDTO"
 import type { AttendanceGetDTO } from "@/shared/dtos/attendance/AttendanceGetDTO"
-import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO"
+import { ScheduleRequestDialog } from "@/components/features/schedule-request-dialog"
+import { TeacherMessageDialog } from "@/components/features/teacher-message-dialog"
 
 function atToday(hour: number, minute = 0, dayOffset = 0): Date {
   const d = new Date()
@@ -35,8 +36,10 @@ function sessionDateKey(session: ClassSessionDTO): string {
 }
 
 export default function StudentHomePage() {
-  const { data: sessionsData } = useFetch<PaginationDTO<ClassSessionDTO>>("/student/me/schedule")
-  const { data: attendanceData } = useFetch<PaginationDTO<AttendanceGetDTO>>("/student/me/attendance")
+  const { data: sessionsData } = useFetch<ClassSessionDTO[]>("/student/me/schedule")
+  const { data: attendanceData } = useFetch<AttendanceGetDTO[]>("/student/me/attendance")
+  const [scheduleFormOpen, setScheduleFormOpen] = useState(false)
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false)
   const [student, setStudent] = useState<StudentDTO | null>(null)
   const [profileError, setProfileError] = useState(false)
   const [month, setMonth] = useState(new Date())
@@ -51,7 +54,7 @@ export default function StudentHomePage() {
 
   const sessionsByDate = useMemo(() => {
     const map = new Map<string, ClassSessionDTO[]>()
-    for (const session of sessionsData?.content ?? []) {
+    for (const session of sessionsData ?? []) {
       const key = sessionDateKey(session)
       const list = map.get(key) ?? []
       list.push(session)
@@ -61,7 +64,7 @@ export default function StudentHomePage() {
       list.sort((a, b) => toDate(a.startTime).getTime() - toDate(b.startTime).getTime())
     }
     return map
-  }, [sessionsData?.content])
+  }, [sessionsData])
 
   const weekDays = useMemo(
     () => WEEK_VIEW_OFFSETS.map((offset) => atToday(0, 0, MONDAY_OFFSET + offset)),
@@ -69,8 +72,8 @@ export default function StudentHomePage() {
   )
 
   const selectedDaySessions = sessionsByDate.get(selectedDate) ?? []
-  const presences = attendanceData?.content?.filter((record) => record.status === "PRESENTE").length ?? 0
-  const absences = attendanceData?.content?.filter((record) => record.status === "AUSENTE").length ?? 0
+  const presences = attendanceData?.filter((record) => record.status === "PRESENTE").length ?? 0
+  const absences = attendanceData?.filter((record) => record.status === "AUSENTE").length ?? 0
   const attendanceCount = presences + absences
   const attendancePercent = attendanceCount === 0 ? 0 : Math.round((presences / attendanceCount) * 100)
   const activeSession =
@@ -206,19 +209,37 @@ export default function StudentHomePage() {
                 </>
               )}
 
-              <Button variant="outline" className="h-11 w-full rounded-2xl text-sm">
+              <Button
+                variant="outline"
+                className="h-11 w-full rounded-2xl text-sm"
+                disabled={!activeSession}
+                title={!activeSession ? "Selecione uma aula para falar com o professor dela" : undefined}
+                onClick={() => setMessageDialogOpen(true)}
+              >
                 <Mail className="h-4 w-4" />
                 Enviar mensagem ao professor
               </Button>
             </ContentCard>
 
-            <Button className="h-11 w-full rounded-2xl text-sm">
+            <Button
+              className="h-11 w-full rounded-2xl text-sm"
+              disabled={!student}
+              onClick={() => setScheduleFormOpen(true)}
+            >
               <Clock className="h-4 w-4" />
               Solicitar agendamento
             </Button>
           </div>
         </div>
       </div>
+
+      <ScheduleRequestDialog open={scheduleFormOpen} onClose={() => setScheduleFormOpen(false)} />
+
+      <TeacherMessageDialog
+        session={activeSession}
+        open={messageDialogOpen}
+        onClose={() => setMessageDialogOpen(false)}
+      />
     </div>
   )
 }

@@ -31,4 +31,8 @@ public class ApplicationClock {
     public LocalDate today() {
         return LocalDate.now(zone);
     }
+
+    public java.util.Date toDate(LocalDateTime dateTime) {
+        return java.util.Date.from(dateTime.atZone(zone).toInstant());
+    }
 }

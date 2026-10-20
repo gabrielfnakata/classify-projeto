@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client"
 
 import "./index.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeSync } from "@/components/theme-sync"
 import { ExceptionModal } from "@/components/features/exception-modal"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider } from "./context/AuthContext.tsx"
@@ -18,6 +19,7 @@ createRoot(document.getElementById("root")!).render(
          <CurrentUserProvider>
            <TooltipProvider delayDuration={0}>
              <AppRoutes/>
+             <ThemeSync />
              <ExceptionModal />
            </TooltipProvider>
          </CurrentUserProvider>

@@ -9,10 +9,11 @@ import { FormikInput } from "@/components/formik-input/FormikInput";
 import { LoginValidationSchema } from "@/validation/LoginSchema";
 import { useEffect, useState } from "react";
 import { ContentCard } from "@/components/layout/content-card";
-import { Roles } from "@/shared/models/enums/roles";
+import { homeRouteFor } from "@/shared/utils/home-route";
 import type { LoginForm } from "@/shared/models/forms/loginForm";
 import type {AxiosError} from "axios";
 import type {ApiExceptionPayload} from "@/services/api.ts";
+import { Logo } from "@/components/common/logo";
 
 export default function Login() {
     const { login, logout } = useAuth();
@@ -24,12 +25,7 @@ export default function Login() {
 
         try {
             const authenticatedUser = await login(values);
-
-            if (authenticatedUser.role === Roles.ESTUDANTE) {
-                navigate('/student-home-page');
-            } else if (authenticatedUser.role === Roles.ADMIN || authenticatedUser.role === Roles.PROFESSOR) {
-                navigate('/classes');
-            }
+            navigate(homeRouteFor(authenticatedUser.role), { replace: true });
         } catch(error) {
             const data = (error as AxiosError).response?.data as ApiExceptionPayload;
             setErroLogin(data?.message ?? "Ocorreu um erro. Tente novamente.");
@@ -44,8 +40,8 @@ export default function Login() {
 
     return (
         <div className="background w-screen h-screen flex flex-col items-center justify-center">
-            <ContentCard className="card rounded-2xl w-[36.5vw] h-[64vh] g-[4vh] flex flex-col items-center justify-center">
-                <img className="w-[25vw] h-[12vh] mb-[5vh]" src="/light logo.svg" />
+            <ContentCard className="card rounded-2xl w-[36.5vw] min-h-[64vh] py-[4vh] g-[4vh] flex flex-col items-center justify-center">
+                <Logo tone="page" className="w-[25vw] h-[12vh] mb-[5vh]" />
                 <Formik
                     initialValues={{email: "", password: "", rememberMe: false}}
                     validationSchema={LoginValidationSchema}
@@ -90,6 +86,14 @@ export default function Login() {
                                 </p>
                             </div>
                             <Button className="bg-[#119D96] disabled:border-t-green-200 text-[#f1f1f1] p-1 rounded-sm border-none w-[20vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]" type="submit" disabled={!isValid || isSubmitting}>Entrar</Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="w-[20vw] h-[4vh] rounded-sm"
+                                onClick={() => navigate('/first-access')}
+                            >
+                                Primeiro acesso
+                            </Button>
                         </Form>
                     )}
                 </Formik>

@@ -5,6 +5,7 @@ import br.com.ifsp.classify.dtos.get.AnswerFileUploadDTO;
 import br.com.ifsp.classify.dtos.get.FormGetDTO;
 import br.com.ifsp.classify.dtos.get.FormInfoGetDTO;
 import br.com.ifsp.classify.dtos.get.FormSubmissionGetDTO;
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.dtos.update.FormAnswerCorrectionDTO;
 import br.com.ifsp.classify.dtos.update.FormCorrectionScoreUpdateDTO;
 import br.com.ifsp.classify.security.AuthenticatedUser;
@@ -12,6 +13,8 @@ import br.com.ifsp.classify.services.form.FormService;
 import br.com.ifsp.classify.services.form.FormSubmissionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,8 +47,9 @@ public class FormController {
     }
 
     @GetMapping
-    public List<FormGetDTO> getMyForms(@AuthenticationPrincipal AuthenticatedUser auth) {
-        return this.formService.getForms(auth);
+    public PageResponseGetDTO<FormGetDTO> getMyForms(@AuthenticationPrincipal AuthenticatedUser auth,
+            @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        return this.formService.getForms(auth, pageable);
     }
 
     @GetMapping("/{uuid}")

@@ -5,6 +5,8 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,6 +23,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import br.com.ifsp.classify.dtos.get.AuditGetDTO;
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.models.Audit;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.repositories.AuditRepository;
@@ -139,7 +142,13 @@ public class AuditService {
                 .collect(Collectors.toList());
     }
 
-    public List<AuditGetDTO> findAll(String tableName, Long registerId, String operation, LocalDateTime startDate, LocalDateTime endDate) {
+    public PageResponseGetDTO<AuditGetDTO> findAll(
+            String tableName,
+            Long registerId,
+            String operation,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            Pageable pageable) {
         Specification<Audit> spec = Specification.allOf(
                 AuditSpecification.hasTableName(tableName),
                 AuditSpecification.hasRegisterId(registerId),
@@ -147,11 +156,9 @@ public class AuditService {
                 AuditSpecification.dateBetween(startDate, endDate)
         );
 
-        return auditRepository.findAll(spec)
-                .stream()
-                .map(this::returnDTO)
-                .sorted((a, b) -> b.date().compareTo(a.date()))
-                .collect(Collectors.toList());
+        Page<AuditGetDTO> audits = auditRepository.findAll(spec, pageable)
+                .map(this::returnDTO);
+        return PageResponseGetDTO.from(audits);
     }
 
     private User resolveCurrentUser() {

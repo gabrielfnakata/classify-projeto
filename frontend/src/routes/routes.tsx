@@ -1,18 +1,24 @@
 import Login from "@/pages/login/Login";
+import FirstAccess from "@/pages/first-access/FirstAccess";
+import ScheduleRequestReview from "@/pages/schedule-requests/ScheduleRequestReview";
+import ForgotPassword from "@/pages/forgot-password/ForgotPassword";
+import ResetPassword from "@/pages/forgot-password/ResetPassword";
 import OnDevelopment from "@/pages/on-development/OnDevelopment";
 import { Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
-import Components from "@/app/pages/Components";
+import { HomeRedirect } from "./HomeRedirect";
 import StudentRegistration from "@/pages/students/StudentRegistration";
 import EmployeeRegistration from "@/pages/employees/EmployeeRegistration";
 import NewEmployee from "@/pages/employees/NewEmployee";
 import SubjectRegistration from "@/pages/subjects/SubjectRegistration";
 import ClassroomRegistration from "@/pages/classrooms/ClassroomRegistration";
 import SchedulePage from "@/pages/schedule";
-import { PublicShell } from "@/components/layout/public-shell";
 import NewSubject from "@/pages/subjects/NewSubject";
 import NewStudent from "@/pages/students/NewStudent";
 import NewClassroom from "@/pages/classrooms/NewClassroom";
+import AdminDashboard from "@/pages/dashboard/AdminDashboard";
+import TeacherDashboard from "@/pages/dashboard/TeacherDashboard";
+import StudentDashboard from "@/pages/dashboard/StudentDashboard";
 import AuditLogs from "@/pages/audit/AuditLogs";
 import StudentForms from "@/pages/forms/StudentForms";
 import TeacherForms from "@/pages/forms/TeacherForms";
@@ -33,6 +39,7 @@ import SubjectDetail from "@/pages/subjects/SubjectDetail";
 import ClassroomDetail from "@/pages/classrooms/ClassroomDetail";
 import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import SettingsPage from "@/pages/settings/SettingsPage";
 import { Roles } from "@/shared/models/enums/roles";
 import DeletedEntities from "@/pages/deleted-entities/DeletedEntities.tsx";
 
@@ -46,11 +53,9 @@ export default function AppRoutes() {
             {/* Rotas públicas */}
             <Route path="/" element={<Login/>}  />
             <Route path="/login" element={<Login/>} />
-            <Route path="/forgot-password" element={
-                <PublicShell>
-                    <OnDevelopment/>
-                </PublicShell>
-            } />
+            <Route path="/first-access" element={<FirstAccess/>} />
+            <Route path="/forgot-password" element={<ForgotPassword/>} />
+            <Route path="/reset-password" element={<ResetPassword/>} />
 
             {/* Rotas protegidas para estudantes */}
             <Route path="/student-home-page" element={
@@ -61,14 +66,20 @@ export default function AppRoutes() {
             <Route path="/classes" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<OnDevelopment />} />
             }/>
-            <Route path="/components-demo" element={
-                <ProtectedRoute allowedRoles={teachingRoles} children={<Components />} />
+            <Route path="/dashboard/admin" element={
+                <ProtectedRoute allowedRoles={adminRoles} children={<AdminDashboard />} />
+            }/>
+            <Route path="/dashboard/teacher" element={
+                <ProtectedRoute allowedRoles={teachingRoles} children={<TeacherDashboard />} />
+            }/>
+            <Route path="/dashboard/student" element={
+                <ProtectedRoute allowedRoles={[Roles.ADMIN, Roles.ESTUDANTE]} children={<StudentDashboard />} />
             }/>
             {/* <Route path="/schedule" element={
                 <ProtectedRoute children={<ClassRegistration />} />
             }/> */}
             <Route path="/home" element={
-                <ProtectedRoute allowedRoles={teachingRoles} children={<OnDevelopment />} />
+                <ProtectedRoute children={<HomeRedirect />} />
             }/>
             <Route path="/new-class-session" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<OnDevelopment />} />
@@ -101,7 +112,10 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<ClassroomDetail />} />
             }/>
             <Route path="/schedule" element={
-                <ProtectedRoute allowedRoles={teachingRoles} children={<SchedulePage />} />
+                <ProtectedRoute allowedRoles={[...teachingRoles, Roles.ESTUDANTE]} children={<SchedulePage />} />
+            }/>
+            <Route path="/schedule-requests/review" element={
+                <ProtectedRoute allowedRoles={teachingRoles} children={<ScheduleRequestReview />} />
             }/>
             <Route path="/attendance" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<AttendanceOverview />} />
@@ -122,7 +136,7 @@ export default function AppRoutes() {
                 <ProtectedRoute allowedRoles={teachingRoles} children={<ClassGroupDetail />} />
             }/>
             <Route path="/pending-forms" element={
-                <ProtectedRoute allowedRoles={teachingRoles} children={<StudentForms />} />
+                <ProtectedRoute allowedRoles={studentRoles} children={<StudentForms />} />
             }/>
             <Route path="/posted-forms" element={
                 <ProtectedRoute allowedRoles={teachingRoles} children={<TeacherForms />} />
@@ -162,9 +176,6 @@ export default function AppRoutes() {
             <Route path="/new-classroom" element={
                 <ProtectedRoute allowedRoles={adminRoles} children={<NewClassroom />} />
             }/>
-            <Route path="/components-demo" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<Components />} />
-            }/>
             <Route path="/audit-logs" element={
                 <ProtectedRoute allowedRoles={adminRoles} children={<AuditLogs />} />
             }/>
@@ -178,7 +189,7 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<ProfilePage />} />
             }/>
             <Route path="/settings" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute children={<SettingsPage />} />
             }/>
             {/* <Route path="/schedule" element={
                 <ProtectedRoute children={<ClassRegistration />} />

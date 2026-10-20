@@ -25,6 +25,9 @@ import type { ClassSessionCreateDTO } from "@/shared/dtos/class-session/ClassSes
 import type { ClassGroupDTO } from "@/shared/dtos/class-group/ClassGroupDTO";
 import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO";
 import useFetch from "@/hooks/useFetch";
+import { useAuth } from "@/hooks/useAuth";
+import { Roles } from "@/shared/models/enums/roles";
+import { OwnTeacherField } from "@/components/features/own-teacher-field";
 import { formatYMD } from "@/shared/utils/date-formatter";
 import { sortedByName } from "@/shared/utils/sort-by-name";
 import {
@@ -86,6 +89,8 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
   const classrooms = (classroomsData?.content ?? []).filter((c) => !c.isDisabled);
   const classGroups = classGroupsData?.content ?? [];
   const loading = loadingST !== false || loadingCR !== false || loadingCG !== false;
+  const isProfessor = useAuth().userData?.role === Roles.PROFESSOR;
+  const ownTeacher = isProfessor ? subjectTeachers[0]?.employee ?? null : null;
 
   const primary = sessions?.[0] ?? null;
   const isClassSeries = Boolean(primary?.classDTO);
@@ -334,6 +339,9 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
                         <Label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                           Professor
                         </Label>
+                        {ownTeacher ? (
+                          <OwnTeacherField name={ownTeacher.name} />
+                        ) : (
                         <div className="flex gap-1.5">
                           <Select
                             value={values.teacherId}
@@ -365,6 +373,7 @@ export function ScheduleSeriesForm({ open, onClose, onSuccess, sessions }: Sched
                             </Button>
                           )}
                         </div>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">

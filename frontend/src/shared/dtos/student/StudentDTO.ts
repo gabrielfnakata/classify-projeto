@@ -10,4 +10,5 @@ export interface StudentDTO {
     cpf: string;
     telephones: TelephoneDTO[];
     guardians: GuardianDTO[];
+    welcomeEmailSent?: boolean;
 }

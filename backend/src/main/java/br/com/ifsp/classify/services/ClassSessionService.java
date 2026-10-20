@@ -39,6 +39,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -46,6 +47,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,6 +66,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
     private final ClassService classService;
     private final TeacherAvailabilityService availabilityService;
     private final ApplicationClock clock;
+    private final AccessScopeService accessScope;
 
     private final String START_GREATER_END_MESSAGE = "O horário de início da aula deve ser antes que o horário de encerramento";
     private final String START_EQUALS_END_MESSAGE = "O horário do final da aula não pode ser o mesmo do início";
@@ -73,7 +76,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
     public ClassSessionService(ClassSessionRepository repository, SubjectTeacherRepository subjectTeacherRepository, SubjectTeacherService subjectTeacherService,
         ClassroomRepository classroomRepository, StudentRepository studentRepository, ClassRepository classRepository, AttendanceRepository attendanceRepository,
         StudentService studentService, ReportService reportService, ClassService classService,
-        TeacherAvailabilityService availabilityService, ApplicationClock clock) {
+        TeacherAvailabilityService availabilityService, ApplicationClock clock, AccessScopeService accessScope) {
         super(repository);
         this.repository = repository;
         this.subjectTeacherRepository = subjectTeacherRepository;
@@ -87,6 +90,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         this.classService = classService;
         this.availabilityService = availabilityService;
         this.clock = clock;
+        this.accessScope = accessScope;
     }
 
     @Override
@@ -94,6 +98,8 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         ClassSession classSession = getEntityById(uuid);
         if (classSession == null)
             return ResponseEntity.badRequest().build();
+
+        accessScope.requireOwnsSession(classSession);
 
         if (Utils.hasElements(classSession.getAssessments()))
             throw new DtoException("Não é possível excluir uma aula que já possui avaliações lançadas");
@@ -113,6 +119,8 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         ClassSession classSession = getEntityById(uuid);
         if (classSession == null || statusDTO == null)
             return null;
+
+        accessScope.requireOwnsSession(classSession);
 
         ClassSessionStatus status = ClassSessionStatus.fromString(statusDTO.status());
         if (status == null)
@@ -156,7 +164,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                     failures.add(new BatchResultDTO.BatchFailureDTO(uuid, "A aula informada não foi encontrada"));
                 else
                     applied++;
-            } catch (DtoException e) {
+            } catch (DtoException | AccessDeniedException e) {
                 failures.add(new BatchResultDTO.BatchFailureDTO(uuid, e.getMessage()));
             }
         }
@@ -180,7 +188,7 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                     applied++;
                 else
                     failures.add(new BatchResultDTO.BatchFailureDTO(uuid, "A aula informada não foi encontrada"));
-            } catch (DtoException e) {
+            } catch (DtoException | AccessDeniedException e) {
                 failures.add(new BatchResultDTO.BatchFailureDTO(uuid, e.getMessage()));
             }
         }
@@ -190,9 +198,11 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
 
     public List<ClassSessionGetDTO> filter(String studentUuid, String employeeUuid, String classroomUuid,
             String subjectUuid, String classUuid, LocalDateTime from, LocalDateTime to) {
+        Predicate<ClassSession> visible = accessScope.sessionVisibility();
         return repository
                 .findAll(ClassSessionSpecification.filter(studentUuid, employeeUuid, classroomUuid, subjectUuid, classUuid, from, to))
                 .stream()
+                .filter(visible)
                 .map(this::returnDTO)
                 .toList();
     }
@@ -202,6 +212,9 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         LocalDateTime now = clock.now();
         LocalDateTime dayStart = clock.today().atStartOfDay();
         LocalDateTime dayEnd = dayStart.plusDays(1);
+
+        if (!accessScope.isUnrestricted())
+            return summarizeVisibleSessions(groupBy, now, dayStart, dayEnd);
 
         List<SessionCountProjection> rows = switch (Utils.trimAndUpper(groupBy) == null ? "" : Utils.trimAndUpper(groupBy)) {
             case "SUBJECT" -> repository.countBySubject(now, dayStart, dayEnd);
@@ -219,6 +232,57 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                 .toList();
     }
 
+
+    /**
+     * Mesma contagem do resumo, mas só com as aulas que o usuário pode ver. As consultas agregadas
+     * do repositório somam a escola toda, o que mostraria ao professor a agenda dos outros.
+     */
+    private List<ClassSessionSummaryDTO> summarizeVisibleSessions(String groupBy, LocalDateTime now,
+            LocalDateTime dayStart, LocalDateTime dayEnd) {
+        java.util.function.Function<ClassSession, byte[]> keyOf = switch (Utils.trimAndUpper(groupBy) == null ? "" : Utils.trimAndUpper(groupBy)) {
+            case "SUBJECT" -> s -> s.getSubjectTeacher().getSubject().getUuid();
+            case "EMPLOYEE" -> s -> s.getSubjectTeacher().getEmployee().getUuid();
+            case "CLASSROOM" -> s -> s.getClassroom().getUuid();
+            case "CLASS" -> s -> s.getClassSessionClass() == null ? null : s.getClassSessionClass().getUuid();
+            default -> throw new DtoException("Agrupamento inválido: use SUBJECT, EMPLOYEE, CLASSROOM ou CLASS");
+        };
+
+        Predicate<ClassSession> visible = accessScope.sessionVisibility();
+        java.util.Map<String, long[]> counts = new java.util.LinkedHashMap<>();
+
+        repository.findAll().stream()
+            .filter(visible)
+            .filter(s -> s.getStatus() != ClassSessionStatus.CANCELED)
+            .forEach(s -> {
+                byte[] key = keyOf.apply(s);
+                if (key == null)
+                    return;
+                long[] count = counts.computeIfAbsent(UuidUtils.convertBytesToString(key), k -> new long[2]);
+                if (!s.getStartTime().isBefore(now))
+                    count[0]++;
+                if (!s.getStartTime().isBefore(dayStart) && s.getStartTime().isBefore(dayEnd))
+                    count[1]++;
+            });
+
+        return counts.entrySet().stream()
+            .map(e -> new ClassSessionSummaryDTO(e.getKey(), e.getValue()[0], e.getValue()[1]))
+            .toList();
+    }
+
+    @Override
+    protected Specification<ClassSession> accessSpecification() {
+        return accessScope.sessionVisibilitySpec(root -> root);
+    }
+
+    @Override
+    public ClassSessionGetDTO getById(String uuid) {
+        ClassSession classSession = Utils.isNullOrEmpty(uuid) ? null : getEntityById(uuid);
+        if (classSession == null)
+            return null;
+
+        accessScope.requireCanViewSession(classSession);
+        return returnDTO(classSession);
+    }
 
     @Override
     ClassSessionGetDTO returnDTO(ClassSession classSession) {
@@ -245,6 +309,21 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         if (student == null)
             return null;
 
+        return getScheduleForStudent(student);
+    }
+
+    public List<ClassSessionGetDTO> getScheduleForStudentUuid(String studentUuid) {
+        Student student = studentRepository.findOne((root, query, cb) ->
+                cb.equal(root.get("uuid"), UuidUtils.convertUUIDToBytes(studentUuid))
+        ).orElse(null);
+        if (student == null)
+            return null;
+
+        accessScope.requireCanViewStudent(student);
+        return getScheduleForStudent(student);
+    }
+
+    private List<ClassSessionGetDTO> getScheduleForStudent(Student student) {
         List<Long> classIds = student.getClasses().stream()
                 .map(Class::getId)
                 .toList();
@@ -292,7 +371,9 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         else if (!Utils.isNullOrEmpty(classSessionDTO.studentUuid()) && !Utils.isNullOrEmpty(classSessionDTO.classUuid())) {
             throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Não é permitido informar uma turma e um aluno ao mesmo tempo.");
         }
-        
+
+        assertSchedulingAllowed(classSessionDTO.subjectTeacherUuid(), classSessionDTO.studentUuid(), classSessionDTO.classUuid());
+
         SubjectTeacher subjectTeacher = subjectTeacherRepository
             .findOne(SubjectTeacherSpecification.getByUUID(classSessionDTO.subjectTeacherUuid()))
             .orElse(null);
@@ -370,6 +451,9 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         ClassSession classSession = getEntityById(uuid);
         if (classSession == null || classSessionDTO == null)
             return null;
+
+        accessScope.requireOwnsSession(classSession);
+        assertSchedulingAllowed(classSessionDTO.subjectTeacherId(), classSessionDTO.studentUuid(), classSessionDTO.classUuid());
 
         if (!Utils.isNullOrEmpty(classSessionDTO.subjectTeacherId())) {
             SubjectTeacher subjectTeacher = subjectTeacherRepository
@@ -506,6 +590,33 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
             return conditions;
 
         return conditions;
+    }
+
+    /**
+     * Quem pode agendar o quê: o admin agenda para qualquer um; o professor só como ele mesmo
+     * (para qualquer aluno ou turma); o aluno só aula individual para ele mesmo, com qualquer
+     * professor. Roda antes de alterar a entidade, para uma recusa não deixar mudança pendente.
+     */
+    private void assertSchedulingAllowed(String subjectTeacherUuid, String studentUuid, String classUuid) {
+        if (accessScope.isUnrestricted())
+            return;
+
+        if (accessScope.isProfessor()) {
+            if (Utils.isNullOrEmpty(subjectTeacherUuid))
+                return;
+            SubjectTeacher subjectTeacher = subjectTeacherRepository
+                .findOne(SubjectTeacherSpecification.getByUUID(subjectTeacherUuid))
+                .orElse(null);
+            if (subjectTeacher != null
+                    && !subjectTeacher.getEmployee().getId().equals(accessScope.currentEmployee().getId()))
+                throw new AccessDeniedException("Professores só podem agendar aulas para si mesmos.");
+            return;
+        }
+
+        if (accessScope.isStudent())
+            throw new AccessDeniedException("Alunos não agendam aulas diretamente. Use \"Solicitar agendamento\".");
+
+        throw new AccessDeniedException("Você não pode agendar aulas.");
     }
 
     private void discardAttendanceOutsideRoster(ClassSession session) {

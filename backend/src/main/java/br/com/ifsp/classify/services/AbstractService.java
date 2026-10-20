@@ -24,10 +24,14 @@ public abstract class AbstractService<Model, CreateDTO, GetDTO, UpdateDTO, Filte
     public abstract GetDTO update(String uuid, UpdateDTO entity);
     public abstract Specification<Model> createSpecificationFromFilter(FilterDTO filterDTO);
 
+    protected Specification<Model> accessSpecification() {
+        return Specification.unrestricted();
+    }
+
     @Override
     public PageResponseGetDTO<GetDTO> findAll(Pageable pageable, FilterDTO filterDTO) {
         Page<GetDTO> pageResponse = repository
-            .findAll(createSpecificationFromFilter(filterDTO), (pageable != null) ? pageable : Pageable.unpaged())
+            .findAll(createSpecificationFromFilter(filterDTO).and(accessSpecification()), (pageable != null) ? pageable : Pageable.unpaged())
             .map(this::returnDTO);
 
         return returnPageResponseDTO(pageResponse);

@@ -2,9 +2,16 @@ package br.com.ifsp.classify.controllers;
 
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
+import br.com.ifsp.classify.dtos.create.TeacherMessageCreateDTO;
+import br.com.ifsp.classify.services.TeacherMessageService;
+import br.com.ifsp.classify.services.ScheduleRequestService;
+import br.com.ifsp.classify.dtos.create.ScheduleRequestCreateDTO;
 import br.com.ifsp.classify.dtos.filter.StudentFilterDTO;
 import br.com.ifsp.classify.dtos.get.*;
+import br.com.ifsp.classify.dtos.get.FormGetDTO;
+import br.com.ifsp.classify.dtos.get.OptionGetDTO;
 import br.com.ifsp.classify.services.AttendanceService;
+import br.com.ifsp.classify.services.form.FormService;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
 import br.com.ifsp.classify.security.AuthenticatedUser;
@@ -27,12 +34,19 @@ public class StudentController extends AbstractController<StudentCreateDTO, Stud
     private final StudentService service;
     private final ClassSessionService classSessionService;
     private final AttendanceService attendanceService;
+    private final FormService formService;
+    private final TeacherMessageService teacherMessageService;
+    private final ScheduleRequestService scheduleRequestService;
 
-    public StudentController(StudentService service, ClassSessionService classSessionService, AttendanceService attendanceService) {
+    public StudentController(StudentService service, ClassSessionService classSessionService, AttendanceService attendanceService,
+            FormService formService, TeacherMessageService teacherMessageService, ScheduleRequestService scheduleRequestService) {
         super(service);
         this.service = service;
         this.classSessionService = classSessionService;
         this.attendanceService = attendanceService;
+        this.formService = formService;
+        this.teacherMessageService = teacherMessageService;
+        this.scheduleRequestService = scheduleRequestService;
     }
 
     @GetMapping("/me")
@@ -59,6 +73,47 @@ public class StudentController extends AbstractController<StudentCreateDTO, Stud
         List<AttendanceGetDTO> attendance = attendanceService.getForStudentAccount(user.username());
         return (attendance != null)
                 ? ResponseEntity.ok(attendance)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @PostMapping(value = "/me/schedule-requests", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> requestSchedule(@RequestBody ScheduleRequestCreateDTO request) {
+        scheduleRequestService.request(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/me/messages", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> sendMessageToTeacher(@RequestBody TeacherMessageCreateDTO message) {
+        teacherMessageService.sendToTeacher(message);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/options")
+    public ResponseEntity<List<OptionGetDTO>> getOptions() {
+        return ResponseEntity.ok(service.findOptions());
+    }
+
+    @GetMapping("/{uuid}/schedule")
+    public ResponseEntity<List<ClassSessionGetDTO>> getStudentSchedule(@PathVariable String uuid) {
+        List<ClassSessionGetDTO> schedule = classSessionService.getScheduleForStudentUuid(uuid);
+        return (schedule != null)
+                ? ResponseEntity.ok(schedule)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @GetMapping("/{uuid}/attendance")
+    public ResponseEntity<List<AttendanceGetDTO>> getStudentAttendance(@PathVariable String uuid) {
+        List<AttendanceGetDTO> attendance = attendanceService.getForStudent(uuid);
+        return (attendance != null)
+                ? ResponseEntity.ok(attendance)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    @GetMapping("/{uuid}/forms")
+    public ResponseEntity<List<FormGetDTO>> getStudentForms(@PathVariable String uuid) {
+        List<FormGetDTO> forms = formService.getFormsForStudent(uuid);
+        return (forms != null)
+                ? ResponseEntity.ok(forms)
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 

@@ -20,6 +20,9 @@ import { formatDateLabel, formatMonthYearLabel, formatYMD } from "@/shared/utils
 import { classroomNameMap, resolveClassroomName } from "@/shared/utils/class-session-helpers";
 import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping";
 import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
+import { ScheduleRequestDialog } from "@/components/features/schedule-request-dialog";
+import { useAuth } from "@/hooks/useAuth";
+import { Roles } from "@/shared/models/enums/roles";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -28,6 +31,8 @@ function sessionDate(dto: ClassSessionDTO): string {
 }
 
 export default function SchedulePage() {
+  const isStudent = useAuth().userData?.role === Roles.ESTUDANTE;
+
   const [refreshKey, setRefreshKey] = useState(0);
   const { data: classSessionData, loading: loadingData } = useFetch<PaginationDTO<ClassSessionDTO>>(`/classsession?r=${refreshKey}`);
   const { data: classroomData } = useFetch<PaginationDTO<ClassroomDTO>>("/classroom");
@@ -162,12 +167,14 @@ export default function SchedulePage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500 p-6 md:p-8">
       <SectionTitle
-        title="Agendamentos de Aula"
-        description="Controle de cronograma e fluxo de alunos."
+        title={isStudent ? "Meus Agendamentos" : "Agendamentos de Aula"}
+        description={isStudent
+          ? "Suas aulas individuais e as das suas turmas. Precisa de uma aula? Solicite ao professor."
+          : "Controle de cronograma e fluxo de alunos."}
         action={
           <Button onClick={() => { setEditingSessions(null); setFormOpen(true); }}>
             <Plus />
-            Novo Agendamento
+            {isStudent ? "Solicitar agendamento" : "Novo Agendamento"}
           </Button>
         }
       />
@@ -268,6 +275,7 @@ export default function SchedulePage() {
         onEditSeries={openEditSeries}
         onCancel={openCancel}
         onReactivate={reactivateSelected}
+        studentView={isStudent}
       />
       <CancelSessionDialog
         open={cancelTarget !== null}
@@ -275,21 +283,27 @@ export default function SchedulePage() {
         onClose={closeCancel}
         onConfirm={confirmCancel}
       />
-      <ScheduleForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSuccess={(date) => {
-          fetchSessions();
-          setCurrentDate(new Date(date + "T00:00:00"));
-        }}
-        editingSessions={editingSessions}
-      />
-      <ScheduleSeriesForm
-        open={seriesFormOpen}
-        onClose={() => setSeriesFormOpen(false)}
-        onSuccess={fetchSessions}
-        sessions={editingSeries}
-      />
+      {isStudent ? (
+        <ScheduleRequestDialog open={formOpen} onClose={() => setFormOpen(false)} />
+      ) : (
+        <>
+          <ScheduleForm
+            open={formOpen}
+            onClose={() => setFormOpen(false)}
+            onSuccess={(date) => {
+              fetchSessions();
+              setCurrentDate(new Date(date + "T00:00:00"));
+            }}
+            editingSessions={editingSessions}
+          />
+          <ScheduleSeriesForm
+            open={seriesFormOpen}
+            onClose={() => setSeriesFormOpen(false)}
+            onSuccess={fetchSessions}
+            sessions={editingSeries}
+          />
+        </>
+      )}
     </div>
   );
 }

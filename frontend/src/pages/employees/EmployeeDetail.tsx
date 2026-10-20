@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 import api from "@/services/api";
-import useFetchList from "@/hooks/useFetchList";
 import useFetchOne from "@/hooks/useFetchOne";
 import useApiAction from "@/hooks/useApiAction";
 import { EntityDetailLayout } from "@/components/features/entity-detail-layout";
@@ -19,6 +18,9 @@ import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import type { SubjectTeacherCreateDTO } from "@/shared/dtos/teacher/SubjectTeacherCreateDTO";
 import type { ClassSessionDTO } from "@/shared/dtos/class-session/ClassSessionDTO";
 import type { ScheduleFormState } from "@/shared/models/forms/ScheduleFormState";
+import useFetch from "@/hooks/useFetch";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
+import useFetchList from "@/hooks/useFetchList";
 
 const EMPTY_LINKS: SubjectTeacherDTO[] = [];
 const EMPTY_SUBJECTS: SubjectDTO[] = [];
@@ -29,15 +31,15 @@ export default function EmployeeDetail() {
   const { uuid = "" } = useParams<{ uuid: string }>();
 
   const { data: employee, loading } = useFetchOne<EmployeeDTO>(`/employee/${uuid}`);
-  const { data: linksData, refetch: refetchLinks } = useFetchList<SubjectTeacherDTO>("/subjectteacher");
-  const { data: subjectsData } = useFetchList<SubjectDTO>("/subject");
-  const { data: classroomsData } = useFetchList<ClassroomDTO>("/classroom");
+  const { data: linksData, refetch: refetchLinks } = useFetch<PaginationDTO<SubjectTeacherDTO>>("/subjectteacher");
+  const { data: subjectsData } = useFetch<PaginationDTO<SubjectDTO>>("/subject");
+  const { data: classroomsData } = useFetch<PaginationDTO<ClassroomDTO>>("/classroom");
   const { data: sessionsData, refetch: refetchSessions } = useFetchList<ClassSessionDTO>(
     `/classsession/filter?employeeUuid=${uuid}&${scheduleWindowQuery()}`
   );
-  const links = linksData ?? EMPTY_LINKS;
-  const subjects = subjectsData ?? EMPTY_SUBJECTS;
-  const classrooms = classroomsData ?? EMPTY_CLASSROOMS;
+  const links = linksData?.content ?? EMPTY_LINKS;
+  const subjects = subjectsData?.content ?? EMPTY_SUBJECTS;
+  const classrooms = classroomsData?.content ?? EMPTY_CLASSROOMS;
   const sessions = sessionsData ?? EMPTY_SESSIONS;
 
   const [editing, setEditing] = useState(false);

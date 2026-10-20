@@ -6,7 +6,9 @@ import br.com.ifsp.classify.dtos.update.FormAnswerCorrectionDTO;
 import br.com.ifsp.classify.dtos.update.FormCorrectionScoreUpdateDTO;
 import br.com.ifsp.classify.models.form.*;
 import br.com.ifsp.classify.repositories.form.*;
+import br.com.ifsp.classify.services.AccessScopeService;
 import br.com.ifsp.classify.services.FileStorageService;
+import org.springframework.security.access.AccessDeniedException;
 import br.com.ifsp.classify.utils.Utils;
 import io.minio.MinioClient;
 import io.minio.RemoveObjectArgs;
@@ -38,6 +40,8 @@ public class FormSubmissionService {
 
     public MinioClient minioClient;
 
+    private final AccessScopeService accessScope;
+
     public FormSubmissionService(
             FormSubmissionRepository formSubmissionRepository,
             FormQuestionRepository formQuestionRepository,
@@ -45,8 +49,10 @@ public class FormSubmissionService {
             FormQuestionOptionRepository formQuestionOptionRepository,
             FileStorageService fileStorageService,
             FormAnswerFileRepository formAnswerFileRepository,
-            MinioClient minioClient
+            MinioClient minioClient,
+            AccessScopeService accessScope
     ) {
+        this.accessScope = accessScope;
         this.formSubmissionRepository = formSubmissionRepository;
         this.formQuestionRepository = formQuestionRepository;
         this.formAnswerRepository = formAnswerRepository;
@@ -56,8 +62,19 @@ public class FormSubmissionService {
         this.minioClient = minioClient;
     }
 
+    private void requireOwnSubmission(FormSubmission submission) {
+        if (!accessScope.isStudent()
+                || !Objects.equals(submission.getStudent().getId(), accessScope.currentStudent().getId()))
+            throw new AccessDeniedException("Esse formulário foi enviado para outro aluno.");
+    }
+
+    private void requireOwnsForm(FormSubmission submission) {
+        accessScope.requireTeacherOrAdmin(submission.getForm().getTeacher(), "Esse formulário é de outro professor.");
+    }
+
     public void markSubmissionStart(String uuid) {
         FormSubmission formSubmission = formSubmissionRepository.getByUuid(UUID.fromString(uuid)).orElseThrow();
+        requireOwnSubmission(formSubmission);
         formSubmission.setStartedAt(LocalDateTime.now());
         formSubmissionRepository.save(formSubmission);
     }
@@ -65,6 +82,7 @@ public class FormSubmissionService {
     @Transactional
     public void saveFormSubmission(String uuid, FormSubmissionCreateDTO dto) {
         FormSubmission formSubmission = formSubmissionRepository.getByUuid(UUID.fromString(uuid)).orElseThrow();
+        requireOwnSubmission(formSubmission);
         List<FormAnswerCreateDTO> answers = dto.answers();
 
         Set<UUID> questionUuids = answers.stream()
@@ -135,6 +153,7 @@ public class FormSubmissionService {
 
     public void correctFormAnswer(FormAnswerCorrectionDTO dto) {
         FormAnswer answerToBeCorrected = formAnswerRepository.findByUuid(UUID.fromString(dto.uuid())).orElseThrow();
+        requireOwnsForm(answerToBeCorrected.getSubmission());
         answerToBeCorrected.setCorrect(dto.correct());
         answerToBeCorrected.setTeacherFeedback(dto.feedback());
         formAnswerRepository.save(answerToBeCorrected);
@@ -142,6 +161,7 @@ public class FormSubmissionService {
 
     public void finishCorrection(FormCorrectionScoreUpdateDTO dto) {
         FormSubmission submission = formSubmissionRepository.getByUuid(UUID.fromString(dto.uuid())).orElseThrow();
+        requireOwnsForm(submission);
         submission.setCorrectedAt(LocalDateTime.now());
         submission.setStatus(FormStatus.CORRECTED);
         submission.setScore(BigDecimal.valueOf(dto.score()));

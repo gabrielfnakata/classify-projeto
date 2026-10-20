@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Search, Download, Upload, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Download, Upload, FileText, AlertCircle, CheckCircle2, MailCheck, X } from "lucide-react";
 import type { FilterConfig } from "../../filter-row/FilterRow";
 import FilterRow from "../../filter-row/FilterRow";
 import { DataTable, type DataTableColumn } from "../../common/data-table";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
+import { cn } from "@/lib/utils";
+import type { RegistrationNotice } from "@/shared/utils/welcome-email-notice";
 import { Button } from "../../ui/button";
 import { ContentCard } from "../../layout/content-card";
 import { PageHeader } from "../../layout/page-header";
@@ -12,6 +14,7 @@ import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../../ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../ui/dialog";
 import api from "@/services/api";
+import { showErrorModal } from "@/shared/utils/api-error";
 
 interface registrationPageProps<T> {
     title: string;
@@ -24,6 +27,7 @@ interface registrationPageProps<T> {
     refreshKey?: number;
     sortData?: (rows: T[]) => T[];
     onDataChange?: (rows: T[]) => void;
+    rowKey?: (row: T) => string | number;
 }
 
 interface dataType {
@@ -49,9 +53,9 @@ function getPaginationSize(key: string | null): number {
         : 10;
 }
 
-export default function RegistrationPage<T extends dataType>({
+export default function RegistrationPage<T extends object>({
     title, url, filters, columns, registrationRoute, detailRoute, onRefresh, refreshKey = 0,
-    sortData, onDataChange
+    sortData, onDataChange, rowKey
 }: registrationPageProps<T>) {
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -66,7 +70,16 @@ export default function RegistrationPage<T extends dataType>({
     const previousRefreshkey = useRef<number>(refreshKey);
 
     const { data, refetch } = useFetch<PaginationDTO<T>>(url, page, size, filterValues);
-    console.log("data", data);
+
+    const importEmails = (importResult?.created ?? []).reduce<{ sent: number; failed: number }>(
+        (acc, created) => {
+            const sent = (created as { welcomeEmailSent?: boolean }).welcomeEmailSent;
+            if (sent === true) acc.sent += 1;
+            else if (sent === false) acc.failed += 1;
+            return acc;
+        },
+        { sent: 0, failed: 0 }
+    );
 
     useEffect(() => {
         if (previousRefreshkey.current === refreshKey) return;
@@ -81,37 +94,57 @@ export default function RegistrationPage<T extends dataType>({
 
     const navigate = useNavigate();
 
+    const location = useLocation();
+    const [notice, setNotice] = useState<RegistrationNotice | null>(
+        () => (location.state as { notice?: RegistrationNotice } | null)?.notice ?? null
+    );
+    useEffect(() => {
+        if (!(location.state as { notice?: RegistrationNotice } | null)?.notice) return;
+        navigate(location.pathname, { replace: true, state: null });
+    }, [location, navigate]);
+
     const entityPath = registrationRoute?.includes('student')
         ? '/student'
         : registrationRoute?.includes('employee')
             ? '/employee'
             : null;
 
-    const tableColumns: DataTableColumn<T>[] = detailRoute
-        ? [
-            ...columns,
-            {
-                key: 'details',
-                header: <span className="sr-only">Detalhes</span>,
-                className: 'w-12 text-right',
-                cell: (row) => (
-                    <button
-                        type="button"
-                        title="Ver detalhes"
-                        aria-label="Ver detalhes"
-                        onClick={() => navigate(detailRoute(row))}
-                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
-                    >
-                        <Search className="h-4 w-4" />
-                    </button>
+    const detailsButton = (row: T) => detailRoute && (
+        <button
+            type="button"
+            title="Ver detalhes"
+            aria-label="Ver detalhes"
+            onClick={() => navigate(detailRoute(row))}
+            className="text-muted-foreground transition-colors hover:text-primary"
+        >
+            <Search className="h-4 w-4" />
+        </button>
+    );
+
+    const hasActionsColumn = columns.some((column) => column.key === 'actions');
+
+    const tableColumns: DataTableColumn<T>[] = !detailRoute
+        ? columns
+        : hasActionsColumn
+            ? columns.map((column) => column.key !== 'actions' ? column : {
+                ...column,
+                cell: (row, index) => (
+                    <div className="flex items-center gap-2">
+                        {column.cell(row, index)}
+                        {detailsButton(row)}
+                    </div>
                 ),
-            },
-        ]
-        : columns;
+            })
+            : [
+                ...columns,
+                { key: 'actions', header: 'Ações', cell: (row) => detailsButton(row) },
+            ];
 
     const handleFilterSubmit = (values: Record<string, string>) => {
         const activeFilters = Object.fromEntries(
-            Object.entries(values).filter(([, value]) => value.trim() !== "")
+            Object.entries(values)
+                .map(([key, value]) => [key, String(value)])
+                .filter(([, value]) => value.trim() !== "")
         );
 
         setPage(0);
@@ -184,7 +217,7 @@ export default function RegistrationPage<T extends dataType>({
             setPreviewRows(response.data ?? []);
         } catch (e) {
             console.error(e);
-            alert('Erro ao gerar pré-visualização. Verifique se o arquivo está no formato esperado (.xlsx).');
+            showErrorModal('Erro ao gerar pré-visualização. Verifique se o arquivo está no formato esperado (.xlsx).');
             setImportDialogOpen(false);
         } finally {
             setPreviewLoading(false);
@@ -230,7 +263,7 @@ export default function RegistrationPage<T extends dataType>({
                                         {entityPath ? (
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button className="h-10 px-4 rounded-xl text-sm font-semibold flex items-center gap-2">
+                                                    <Button variant="secondary" className="h-10 px-4 rounded-xl text-sm font-semibold flex items-center gap-2">
                                                         <FileText />
                                                         Importar / Exportar
                                                     </Button>
@@ -249,14 +282,32 @@ export default function RegistrationPage<T extends dataType>({
                                             </DropdownMenu>
                                         ) : null}
 
-                                        <Button className="h-10 px-5 bg-button-background rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
+                                        <Button className="h-10 px-5 rounded-xl text-sm font-semibold" onClick={() => navigate(registrationRoute)}>
                                             <Plus></Plus>
                                             Criar novo registro
                                         </Button>
                                     </div>
                                 ) : undefined}
                             />
-                            </div> 
+                            </div>
+                    {notice && (
+                        <div
+                            className={cn(
+                                "flex w-9/10 items-start gap-2.5 rounded-xl border px-4 py-3 text-sm",
+                                notice.kind === "success"
+                                    ? "border-success/30 bg-success/10 text-success-foreground"
+                                    : "border-warning/40 bg-warning/10 text-warning-foreground"
+                            )}
+                        >
+                            {notice.kind === "success"
+                                ? <MailCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                                : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+                            <p className="flex-1">{notice.text}</p>
+                            <button type="button" aria-label="Fechar aviso" onClick={() => setNotice(null)}>
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                    )}
                     <ContentCard className="flex flex-col w-9/10 h-[70vh] p-8 gap-[4vh]">
                             <FilterRow
                                 filters={filters}
@@ -265,7 +316,7 @@ export default function RegistrationPage<T extends dataType>({
                             <DataTable
                                 data={sortData ? sortData(data?.content ?? []) : data?.content ?? []}
                                 columns={tableColumns}
-                                rowKey={(row) => row.uuid}
+                                rowKey={rowKey ?? ((row) => (row as dataType).uuid)}
                                 totalPages={data?.totalPages ?? 1}
                                 page={page}
                                 size={size}
@@ -311,6 +362,23 @@ export default function RegistrationPage<T extends dataType>({
                                     {importResult.created.length} registro(s) importado(s) com sucesso
                                 </span>
                             </div>
+
+                            {importEmails.sent > 0 && (
+                                <div className="flex items-center gap-2 text-green-700">
+                                    <MailCheck size={18} />
+                                    <span className="text-sm font-medium">
+                                        {importEmails.sent} e-mail(s) de primeiro acesso enviado(s)
+                                    </span>
+                                </div>
+                            )}
+                            {importEmails.failed > 0 && (
+                                <div className="flex items-center gap-2 text-amber-700">
+                                    <AlertCircle size={18} />
+                                    <span className="text-sm font-medium">
+                                        {importEmails.failed} e-mail(s) não puderam ser enviados — essas pessoas podem usar "Primeiro acesso" na tela de login
+                                    </span>
+                                </div>
+                            )}
 
                             {importResult.errors.length > 0 && (
                                 <div className="flex flex-col gap-2">
