@@ -31,6 +31,7 @@ import type { SubjectTeacherDTO } from "@/shared/dtos/teacher/SubjectTeacherDTO"
 import type { TeacherAvailabilityDTO } from "@/shared/dtos/employees/TeacherAvailabilityDTO";
 import { availableJsDays } from "@/shared/utils/weekdays";
 import useFetch from "@/hooks/useFetch";
+import useFetchList from "@/hooks/useFetchList";
 import { useAuth } from "@/hooks/useAuth";
 import { Roles } from "@/shared/models/enums/roles";
 import {
@@ -120,10 +121,10 @@ export function ScheduleForm({ open, onClose, onSuccess, editingSessions, preset
     setTeacherOverride(null);
   }
   const selectedTeacherId = teacherOverride ?? initialValues.teacherId;
-  const { data: availabilityData } = useFetch<PaginationDTO<TeacherAvailabilityDTO>>(
+  const { data: availabilityData } = useFetchList<TeacherAvailabilityDTO>(
     selectedTeacherId ? `/employee/${selectedTeacherId}/availability` : null
   );
-  const availability = useMemo(() => availabilityData?.content ?? [], [availabilityData?.content]);
+  const availability = useMemo(() => availabilityData ?? [], [availabilityData]);
   const unavailableDays = useMemo(() => {
     if (availability.length === 0) return [];
     const available = availableJsDays(availability);
