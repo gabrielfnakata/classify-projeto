@@ -303,6 +303,9 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
     public StudentGetDTO undoDelete(Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "Aluno não encontrado."));
+        if (!student.getIsDeleted())
+            throw new DtoException(ExceptionCode.DATA_INTEGRITY, "Este registro já foi restaurado.");
+
         StudentGetDTO oldData = returnDTO(student);
 
         student.setIsDeleted(false);

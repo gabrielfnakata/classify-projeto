@@ -162,6 +162,9 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
     public EmployeeGetDTO undoDelete(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "Funcionário não encontrado."));
+        if (!employee.getIsDeleted())
+            throw new DtoException(ExceptionCode.DATA_INTEGRITY, "Este registro já foi restaurado.");
+
         EmployeeGetDTO oldData = returnDTO(employee);
 
         employee.setIsDeleted(false);

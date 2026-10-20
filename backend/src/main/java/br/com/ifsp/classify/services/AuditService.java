@@ -2,14 +2,15 @@ package br.com.ifsp.classify.services;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import br.com.ifsp.classify.exceptions.DtoException;
-import br.com.ifsp.classify.exceptions.ExceptionCode;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,8 +26,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import br.com.ifsp.classify.dtos.get.AuditGetDTO;
 import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.models.Audit;
+import br.com.ifsp.classify.models.Employee;
+import br.com.ifsp.classify.models.Student;
 import br.com.ifsp.classify.models.User;
+import br.com.ifsp.classify.models.enums.RestoreStatus;
 import br.com.ifsp.classify.repositories.AuditRepository;
+import br.com.ifsp.classify.repositories.EmployeeRepository;
+import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.repositories.UserRepository;
 import br.com.ifsp.classify.specifications.AuditSpecification;
 import br.com.ifsp.classify.specifications.UserSpecification;
@@ -37,11 +43,15 @@ public class AuditService {
 
     private final AuditRepository auditRepository;
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
+    private final EmployeeRepository employeeRepository;
     private final ObjectMapper objectMapper;
 
-    public AuditService(AuditRepository auditRepository, UserRepository userRepository) {
+    public AuditService(AuditRepository auditRepository, UserRepository userRepository, StudentRepository studentRepository, EmployeeRepository employeeRepository) {
         this.auditRepository = auditRepository;
         this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
+        this.employeeRepository = employeeRepository;
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -69,7 +79,8 @@ public class AuditService {
                 userRole,
                 audit.getDate(),
                 audit.getOldData(),
-                audit.getNewData()
+                audit.getNewData(),
+                null
         );
     }
 
@@ -158,7 +169,44 @@ public class AuditService {
 
         Page<AuditGetDTO> audits = auditRepository.findAll(spec, pageable)
                 .map(this::returnDTO);
-        return PageResponseGetDTO.from(audits);
+        return PageResponseGetDTO.from(new PageImpl<>(markRestoreStatus(audits.getContent()), pageable, audits.getTotalElements()));
+    }
+
+    private List<AuditGetDTO> markRestoreStatus(List<AuditGetDTO> logs) {
+        Map<Long, Boolean> students = studentRepository.findAllById(deletedRegisterIds(logs, "STUDENT")).stream()
+                .collect(Collectors.toMap(Student::getId, Student::getIsDeleted));
+        Map<Long, Boolean> employees = employeeRepository.findAllById(deletedRegisterIds(logs, "EMPLOYEE")).stream()
+                .collect(Collectors.toMap(Employee::getId, Employee::getIsDeleted));
+        Set<Long> latestStudentDeletes = new HashSet<>(auditRepository.findLatestDeleteIds("STUDENT"));
+        Set<Long> latestEmployeeDeletes = new HashSet<>(auditRepository.findLatestDeleteIds("EMPLOYEE"));
+
+        return logs.stream()
+                .map(log -> {
+                    if (!"DELETE".equals(log.operation()))
+                        return log;
+
+                    return switch (log.tableName()) {
+                        case "STUDENT" -> log.withRestoreStatus(restoreStatus(log, students, latestStudentDeletes));
+                        case "EMPLOYEE" -> log.withRestoreStatus(restoreStatus(log, employees, latestEmployeeDeletes));
+                        default -> log;
+                    };
+                })
+                .collect(Collectors.toList());
+    }
+
+    private RestoreStatus restoreStatus(AuditGetDTO log, Map<Long, Boolean> deletedByRecord, Set<Long> latestDeletes) {
+        Boolean deleted = deletedByRecord.get(log.registerId());
+        if (deleted == null)
+            return RestoreStatus.UNAVAILABLE;
+
+        return deleted && latestDeletes.contains(log.id()) ? RestoreStatus.RESTORABLE : RestoreStatus.RESTORED;
+    }
+
+    private Set<Long> deletedRegisterIds(List<AuditGetDTO> logs, String tableName) {
+        return logs.stream()
+                .filter(log -> "DELETE".equals(log.operation()) && tableName.equals(log.tableName()))
+                .map(AuditGetDTO::registerId)
+                .collect(Collectors.toSet());
     }
 
     private User resolveCurrentUser() {
