@@ -5,7 +5,7 @@ import {PageHeader} from "@/components/layout/page-header.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {ArrowLeft, Eye} from "lucide-react";
 import LimitDateDialog from "@/components/dialogs/LimitDateDialog.tsx";
-import {formatYMD} from "@/shared/utils/date-formatter.ts";
+import {formatYMD, toDate} from "@/shared/utils/date-formatter.ts";
 import AddQuestion from "@/pages/forms/new-form/AddQuestion.tsx";
 import DefineFormTypeDialog from "@/components/dialogs/DefineFormTypeDialog.tsx";
 
@@ -44,7 +44,7 @@ export default function FormHeaderActions({ type }: FormHeaderActionsProps) {
                             <>
                                 <AddQuestion buttonVariant={buttonVariant}/>
                                 <LimitDateDialog
-                                    initialDate={new Date(values.limitDate)}
+                                    initialDate={toDate(values.limitDate)}
                                     onDateChange={(date) => { setFieldValue("limitDate", formatYMD(date)) }}
                                     disabled={isSubmitting}
                                     buttonVariant={buttonVariant}

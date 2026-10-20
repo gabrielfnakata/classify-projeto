@@ -130,7 +130,7 @@ public class FormSubmissionService {
                     }
 
                     return formAnswer;
-                }).toList();
+                }).collect(Collectors.toCollection(ArrayList::new));
 
         formSubmission.setFormAnswer(formAnswers);
         formSubmission.setStatus(FormStatus.ANSWERED);
@@ -139,7 +139,7 @@ public class FormSubmissionService {
     }
 
     private List<AnswerFile> buildPendingFiles(List<AnswerFileSubmissionDTO> dtos, FormAnswer formAnswer) {
-        if (dtos == null) return List.of();
+        if (dtos == null) return new ArrayList<>();
 
         return dtos.stream().map(dto -> {
             AnswerFile file = new AnswerFile();
@@ -148,7 +148,7 @@ public class FormSubmissionService {
             file.setFormAnswer(formAnswer);
             file.setStatus(UploadStatus.PENDING);
             return file;
-        }).toList();
+        }).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public void correctFormAnswer(FormAnswerCorrectionDTO dto) {

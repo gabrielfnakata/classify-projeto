@@ -16,7 +16,16 @@ export const formatShortDate = (d: Date): string =>
 export const formatFullDateLabel = (d: Date): string =>
   new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d)
 
-export const toDate = (value: unknown): Date => new Date(value as string)
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+
+export const toDate = (value: unknown): Date => {
+  if (typeof value === "string" && DATE_ONLY.test(value)) {
+    const [year, month, day] = value.split("-").map(Number)
+    return new Date(year, month - 1, day)
+  }
+
+  return new Date(value as string)
+}
 
 export const formatHHMM = (raw: unknown): string => {
   const d = toDate(raw)

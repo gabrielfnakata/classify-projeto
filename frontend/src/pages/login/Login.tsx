@@ -74,18 +74,18 @@ export default function Login() {
                                 <FieldGroup className="w-[36%]">
                                     <UIField orientation="horizontal">
                                         <Checkbox 
-                                        className="bg-[#D9D9D9] dark:bg-[#f1f1f1] data-checked:bg-[#f1f1f1] dark:data-checked:bg-[#f1f1f1] data-checked:text-[#119E96]"
+                                        className="bg-[#D9D9D9] dark:bg-[#f1f1f1] data-checked:bg-[#f1f1f1] dark:data-checked:bg-[#f1f1f1] data-checked:text-primary"
                                         checked={values.rememberMe}
                                         onCheckedChange={(checked) => setFieldValue("rememberMe", checked)}
                                         />
                                         <FieldLabel className="text-xs"> Lembrar de mim </FieldLabel>
                                     </UIField>
                                 </FieldGroup>
-                                <p className="text-xs text-[#0AA660] hover:cursor-pointer" onClick={() => {navigate('/forgot-password')}}>
+                                <p className="text-xs text-primary hover:cursor-pointer" onClick={() => {navigate('/forgot-password')}}>
                                     Esqueci minha senha
                                 </p>
                             </div>
-                            <Button className="bg-[#119D96] disabled:border-t-green-200 text-[#f1f1f1] p-1 rounded-sm border-none w-[20vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]" type="submit" disabled={!isValid || isSubmitting}>Entrar</Button>
+                            <Button className="p-1 rounded-sm border-none w-[20vw] h-[4vh] shadow-[0_4px_4px_-4px_#707070]" type="submit" disabled={!isValid || isSubmitting}>Entrar</Button>
                             <Button
                                 type="button"
                                 variant="outline"

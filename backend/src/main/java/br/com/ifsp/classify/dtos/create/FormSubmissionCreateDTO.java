@@ -3,8 +3,8 @@ package br.com.ifsp.classify.dtos.create;
 import java.util.List;
 
 public record FormSubmissionCreateDTO(
-        Long formId,
-        Long studentId,
+        String formId,
+        String studentId,
         List<FormAnswerCreateDTO> answers
 ) {
 }

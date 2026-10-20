@@ -8,6 +8,7 @@ import br.com.ifsp.classify.dtos.get.FormSubmissionGetDTO;
 import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import br.com.ifsp.classify.dtos.update.FormAnswerCorrectionDTO;
 import br.com.ifsp.classify.dtos.update.FormCorrectionScoreUpdateDTO;
+import br.com.ifsp.classify.models.form.FormStatus;
 import br.com.ifsp.classify.security.AuthenticatedUser;
 import br.com.ifsp.classify.services.form.FormService;
 import br.com.ifsp.classify.services.form.FormSubmissionService;
@@ -105,8 +106,11 @@ public class FormController {
     }
 
     @GetMapping("/{formId}/submissions")
-    public ResponseEntity<List<FormSubmissionGetDTO>> getFormSubmissions(@PathVariable String formId) {
-        return new ResponseEntity<>(this.formService.getFormSubmissions(formId), HttpStatus.OK);
+    public PageResponseGetDTO<FormSubmissionGetDTO> getFormSubmissions(@PathVariable String formId,
+            @RequestParam(required = false) String studentName,
+            @RequestParam(required = false) FormStatus status,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return this.formService.getFormSubmissions(formId, studentName, status, pageable);
     }
 
     @PostMapping("/form-correction")

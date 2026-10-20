@@ -3,7 +3,7 @@ import type { FilterConfig } from "@/components/filter-row/FilterRow";
 import RegistrationPage from "@/components/page-templates/registration/RegistrationPage";
 import { StatusBadge } from "@/components/features/status-badge";
 import useFetch from "@/hooks/useFetch";
-import { formatDateLabel } from "@/shared/utils/date-formatter";
+import { formatDateLabel, toDate } from "@/shared/utils/date-formatter";
 import type { FormDTO } from "@/shared/dtos/form/FormDTO";
 import { statusLabel, statusVariant } from "@/shared/models/enums/form-status.ts";
 import {useNavigate} from "react-router";
@@ -20,8 +20,8 @@ export default function TeacherForms() {
     const { data: classData } = useFetch<PaginationDTO<ClassGroupDTO>>('/class');
     const columns: DataTableColumn<FormDTO>[] = [
         {key: 'title', header: 'Título', cell: row => row.title},
-        {key: 'createdAt', header: 'Data', cell: row => formatDateLabel(new Date(row.createdAt))},
-        {key: 'limitDate', header: 'Data Limite', cell: row => formatDateLabel(new Date(row.limitDate))},
+        {key: 'createdAt', header: 'Data', cell: row => formatDateLabel(toDate(row.createdAt))},
+        {key: 'limitDate', header: 'Data Limite', cell: row => formatDateLabel(toDate(row.limitDate))},
         {key: 'hasScore', header: 'Tipo', cell: row => row.hasScore ? "Avaliativo" : "Sem nota"},
         {key: 'questions', header: 'Questões', cell: row => row.questions},
         {key: 'score', header: 'Nota', cell: row => row.score ?? "-"},
