@@ -21,6 +21,8 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import br.com.ifsp.classify.security.UserRole;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -122,21 +124,18 @@ public class FormService {
         );
     }
 
-    public List<FormGetDTO> getForms(AuthenticatedUser auth) {
+    public PageResponseGetDTO<FormGetDTO> getForms(AuthenticatedUser auth, Pageable pageable) {
         User user = userRepository.findByEmail(auth.username()).orElseThrow();
         return switch (auth.role()) {
-            case "PROFESSOR", "ADMIN" -> getPostedForms(user.getEmployee());
-            case "ESTUDANTE" -> getAvailableForms(user.getStudent());
+            case "PROFESSOR", "ADMIN" -> getPostedForms(user.getEmployee(), pageable);
+            case "ESTUDANTE" -> getAvailableForms(user.getStudent(), pageable);
             default -> throw new IllegalStateException("Role não suportada: " + auth.role());
         };
     }
 
-    public List<FormGetDTO> getPostedForms(Employee employee) {
-        List<Form> forms = formRepository.getAllFromEmployee(employee);
-        List<FormGetDTO> formGetDTOs = new ArrayList<>();
-
-        forms.forEach(form -> {
-            FormGetDTO dto = new FormGetDTO(
+    public PageResponseGetDTO<FormGetDTO> getPostedForms(Employee employee, Pageable pageable) {
+        Page<FormGetDTO> forms = formRepository.getAllFromEmployee(employee, pageable).map(form ->
+                new FormGetDTO(
                     form.getUuid().toString(),
                     form.getTitle(),
                     form.getDescription(),
@@ -147,15 +146,13 @@ public class FormService {
                     form.getHasScore(),
                     0.0f,
                     FormStatus.PENDING
-            );
-            formGetDTOs.add(dto);
-        });
-        return formGetDTOs;
+                )
+        );
+        return PageResponseGetDTO.from(forms);
     }
 
-    public List<FormGetDTO> getAvailableForms(Student student) {
-        List<FormSubmission> availableSubmissions = student.getFormSubmissions();
-        return availableSubmissions.stream().map(submission -> {
+    public PageResponseGetDTO<FormGetDTO> getAvailableForms(Student student, Pageable pageable) {
+        Page<FormGetDTO> forms = formSubmissionRepository.findAllByStudent(student, pageable).map(submission -> {
             Form form = submission.getForm();
             return new FormGetDTO(
                     submission.getUuid().toString(),
@@ -169,7 +166,8 @@ public class FormService {
                     0.0f,
                     submission.getStatus()
             );
-        }).toList();
+        });
+        return PageResponseGetDTO.from(forms);
     }
 
     public FormInfoGetDTO getFormInfo(String uuid) {

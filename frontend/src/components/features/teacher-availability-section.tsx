@@ -1,8 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { CalendarClock, Plus, X } from "lucide-react";
-
 import api from "@/services/api";
-import useFetchList from "@/hooks/useFetchList";
 import { SectionTitle } from "@/components/features/section-title";
 import { WeekdayPicker } from "@/components/features/weekday-picker";
 import { EmptyState } from "@/components/common/empty-state";
@@ -13,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { apiErrorMessage } from "@/shared/utils/api-error";
 import { WEEKDAYS, formatTimeRange, weekdayByJsDay } from "@/shared/utils/weekdays";
 import type { TeacherAvailabilityCreateDTO, TeacherAvailabilityDTO } from "@/shared/dtos/employees/TeacherAvailabilityDTO";
+import useFetch from "@/hooks/useFetch";
+import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 
 interface TeacherAvailabilitySectionProps {
   employeeUuid: string;
@@ -23,8 +23,8 @@ const EMPTY: TeacherAvailabilityDTO[] = [];
 const WEEKDAYS_DEFAULT = [1, 2, 3, 4, 5]; // seg–sex, em índices de Date#getDay()
 
 export function TeacherAvailabilitySection({ employeeUuid, editing }: TeacherAvailabilitySectionProps) {
-  const { data, refetch } = useFetchList<TeacherAvailabilityDTO>(`/employee/${employeeUuid}/availability`);
-  const blocks = data ?? EMPTY;
+  const { data, refetch } = useFetch<PaginationDTO<TeacherAvailabilityDTO>>(`/employee/${employeeUuid}/availability`);
+  const blocks = data?.content ?? EMPTY;
 
   const [weekdays, setWeekdays] = useState<number[]>(WEEKDAYS_DEFAULT);
   const [startTime, setStartTime] = useState("07:30");
