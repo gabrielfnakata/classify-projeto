@@ -72,7 +72,7 @@ export default function ForgotPassword() {
                         <div className="flex flex-col gap-3 pt-2">
                             <Button
                                 type="submit"
-                                className="h-[4vh] min-h-9 rounded-sm bg-[#119D96] text-[#f1f1f1] shadow-[0_4px_4px_-4px_#707070]"
+                                className="h-[4vh] min-h-9 rounded-sm shadow-[0_4px_4px_-4px_#707070]"
                                 disabled={!isValid || isSubmitting}
                             >
                                 {isSubmitting ? "Enviando..." : "Enviar link"}
