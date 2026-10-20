@@ -6,12 +6,12 @@ export const SendFormSchema = Yup.object({
     formUuid: Yup.string().required(),
     students: Yup.array().when("type", {
         is: FormAssignType.STUDENT,
-        then: (schema) => schema.min(1, "Selecione ao menos um aluno").required(),
+        then: (schema) => schema.min(0, "Selecione ao menos um aluno").required(),
         otherwise: (schema) => schema.notRequired(),
     }),
     classGroup: Yup.object({
-        value: Yup.string().length(36, 'UUID inválido').required().nonNullable(),
-        label: Yup.string().min(1).required().nonNullable()
+        value: Yup.string().length(36, 'UUID inválido').nonNullable(),
+        label: Yup.string().nonNullable()
     }).when("type", {
         is: FormAssignType.CLASS,
         then: (schema) => schema.nonNullable().required("Selecione uma turma"),
