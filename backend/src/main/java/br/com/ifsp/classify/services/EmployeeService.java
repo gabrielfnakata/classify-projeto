@@ -154,6 +154,19 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         return createdEmployee;
     }
 
+    public EmployeeGetDTO undoDelete(Long id) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "Funcionário não encontrado."));
+        EmployeeGetDTO oldData = returnDTO(employee);
+
+        employee.setIsDeleted(false);
+        employeeRepository.save(employee);
+        EmployeeGetDTO newData = returnDTO(employee);
+        auditService.logUpdate("EMPLOYEE", employee.getId(), oldData, newData);
+
+        return newData;
+    }
+
     public record ImportError(int row, String reason) {}
     public record ImportResult(List<EmployeeGetDTO> created, List<ImportError> errors) {}
 

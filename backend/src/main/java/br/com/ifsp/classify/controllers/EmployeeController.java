@@ -120,6 +120,11 @@ public class EmployeeController extends AbstractController<EmployeeCreateDTO, Em
         }
     }
 
+    @PutMapping(value = "/undo-delete/{id}")
+    public ResponseEntity<EmployeeGetDTO> undoDelete(@PathVariable Long id) {
+        return ResponseEntity.ok(service.undoDelete(id));
+    }
+
     @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<EmployeeService.ImportResult> importEmployees(@RequestPart("file") MultipartFile file) {
         if (file == null || file.isEmpty())
@@ -160,4 +165,5 @@ public class EmployeeController extends AbstractController<EmployeeCreateDTO, Em
                 .contentType(MediaType.parseMediaType(EXCEL_MEDIA_TYPE))
                 .body(content);
     }
+
 }

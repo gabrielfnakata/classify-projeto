@@ -3,10 +3,7 @@ package br.com.ifsp.classify.controllers;
 import br.com.ifsp.classify.dtos.create.GuardianCreateDTO;
 import br.com.ifsp.classify.dtos.create.StudentCreateDTO;
 import br.com.ifsp.classify.dtos.filter.StudentFilterDTO;
-import br.com.ifsp.classify.dtos.get.GuardianGetDTO;
-import br.com.ifsp.classify.dtos.get.StudentGetDTO;
-import br.com.ifsp.classify.dtos.get.ClassSessionGetDTO;
-import br.com.ifsp.classify.dtos.get.AttendanceGetDTO;
+import br.com.ifsp.classify.dtos.get.*;
 import br.com.ifsp.classify.services.AttendanceService;
 import br.com.ifsp.classify.dtos.update.GuardianUpdateDTO;
 import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
@@ -81,6 +78,11 @@ public class StudentController extends AbstractController<StudentCreateDTO, Stud
         return (guardian != null)
                 ? ResponseEntity.ok(guardian)
                 : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    @PutMapping(value = "/undo-delete/{id}")
+    public ResponseEntity<StudentGetDTO> undoDelete(@PathVariable Long id) {
+        return ResponseEntity.ok(service.undoDelete(id));
     }
 
     @GetMapping(value = "/template", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

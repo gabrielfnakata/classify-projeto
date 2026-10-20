@@ -1,7 +1,7 @@
 package br.com.ifsp.classify.services;
+import br.com.ifsp.classify.models.*;
 import br.com.ifsp.classify.models.Class;
 import br.com.ifsp.classify.repositories.ClassRepository;
-import br.com.ifsp.classify.models.ClassSession;
 import br.com.ifsp.classify.models.enums.ClassSessionStatus;
 import br.com.ifsp.classify.repositories.ClassSessionRepository;
 
@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -39,10 +38,6 @@ import br.com.ifsp.classify.dtos.update.StudentUpdateDTO;
 import br.com.ifsp.classify.dtos.update.TelephoneUpdateDTO;
 import br.com.ifsp.classify.exceptions.DtoException;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
-import br.com.ifsp.classify.models.Address;
-import br.com.ifsp.classify.models.Guardian;
-import br.com.ifsp.classify.models.Student;
-import br.com.ifsp.classify.models.Telephone;
 import br.com.ifsp.classify.repositories.StudentRepository;
 import br.com.ifsp.classify.specifications.StudentSpecification;
 import br.com.ifsp.classify.utils.Utils;
@@ -294,6 +289,19 @@ public class StudentService extends AbstractService<Student, StudentCreateDTO, S
         auditService.logDelete("STUDENT", id, oldStudent);
 
         return ResponseEntity.noContent().build();
+    }
+
+    public StudentGetDTO undoDelete(Long id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "Aluno não encontrado."));
+        StudentGetDTO oldData = returnDTO(student);
+
+        student.setIsDeleted(false);
+        studentRepository.save(student);
+        StudentGetDTO newData = returnDTO(student);
+        auditService.logUpdate("STUDENT", student.getId(), oldData, newData);
+
+        return newData;
     }
 
     public List<GuardianGetDTO> addGuardians(String studentUuid, List<GuardianCreateDTO> guardiansDTO) {

@@ -12,6 +12,7 @@ import {formatDateWithTime, toDate} from "@/shared/utils/date-formatter.ts";
 import type {EmployeeDTO} from "@/shared/dtos/employees/EmployeeDTO.ts";
 import type {StudentDTO} from "@/shared/dtos/student/StudentDTO.ts";
 import type {ClassSessionDTO} from "@/shared/dtos/class-session/ClassSessionDTO.ts";
+import UndoDeleteButton from "@/pages/deleted-entities/UndoDeleteButton.tsx";
 
 const emptyFilterValues: AuditFilterParams = {
     startDate: undefined,
@@ -30,7 +31,6 @@ export default function DeletedEntities() {
             width: 100,
         },
     ];
-
 
     const columns: DataTableColumn<AuditDTO>[] = [
         {
@@ -58,6 +58,13 @@ export default function DeletedEntities() {
                 </div>
             ),
         },
+        {
+            key: "action",
+            header: "Ações",
+            cell: (row) => (
+                <UndoDeleteButton row={row} onDone={() => refetch()} />
+            )
+        }
     ];
 
     const [appliedFilters, setAppliedFilters] = useState<AuditFilterParams>(emptyFilterValues);

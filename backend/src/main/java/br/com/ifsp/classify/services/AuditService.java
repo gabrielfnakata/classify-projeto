@@ -5,6 +5,9 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import br.com.ifsp.classify.exceptions.DtoException;
+import br.com.ifsp.classify.exceptions.ExceptionCode;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
