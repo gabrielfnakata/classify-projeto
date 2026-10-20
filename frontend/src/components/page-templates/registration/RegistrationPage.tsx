@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Search, Download, Upload, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Download, Upload, FileText, AlertCircle, CheckCircle2, MailCheck, X } from "lucide-react";
 import type { FilterConfig } from "../../filter-row/FilterRow";
 import FilterRow from "../../filter-row/FilterRow";
 import { DataTable, type DataTableColumn } from "../../common/data-table";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
+import { cn } from "@/lib/utils";
+import type { RegistrationNotice } from "@/shared/utils/welcome-email-notice";
 import { Button } from "../../ui/button";
 import { ContentCard } from "../../layout/content-card";
 import { PageHeader } from "../../layout/page-header";
@@ -68,7 +70,16 @@ export default function RegistrationPage<T extends object>({
     const previousRefreshkey = useRef<number>(refreshKey);
 
     const { data, refetch } = useFetch<PaginationDTO<T>>(url, page, size, filterValues);
-    console.log(data);
+
+    const importEmails = (importResult?.created ?? []).reduce<{ sent: number; failed: number }>(
+        (acc, created) => {
+            const sent = (created as { welcomeEmailSent?: boolean }).welcomeEmailSent;
+            if (sent === true) acc.sent += 1;
+            else if (sent === false) acc.failed += 1;
+            return acc;
+        },
+        { sent: 0, failed: 0 }
+    );
 
     useEffect(() => {
         if (previousRefreshkey.current === refreshKey) return;
@@ -83,33 +94,51 @@ export default function RegistrationPage<T extends object>({
 
     const navigate = useNavigate();
 
+    const location = useLocation();
+    const [notice, setNotice] = useState<RegistrationNotice | null>(
+        () => (location.state as { notice?: RegistrationNotice } | null)?.notice ?? null
+    );
+    useEffect(() => {
+        if (!(location.state as { notice?: RegistrationNotice } | null)?.notice) return;
+        navigate(location.pathname, { replace: true, state: null });
+    }, [location, navigate]);
+
     const entityPath = registrationRoute?.includes('student')
         ? '/student'
         : registrationRoute?.includes('employee')
             ? '/employee'
             : null;
 
-    const tableColumns: DataTableColumn<T>[] = detailRoute
-        ? [
-            ...columns,
-            {
-                key: 'details',
-                header: <span className="sr-only">Detalhes</span>,
-                className: 'w-12 text-right',
-                cell: (row) => (
-                    <button
-                        type="button"
-                        title="Ver detalhes"
-                        aria-label="Ver detalhes"
-                        onClick={() => navigate(detailRoute(row))}
-                        className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
-                    >
-                        <Search className="h-4 w-4" />
-                    </button>
+    const detailsButton = (row: T) => detailRoute && (
+        <button
+            type="button"
+            title="Ver detalhes"
+            aria-label="Ver detalhes"
+            onClick={() => navigate(detailRoute(row))}
+            className="text-muted-foreground transition-colors hover:text-primary"
+        >
+            <Search className="h-4 w-4" />
+        </button>
+    );
+
+    const hasActionsColumn = columns.some((column) => column.key === 'actions');
+
+    const tableColumns: DataTableColumn<T>[] = !detailRoute
+        ? columns
+        : hasActionsColumn
+            ? columns.map((column) => column.key !== 'actions' ? column : {
+                ...column,
+                cell: (row, index) => (
+                    <div className="flex items-center gap-2">
+                        {column.cell(row, index)}
+                        {detailsButton(row)}
+                    </div>
                 ),
-            },
-        ]
-        : columns;
+            })
+            : [
+                ...columns,
+                { key: 'actions', header: 'Ações', cell: (row) => detailsButton(row) },
+            ];
 
     const handleFilterSubmit = (values: Record<string, string>) => {
         const activeFilters = Object.fromEntries(
@@ -260,7 +289,25 @@ export default function RegistrationPage<T extends object>({
                                     </div>
                                 ) : undefined}
                             />
-                            </div> 
+                            </div>
+                    {notice && (
+                        <div
+                            className={cn(
+                                "flex w-9/10 items-start gap-2.5 rounded-xl border px-4 py-3 text-sm",
+                                notice.kind === "success"
+                                    ? "border-success/30 bg-success/10 text-success-foreground"
+                                    : "border-warning/40 bg-warning/10 text-warning-foreground"
+                            )}
+                        >
+                            {notice.kind === "success"
+                                ? <MailCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                                : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}
+                            <p className="flex-1">{notice.text}</p>
+                            <button type="button" aria-label="Fechar aviso" onClick={() => setNotice(null)}>
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                    )}
                     <ContentCard className="flex flex-col w-9/10 h-[70vh] p-8 gap-[4vh]">
                             <FilterRow
                                 filters={filters}
@@ -315,6 +362,23 @@ export default function RegistrationPage<T extends object>({
                                     {importResult.created.length} registro(s) importado(s) com sucesso
                                 </span>
                             </div>
+
+                            {importEmails.sent > 0 && (
+                                <div className="flex items-center gap-2 text-green-700">
+                                    <MailCheck size={18} />
+                                    <span className="text-sm font-medium">
+                                        {importEmails.sent} e-mail(s) de primeiro acesso enviado(s)
+                                    </span>
+                                </div>
+                            )}
+                            {importEmails.failed > 0 && (
+                                <div className="flex items-center gap-2 text-amber-700">
+                                    <AlertCircle size={18} />
+                                    <span className="text-sm font-medium">
+                                        {importEmails.failed} e-mail(s) não puderam ser enviados — essas pessoas podem usar "Primeiro acesso" na tela de login
+                                    </span>
+                                </div>
+                            )}
 
                             {importResult.errors.length > 0 && (
                                 <div className="flex flex-col gap-2">

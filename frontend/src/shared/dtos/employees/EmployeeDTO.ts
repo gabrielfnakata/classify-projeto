@@ -12,4 +12,5 @@ export interface EmployeeDTO {
     email: string;
     roleId: string;
     roleDescription: string;
+    welcomeEmailSent?: boolean;
 }

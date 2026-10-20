@@ -160,6 +160,15 @@
   --info: oklch(0.9 0.035 230);
   --info-foreground: oklch(0.36 0.065 230);
 
+  --viz-series-1: #2a78d6;
+  --viz-series-2: #eb6834;
+  --viz-series-3: #1baf7a;
+  --viz-series-4: #eda100;
+  --viz-series-5: #e87ba4;
+  --viz-series-6: #008300;
+  --viz-series-7: #4a3aa7;
+  --viz-series-8: #e34948;
+
   --check: oklch(0.8 0.2 149);
   --send: oklch(0.89 0.08 89.004);
 }
@@ -232,6 +241,15 @@
 
   --info: oklch(0.36 0.08 235);
   --info-foreground: oklch(0.88 0.09 235);
+
+  --viz-series-1: #3987e5;
+  --viz-series-2: #d95926;
+  --viz-series-3: #199e70;
+  --viz-series-4: #c98500;
+  --viz-series-5: #d55181;
+  --viz-series-6: #008300;
+  --viz-series-7: #9085e9;
+  --viz-series-8: #e66767;
 
   --check: oklch(0.6 0.16 149);
   --send: oklch(0.89 0.08 89.004);

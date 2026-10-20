@@ -11,6 +11,6 @@ export interface StudentCreateDTO {
     guardians: GuardianCreateDTO[];
     account?: {
         email: string;
-        password: string;
+        password: string | null;
     };
 }

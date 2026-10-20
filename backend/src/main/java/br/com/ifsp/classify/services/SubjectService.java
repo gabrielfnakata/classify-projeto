@@ -1,5 +1,6 @@
 package br.com.ifsp.classify.services;
 
+import br.com.ifsp.classify.repositories.SubjectTeacherRepository;
 import br.com.ifsp.classify.dtos.create.SubjectCreateDTO;
 import br.com.ifsp.classify.dtos.filter.SubjectFilterDTO;
 import br.com.ifsp.classify.dtos.get.SubjectGetDTO;
@@ -19,10 +20,30 @@ import org.springframework.stereotype.Service;
 @Service
 public class SubjectService extends AbstractService<Subject, SubjectCreateDTO, SubjectGetDTO, SubjectUpdateDTO, SubjectFilterDTO, Integer> {
 
+    /** Professor só lista as disciplinas que leciona. */
+    @Override
+    protected Specification<Subject> accessSpecification() {
+        if (!accessScope.isProfessor())
+            return Specification.unrestricted();
+
+        Long employeeId = accessScope.currentEmployee().getId();
+        return AccessScopeService.idIn(subjectTeacherRepository
+            .findAll((root, query, cb) -> cb.equal(root.get("employee").get("id"), employeeId))
+            .stream()
+            .map(subjectTeacher -> subjectTeacher.getSubject().getId())
+            .collect(java.util.stream.Collectors.toSet()));
+    }
+
     private final AuditService auditService;
 
-    public SubjectService(SubjectRepository repository, AuditService auditService) {
+    private final AccessScopeService accessScope;
+    private final SubjectTeacherRepository subjectTeacherRepository;
+
+    public SubjectService(SubjectRepository repository, AuditService auditService, AccessScopeService accessScope,
+            SubjectTeacherRepository subjectTeacherRepository) {
         super(repository);
+        this.accessScope = accessScope;
+        this.subjectTeacherRepository = subjectTeacherRepository;
         this.auditService = auditService;
     }
 

@@ -43,11 +43,11 @@ export function SelectField({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          "flex h-8 w-full items-center justify-between rounded-xl border border-border bg-filter-surface px-3 text-sm text-foreground shadow-sm transition-colors",
+          "flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-border bg-filter-surface px-3 text-sm text-foreground shadow-sm transition-colors",
           open && "ring-2 ring-ring/20"
         )}
       >
-        <span className={cn(!selectedOption && "text-muted-foreground")}>
+        <span className={cn("min-w-0 truncate text-left", !selectedOption && "text-muted-foreground")}>
           {selectedOption?.label ?? placeholder}
         </span>
 

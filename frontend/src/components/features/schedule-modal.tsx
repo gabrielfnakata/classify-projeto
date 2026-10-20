@@ -14,9 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatYMD } from "@/shared/utils/date-formatter";
-import { resolveClassroomName } from "@/shared/utils/class-session-helpers";
+import { attendanceBlockReason, isCanceled, resolveClassroomName } from "@/shared/utils/class-session-helpers";
 import { groupRecurrenceUuid, type SessionGroup } from "@/shared/utils/session-grouping";
-import { isCanceled } from "@/shared/utils/class-session-helpers";
 
 interface ScheduleModalProps {
   group: SessionGroup | null;
@@ -26,6 +25,7 @@ interface ScheduleModalProps {
   onEditSeries: () => void;
   onCancel: () => void;
   onReactivate: () => void;
+  studentView?: boolean;
 }
 
 type SessionStatus = "info" | "success" | "danger";
@@ -71,10 +71,11 @@ function Initials({ name }: { name: string }) {
 }
 
 export function ScheduleModal({
-  group, classroomNames, onClose, onEdit, onEditSeries, onCancel, onReactivate,
+  group, classroomNames, onClose, onEdit, onEditSeries, onCancel, onReactivate, studentView = false,
 }: ScheduleModalProps) {
   const navigate = useNavigate();
   const primary = group?.sessions[0] ?? null;
+  const canManage = !studentView;
 
   const handleOpenChange = (open: boolean) => {
     if (!open) onClose();
@@ -83,6 +84,7 @@ export function ScheduleModal({
   const status = group ? groupStatus(group) : "info";
   const canceled = status === "danger";
   const reason = group?.sessions.find((s) => s.cancellationReason)?.cancellationReason;
+  const attendanceBlock = primary ? attendanceBlockReason(primary) : null;
 
   const handleAttendance = () => {
     if (!group) return;
@@ -177,17 +179,20 @@ export function ScheduleModal({
           </div>
         )}
 
+        {canManage && (
         <DialogFooter className="flex-wrap">
-          <Button
-            variant="outline"
-            className="flex-1"
-            disabled={canceled}
-            title={canceled ? "Aula cancelada não tem chamada" : undefined}
-            onClick={handleAttendance}
-          >
-            <ClipboardCheck className="h-4 w-4" />
-            Fazer Chamada
-          </Button>
+          {!studentView && (
+            <Button
+              variant="outline"
+              className="flex-1"
+              disabled={Boolean(attendanceBlock)}
+              title={attendanceBlock ?? undefined}
+              onClick={handleAttendance}
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              Fazer Chamada
+            </Button>
+          )}
           <Button className="flex-1" onClick={onEdit}>
             <Pencil className="h-4 w-4" />
             Editar Agendamento
@@ -203,13 +208,14 @@ export function ScheduleModal({
               Cancelar Aula
             </Button>
           )}
-          {group && groupRecurrenceUuid(group) && (
+          {!studentView && group && groupRecurrenceUuid(group) && (
             <Button variant="outline" className="flex-1" onClick={onEditSeries}>
               <CalendarSync className="h-4 w-4" />
               Editar Recorrência
             </Button>
           )}
         </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

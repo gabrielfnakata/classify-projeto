@@ -16,7 +16,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
     return null;
 
   if (!signed)
-    return (<Navigate to="/" />);
+    return (<Navigate to="/login" replace />);
 
   if (allowedRoles && !allowedRoles.includes(userData?.role as Roles))
     return (<NoAllowedRole />);

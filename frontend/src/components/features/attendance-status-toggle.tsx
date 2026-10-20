@@ -5,6 +5,7 @@ interface AttendanceStatusToggleProps {
   value: AttendanceStatus | null;
   onChange: (value: AttendanceStatus | null) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 const OPTIONS: { label: string; value: AttendanceStatus }[] = [
@@ -12,11 +13,12 @@ const OPTIONS: { label: string; value: AttendanceStatus }[] = [
   { label: "Ausente", value: "AUSENTE" },
 ];
 
-export function AttendanceStatusToggle({ value, onChange, className }: AttendanceStatusToggleProps) {
+export function AttendanceStatusToggle({ value, onChange, className, disabled = false }: AttendanceStatusToggleProps) {
   return (
     <div
       className={cn(
         "inline-flex rounded-lg border border-border bg-panel-strong p-1 shadow-sm",
+        disabled && "pointer-events-none opacity-50",
         className
       )}
     >
@@ -27,6 +29,7 @@ export function AttendanceStatusToggle({ value, onChange, className }: Attendanc
           <button
             key={option.value}
             type="button"
+            disabled={disabled}
             title={isActive ? "Clique para desmarcar" : `Marcar como ${option.label.toLowerCase()}`}
             onClick={() => onChange(isActive ? null : option.value)}
             className={cn(

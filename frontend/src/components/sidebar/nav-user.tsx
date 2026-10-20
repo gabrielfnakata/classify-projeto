@@ -100,7 +100,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+            <DropdownMenuItem onClick={() => { logout(); navigate("/login", { replace: true }) }} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
               <LogOut className="mr-2 size-4" />
               Sair
             </DropdownMenuItem>

@@ -1,4 +1,4 @@
-import { Calendar, File, Home, Users } from "lucide-react"
+import { Calendar, File, Home, LayoutDashboard, Users } from "lucide-react"
 import type { Group } from "./sidebar-item"
 import { Roles } from "@/shared/models/enums/roles"
 
@@ -10,11 +10,18 @@ export const mainNavigation: Group[] = [
   {
     title: "Início",
     icon: Home,
-    items: [
-      { title: "Visão do Professor", url: "/home", allowedRoles: teachingRoles },
-      { title: "Visão do Aluno", url: "/student-home-page", allowedRoles: studentRoles },
-    ],
+    items: [],
     url: '/home'
+  },
+  {
+    title: "Dashboard",
+    icon: LayoutDashboard,
+    items: [
+      { title: "Visão Geral", url: "/dashboard/admin", allowedRoles: adminRoles },
+      { title: "Painel do Professor", url: "/dashboard/teacher", allowedRoles: adminRoles },
+      { title: "Painel do Aluno / Turma", url: "/dashboard/student", allowedRoles: adminRoles },
+      { title: "Meu Desempenho", url: "/dashboard/student", allowedRoles: studentRoles },
+    ],
   },
   {
     title: "Registros",
@@ -32,18 +39,18 @@ export const mainNavigation: Group[] = [
     icon: Calendar,
     items: [
       { title: 'Agendamentos', url: '/schedule', allowedRoles: teachingRoles },
+      { title: 'Meus agendamentos', url: '/schedule', allowedRoles: studentRoles },
       { title: 'Chamada', url: '/attendance', allowedRoles: teachingRoles }
     ],
-    allowedRoles: teachingRoles
   },
   {
     title: 'Relatórios',
     icon: File,
     items: [
       { title: 'Todos os relatórios', url: '/posted-forms', allowedRoles: adminRoles },
-      { title: 'Relatório alunos', url: '/pending-forms', allowedRoles: teachingRoles },
+      { title: 'Meus formulários', url: '/posted-forms', allowedRoles: [Roles.PROFESSOR] },
+      { title: 'Meus formulários', url: '/pending-forms', allowedRoles: studentRoles },
       { title: 'Auditoria', url: '/audit-logs', allowedRoles: adminRoles }
     ],
-    allowedRoles: adminRoles
   }
 ]

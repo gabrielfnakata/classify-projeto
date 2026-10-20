@@ -7,6 +7,9 @@ export const formatDateLabel = (d: Date): string =>
 export const formatMonthYearLabel = (d: Date): string =>
   new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(d)
 
+export const formatShortDate = (d: Date): string =>
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(d)
+
 export const formatFullDateLabel = (d: Date): string =>
   new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(d)
 

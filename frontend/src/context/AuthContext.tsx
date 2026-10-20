@@ -11,6 +11,7 @@ interface AuthContextData {
     userData: UserInfoDTO | null,
     loading: boolean,
     login(values: LoginForm): Promise<UserInfoDTO>,
+    loginWithTokens(tokens: LoginResponseDTO, remember: boolean): UserInfoDTO,
     refresh(): Promise<void>,
     logout(): void
 };
@@ -33,13 +34,17 @@ export const AuthProvider = (params: { children: ReactNode }) => {
             { skipExceptionModal: true }
         );
 
-        setLoginData(response.data);
-        api.defaults.headers.Authorization = `Bearer ${response.data?.accessToken}`;
+        return loginWithTokens(response.data, values.rememberMe);
+    }
 
-        const authenticatedUser = getUserFromToken(response.data.accessToken);
+    function loginWithTokens(tokens: LoginResponseDTO, remember: boolean): UserInfoDTO {
+        setLoginData(tokens);
+        api.defaults.headers.Authorization = `Bearer ${tokens.accessToken}`;
 
-        if (values.rememberMe) {
-            sessionStorage.setItem('refreshToken', response.data.refreshToken);
+        const authenticatedUser = getUserFromToken(tokens.accessToken);
+
+        if (remember) {
+            sessionStorage.setItem('refreshToken', tokens.refreshToken);
         }
 
         return authenticatedUser;
@@ -101,7 +106,7 @@ export const AuthProvider = (params: { children: ReactNode }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ signed: Boolean(loginData), userData: userData, loading: isLoading, login, refresh, logout }}>
+        <AuthContext.Provider value={{ signed: Boolean(loginData), userData: userData, loading: isLoading, login, loginWithTokens, refresh, logout }}>
             {params.children}
         </AuthContext.Provider>
     );

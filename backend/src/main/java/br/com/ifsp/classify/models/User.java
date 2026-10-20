@@ -79,6 +79,12 @@ public class User implements Serializable {
         this.password = password;
     }
 
+    public static final String NO_PASSWORD = "";
+
+    public boolean hasPassword() {
+        return password != null && !password.isEmpty();
+    }
+
     public String getRefreshToken() {
         return refreshToken;
     }

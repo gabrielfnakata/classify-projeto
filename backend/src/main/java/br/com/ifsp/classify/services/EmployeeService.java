@@ -54,14 +54,17 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
     private final AuditService auditService;
     private final RoleRepository roleRepository;
     private final EmployeeRepository employeeRepository;
+    private final WelcomeMailService welcomeMailService;
 
-    public EmployeeService(EmployeeRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, TelephoneService telephoneService, UserService userService, AuditService auditService) {
+    public EmployeeService(EmployeeRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, TelephoneService telephoneService, UserService userService, AuditService auditService,
+            WelcomeMailService welcomeMailService) {
         super(repository);
         this.telephoneService = telephoneService;
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.auditService = auditService;
         this.employeeRepository = repository;
+        this.welcomeMailService = welcomeMailService;
     }
 
     @Override
@@ -90,7 +93,8 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
                     : null,
                 ((user != null) && (user.getRole() != null))
                     ? user.getRole().getDescription()
-                    : null
+                    : null,
+                null
         );
     }
 
@@ -139,10 +143,11 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         }
 
         repository.save(newEmployee);
+        Boolean welcomeEmailSent = welcomeMailService.sendIfPendingFirstAccess(newEmployee.getUser(), newEmployee.getName());
         EmployeeGetDTO createdEmployee = returnDTO(newEmployee);
         auditService.logInsert("EMPLOYEE", newEmployee.getId(), createdEmployee);
 
-        return createdEmployee;
+        return createdEmployee.withWelcomeEmailSent(welcomeEmailSent);
     }
 
     public record ImportError(int row, String reason) {}
@@ -289,11 +294,9 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
                         continue;
                     }
 
-                    UserCreateDTO userDto = null;
-                    if (!Utils.isNullOrEmpty(email)) {
-                        String generatedPassword = "ChangeMe@" + System.currentTimeMillis();
-                        userDto = new UserCreateDTO(email, generatedPassword, roleId, null);
-                    }
+                    UserCreateDTO userDto = Utils.isNullOrEmpty(email)
+                            ? null
+                            : new UserCreateDTO(email, null, roleId, null);
 
                     var employeeDTO = new EmployeeCreateDTO(name, birthDate, cpf, hireDate, userDto, telephones);
 
