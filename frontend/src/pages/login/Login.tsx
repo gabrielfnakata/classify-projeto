@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field as UIField } from "@/components/ui/field";
 import { Form, Formik, type FormikHelpers } from "formik";
-import { useLocation, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FormikInput } from "@/components/formik-input/FormikInput";
 import { LoginValidationSchema } from "@/validation/LoginSchema";
@@ -17,7 +17,6 @@ import type {ApiExceptionPayload} from "@/services/api.ts";
 export default function Login() {
     const { login, logout } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
     const [erroLogin, setErroLogin] = useState<string | null>(null);
 
     const handleLogin = async (values: LoginForm, helpers: FormikHelpers<LoginForm>) => {
@@ -25,8 +24,7 @@ export default function Login() {
 
         try {
             const authenticatedUser = await login(values);
-            const from = (location.state as { from?: string } | null)?.from;
-            navigate(from ?? homeRouteFor(authenticatedUser.role), { replace: true });
+            navigate(homeRouteFor(authenticatedUser.role), { replace: true });
         } catch(error) {
             const data = (error as AxiosError).response?.data as ApiExceptionPayload;
             setErroLogin(data?.message ?? "Ocorreu um erro. Tente novamente.");
