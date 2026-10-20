@@ -12,6 +12,7 @@ import type { PaginationDTO } from "@/shared/dtos/pagination/PaginationDTO";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../../ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../ui/dialog";
 import api from "@/services/api";
+import { showErrorModal } from "@/shared/utils/api-error";
 
 interface registrationPageProps<T> {
     title: string;
@@ -184,7 +185,7 @@ export default function RegistrationPage<T extends dataType>({
             setPreviewRows(response.data ?? []);
         } catch (e) {
             console.error(e);
-            alert('Erro ao gerar pré-visualização. Verifique se o arquivo está no formato esperado (.xlsx).');
+            showErrorModal('Erro ao gerar pré-visualização. Verifique se o arquivo está no formato esperado (.xlsx).');
             setImportDialogOpen(false);
         } finally {
             setPreviewLoading(false);
