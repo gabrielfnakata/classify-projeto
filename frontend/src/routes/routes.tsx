@@ -7,7 +7,6 @@ import OnDevelopment from "@/pages/on-development/OnDevelopment";
 import { Route, Routes } from "react-router";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { HomeRedirect } from "./HomeRedirect";
-import Components from "@/app/pages/Components";
 import StudentRegistration from "@/pages/students/StudentRegistration";
 import EmployeeRegistration from "@/pages/employees/EmployeeRegistration";
 import NewEmployee from "@/pages/employees/NewEmployee";
@@ -40,6 +39,7 @@ import SubjectDetail from "@/pages/subjects/SubjectDetail";
 import ClassroomDetail from "@/pages/classrooms/ClassroomDetail";
 import StudentHomePage from "@/pages/student-home-page/StudentHomePage";
 import ProfilePage from "@/pages/profile/ProfilePage";
+import SettingsPage from "@/pages/settings/SettingsPage";
 import { Roles } from "@/shared/models/enums/roles";
 
 const adminRoles = [Roles.ADMIN];
@@ -73,9 +73,6 @@ export default function AppRoutes() {
             }/>
             <Route path="/dashboard/student" element={
                 <ProtectedRoute allowedRoles={[Roles.ADMIN, Roles.ESTUDANTE]} children={<StudentDashboard />} />
-            }/>
-            <Route path="/components-demo" element={
-                <ProtectedRoute allowedRoles={teachingRoles} children={<Components />} />
             }/>
             {/* <Route path="/schedule" element={
                 <ProtectedRoute children={<ClassRegistration />} />
@@ -178,9 +175,6 @@ export default function AppRoutes() {
             <Route path="/new-classroom" element={
                 <ProtectedRoute allowedRoles={adminRoles} children={<NewClassroom />} />
             }/>
-            <Route path="/components-demo" element={
-                <ProtectedRoute allowedRoles={adminRoles} children={<Components />} />
-            }/>
             <Route path="/audit-logs" element={
                 <ProtectedRoute allowedRoles={adminRoles} children={<AuditLogs />} />
             }/>
@@ -190,7 +184,7 @@ export default function AppRoutes() {
                 <ProtectedRoute children={<ProfilePage />} />
             }/>
             <Route path="/settings" element={
-                <ProtectedRoute children={<OnDevelopment />} />
+                <ProtectedRoute children={<SettingsPage />} />
             }/>
             {/* <Route path="/schedule" element={
                 <ProtectedRoute children={<ClassRegistration />} />

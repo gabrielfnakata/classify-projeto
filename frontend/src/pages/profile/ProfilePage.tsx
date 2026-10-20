@@ -8,14 +8,19 @@ import { ContentCard } from "@/components/layout/content-card"
 import { PageHeader } from "@/components/layout/page-header"
 import { AvatarPickerDialog } from "@/components/profile/AvatarPickerDialog"
 import { ChangePasswordDialog } from "@/components/profile/ChangePasswordDialog"
+import { TeacherAvailabilitySection } from "@/components/features/teacher-availability-section"
 import { EditProfileDialog } from "@/components/profile/EditProfileDialog"
+import { EditStudentTelephoneDialog } from "@/components/profile/EditStudentTelephoneDialog"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useAuth } from "@/hooks/useAuth"
 import { useCurrentUser } from "@/hooks/useCurrentUser"
 import { formatIsoDateBR } from "@/shared/utils/date-formatter"
 import { formatCpf, formatTelephone } from "@/shared/utils/masks"
+import { Roles } from "@/shared/models/enums/roles"
 import type { ProfileDTO } from "@/shared/dtos/profile/ProfileDTO"
+import type { StudentProfileDTO } from "@/shared/dtos/profile/StudentProfileDTO"
 
 interface ProfileFieldProps {
   label: string
@@ -53,19 +58,31 @@ export default function ProfilePage() {
   const [passwordOpen, setPasswordOpen] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
   const { avatarSrc, reloadUser } = useCurrentUser()
+  const { userData } = useAuth()
+  const isStudent = userData?.role === Roles.ESTUDANTE
   const [notice, setNotice] = useState<string | null>(null)
 
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
-    api.get<ProfileDTO>("/employee/me", { data: {}, skipExceptionModal: true })
-      .then((res) => {
-        setProfile(res.data)
+    const request = isStudent
+      ? api.get<StudentProfileDTO>("/student/me", { data: {}, skipExceptionModal: true })
+        .then(({ data }): ProfileDTO => ({
+          ...data,
+          hireDate: data.registrationDate,
+          role: { id: Roles.ESTUDANTE, description: "Estudante" },
+        }))
+      : api.get<ProfileDTO>("/employee/me", { data: {}, skipExceptionModal: true })
+        .then(({ data }) => data)
+
+    request
+      .then((data) => {
+        setProfile(data)
         setFailed(false)
       })
       .catch(() => setFailed(true))
       .finally(() => setLoading(false))
-  }, [refreshKey])
+  }, [refreshKey, isStudent])
 
   const loadProfile = () => {
     setLoading(true)
@@ -106,7 +123,7 @@ export default function ProfilePage() {
           <EmptyState
             icon={UserX}
             title="Não foi possível carregar seu perfil"
-            description="Verifique se seu usuário está vinculado a um funcionário e tente novamente."
+            description={isStudent ? "Verifique se seu usuário está vinculado a um aluno e tente novamente." : "Verifique se seu usuário está vinculado a um funcionário e tente novamente."}
             action={<Button variant="outline" onClick={loadProfile}>Tentar novamente</Button>}
           />
         ) : (
@@ -117,7 +134,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={() => setAvatarOpen(true)}
                   title="Alterar foto de perfil"
-                  className="group relative shrink-0 rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="group relative flex shrink-0 rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                 >
                   <Avatar name={profile.name} seed="usuario-logado" src={avatarSrc} size="xl" className="h-24 w-24 text-3xl sm:h-28 sm:w-28" />
                   <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -152,9 +169,9 @@ export default function ProfilePage() {
                 <ProfileField label="E-mail" value={profile.email} />
                 <ProfileField label="Telefone" value={formatTelephone(profile.telephones[0]?.number)} />
               </ProfileSection>
-              <ProfileSection title="Informações Profissionais">
-                <ProfileField label="Cargo" value={profile.role?.description} />
-                <ProfileField label="Data de Contratação" value={formatIsoDateBR(profile.hireDate)} />
+              <ProfileSection title={isStudent ? "Informações Acadêmicas" : "Informações Profissionais"}>
+                <ProfileField label={isStudent ? "Perfil" : "Cargo"} value={profile.role?.description} />
+                <ProfileField label={isStudent ? "Data de Matrícula" : "Data de Contratação"} value={formatIsoDateBR(profile.hireDate)} />
               </ProfileSection>
             </div>
 
@@ -165,21 +182,34 @@ export default function ProfilePage() {
               </Button>
               <Button size="lg" className="px-4" onClick={() => setEditOpen(true)}>
                 <SquarePen />
-                Editar Perfil
+                {isStudent ? "Editar Telefone" : "Editar Perfil"}
               </Button>
             </div>
 
-            <EditProfileDialog
-              open={editOpen}
-              profile={profile}
-              onClose={() => setEditOpen(false)}
-              onSaved={(updated) => {
-                setProfile(updated)
-                setEditOpen(false)
-                reloadUser().catch(() => undefined)
-                setNotice("Perfil atualizado com sucesso.")
-              }}
-            />
+            {isStudent ? (
+              <EditStudentTelephoneDialog
+                open={editOpen}
+                telephones={profile.telephones}
+                onClose={() => setEditOpen(false)}
+                onSaved={(telephones) => {
+                  setProfile({ ...profile, telephones })
+                  setEditOpen(false)
+                  setNotice("Telefone atualizado com sucesso.")
+                }}
+              />
+            ) : (
+              <EditProfileDialog
+                open={editOpen}
+                profile={profile}
+                onClose={() => setEditOpen(false)}
+                onSaved={(updated) => {
+                  setProfile(updated)
+                  setEditOpen(false)
+                  reloadUser().catch(() => undefined)
+                  setNotice("Perfil atualizado com sucesso.")
+                }}
+              />
+            )}
             <AvatarPickerDialog
               open={avatarOpen}
               name={profile.name}
@@ -198,6 +228,12 @@ export default function ProfilePage() {
               }}
             />
           </ContentCard>
+        )}
+
+        {profile && userData?.role === Roles.PROFESSOR && (
+          <div className="mt-6">
+            <TeacherAvailabilitySection employeeUuid="me" editing />
+          </div>
         )}
       </div>
     </div>

@@ -65,7 +65,8 @@ export default function QuestionList({ readOnly = false }: QuestionListProps) {
                 const errorStyle =
                     hasError ? 'outline-1 outline-solid outline-destructive' : 'outline-none';
                 return (
-                <ContentCard key={index} className={`flex flex-col w-full gap-8 ${errorStyle}`}>
+                <div key={index} id={`question-${index}`} className="w-full scroll-mt-32">
+                <ContentCard className={`flex flex-col w-full gap-8 ${errorStyle}`}>
                     <div className="flex w-full justify-between items-center gap-4">
                         <TextareaAutosize
                             readOnly={readOnly}
@@ -97,6 +98,7 @@ export default function QuestionList({ readOnly = false }: QuestionListProps) {
                         mode={readOnly ? "preview" : "configure"}
                     />
                 </ContentCard>
+                </div>
             )}
         )}
         </div>
