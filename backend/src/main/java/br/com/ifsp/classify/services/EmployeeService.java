@@ -3,6 +3,7 @@ package br.com.ifsp.classify.services;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,17 +11,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import br.com.ifsp.classify.dtos.get.PageResponseGetDTO;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.ifsp.classify.dtos.create.EmployeeCreateDTO;
 import br.com.ifsp.classify.dtos.create.TelephoneCreateDTO;
@@ -41,6 +45,9 @@ import br.com.ifsp.classify.repositories.RoleRepository;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
+import br.com.ifsp.classify.models.ClassSession;
+import br.com.ifsp.classify.models.enums.ClassSessionStatus;
+import br.com.ifsp.classify.repositories.ClassSessionRepository;
 
 import java.util.List;
 
@@ -54,14 +61,16 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
     private final AuditService auditService;
     private final RoleRepository roleRepository;
     private final EmployeeRepository employeeRepository;
+    private final ClassSessionRepository classSessionRepository;
 
-    public EmployeeService(EmployeeRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, TelephoneService telephoneService, UserService userService, AuditService auditService) {
+    public EmployeeService(EmployeeRepository repository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, TelephoneService telephoneService, UserService userService, AuditService auditService, ClassSessionRepository classSessionRepository) {
         super(repository);
         this.telephoneService = telephoneService;
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.auditService = auditService;
         this.employeeRepository = repository;
+        this.classSessionRepository = classSessionRepository;
     }
 
     @Override
@@ -403,7 +412,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
             .stream()
             .map(this::returnDTO)
             .toList();
-            
+
         if (filters == null || filters.isEmpty()) return all;
 
         String name = filters.getOrDefault("name", "").trim().toLowerCase();
@@ -609,6 +618,7 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
     }
 
     @Override
+    @Transactional
     public ResponseEntity<Void> delete(String uuid) {
         Employee employee = getEntityById(uuid);
         if (employee == null)
@@ -616,10 +626,26 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
 
         EmployeeGetDTO oldEmployee = returnDTO(employee);
         Long id = employee.getId();
-        repository.delete(employee);
+
+        cancelFutureSessions(employee);
+        employee.setIsDeleted(true);
+        repository.save(employee);
+
         auditService.logDelete("EMPLOYEE", id, oldEmployee);
 
         return ResponseEntity.noContent().build();
+    }
+
+    private void cancelFutureSessions(Employee employee) {
+        List<ClassSession> sessions = classSessionRepository
+            .findBySubjectTeacherEmployeeAndStatusAndStartTimeAfter(
+                employee, ClassSessionStatus.SCHEDULED, LocalDateTime.now());
+
+        for (ClassSession session : sessions) {
+            session.setStatus(ClassSessionStatus.CANCELED);
+            session.setCancellationReason("Professor inativado");
+        }
+        classSessionRepository.saveAll(sessions);
     }
 
     @Override
@@ -640,6 +666,8 @@ public class EmployeeService extends AbstractService<Employee, EmployeeCreateDTO
         if (!Utils.isNullOrEmpty(filterDTO.email())) {
             conditions = conditions.and(EmployeeSpecification.getByEmail(filterDTO.email()));
         }
+
+        conditions = conditions.and(EmployeeSpecification.getByDeleted(false));
 
         return conditions;
     }

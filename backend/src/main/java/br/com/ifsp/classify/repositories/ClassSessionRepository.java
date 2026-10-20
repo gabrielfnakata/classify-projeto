@@ -1,7 +1,10 @@
 package br.com.ifsp.classify.repositories;
 
 import br.com.ifsp.classify.models.ClassSession;
+import br.com.ifsp.classify.models.Student;
+import br.com.ifsp.classify.models.enums.ClassSessionStatus;
 import br.com.ifsp.classify.repositories.projections.SessionCountProjection;
+import br.com.ifsp.classify.models.Employee;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -61,4 +64,11 @@ public interface ClassSessionRepository extends AbstractRepository<ClassSession,
         """)
     List<SessionCountProjection> countByClass(@Param("now") LocalDateTime now,
             @Param("dayStart") LocalDateTime dayStart, @Param("dayEnd") LocalDateTime dayEnd);
+
+    List<ClassSession> findByStudentAndStatusAndStartTimeAfter(
+        Student student, ClassSessionStatus status, LocalDateTime now);
+
+    List<ClassSession> findBySubjectTeacherEmployeeAndStatusAndStartTimeAfter(
+        Employee employee, ClassSessionStatus status, LocalDateTime now);
+
 }

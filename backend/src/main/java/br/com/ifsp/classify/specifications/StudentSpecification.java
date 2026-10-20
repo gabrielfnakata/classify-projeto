@@ -1,9 +1,6 @@
 package br.com.ifsp.classify.specifications;
 
-import br.com.ifsp.classify.models.Student;
-import br.com.ifsp.classify.models.Student_;
-import br.com.ifsp.classify.models.Telephone;
-import br.com.ifsp.classify.models.Telephone_;
+import br.com.ifsp.classify.models.*;
 import br.com.ifsp.classify.utils.UuidUtils;
 import jakarta.persistence.criteria.Join;
 
@@ -43,5 +40,10 @@ public class StudentSpecification {
                 "%" + telephone.trim() + "%"
             );
         };
+    }
+
+    public static Specification<Student> getByDeleted(Boolean deleted) {
+        return (root, query, cb) ->
+                cb.equal(root.get(Employee_.IS_DELETED), deleted);
     }
 }

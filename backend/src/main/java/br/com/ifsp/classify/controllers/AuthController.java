@@ -7,9 +7,11 @@ import br.com.ifsp.classify.dtos.auth.RefreshRequestDTO;
 import br.com.ifsp.classify.exceptions.ExceptionCode;
 import br.com.ifsp.classify.models.User;
 import br.com.ifsp.classify.repositories.UserRepository;
+import br.com.ifsp.classify.repositories.EmployeeRepository;
 import br.com.ifsp.classify.security.JwtService;
 import br.com.ifsp.classify.security.UserRole;
 import br.com.ifsp.classify.specifications.UserSpecification;
+import br.com.ifsp.classify.repositories.StudentRepository;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +27,20 @@ public class AuthController {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
+    private final EmployeeRepository employeeRepository;
     private final JwtService jwtService;
-
-    public AuthController(PasswordEncoder passwordEncoder, UserRepository userRepository, JwtService jwtService) {
+    
+    public AuthController(
+            PasswordEncoder passwordEncoder,
+            UserRepository userRepository,
+            StudentRepository studentRepository,
+            EmployeeRepository employeeRepository,
+            JwtService jwtService) {
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
+        this.employeeRepository = employeeRepository;
         this.jwtService = jwtService;
     }
 
@@ -45,6 +56,14 @@ public class AuthController {
                             HttpStatus.UNAUTHORIZED.value(),
                             ExceptionCode.INVALID_CREDENTIALS.getCode(),
                             "E-mail ou senha inválidos."));
+        }
+
+        if (!isActive(user)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ExceptionDTO(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            ExceptionCode.INVALID_CREDENTIALS.getCode(),
+                            "Usuário inativo. Procure o administrador."));
         }
 
         String role = user.getRole().getId();
@@ -85,6 +104,14 @@ public class AuthController {
                             "Sua sessão expirou. Faça login novamente."));
         }
 
+        if (!isActive(user)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ExceptionDTO(
+                            HttpStatus.UNAUTHORIZED.value(),
+                            ExceptionCode.INVALID_CREDENTIALS.getCode(),
+                            "Usuário inativo. Procure o administrador."));
+        }
+
         String role = user.getRole().getId();
         if (UserRole.fromId(role).isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -97,5 +124,13 @@ public class AuthController {
         String accessToken = jwtService.generateAccessToken(email, role);
 
         return ResponseEntity.ok(new LoginResponseDTO(accessToken, body.refreshToken()));
+    }
+
+    private boolean isActive(User user) {
+        String role = user.getRole().getId();
+        if (UserRole.ADMIN.name().equals(role) || UserRole.PROFESSOR.name().equals(role)) {
+            return employeeRepository.findByUserEmailAndIsDeletedFalse(user.getEmail()).isPresent();
+        }
+        return !studentRepository.existsByUserEmailAndIsDeletedTrue(user.getEmail());
     }
 }

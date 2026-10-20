@@ -124,6 +124,9 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
                 Utils.isNullOrEmpty(statusDTO.cancellationReason()) ? null : statusDTO.cancellationReason().trim());
         }
         else {
+            if (classSession.getStudent() != null && Boolean.TRUE.equals(classSession.getStudent().getIsDeleted()))
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Não é possível reativar aula de aluno inativado.");
+
             classSession.setStatus(ClassSessionStatus.SCHEDULED);
             classSession.setCancellationReason(null);
             availabilityService.assertAvailable(classSession.getSubjectTeacher().getEmployee(),
@@ -296,6 +299,9 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
         
         if (subjectTeacher == null)
             throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, UNEXISTING_SUBJECT_TEACHER_MESSAGE);
+
+        if (Boolean.TRUE.equals(subjectTeacher.getEmployee().getIsDeleted()))
+        throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Não é possível criar uma aula para um professor inativado.");
         
         Classroom classroom = classroomRepository
             .findOne(ClassroomSpecification.getByUUID(classSessionDTO.classroomUuid()))
@@ -329,6 +335,13 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
 
             if (studentFound == null)
                 throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, "O aluno informado não foi encontrado ou não foi registrado.");
+
+            if (Boolean.TRUE.equals(studentFound.getIsDeleted()))
+                throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Não é possível atribuir a aula a um aluno inativado.");
+
+            if (studentFound.getIsDeleted() != null && studentFound.getIsDeleted()) {
+                throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Não é possível criar uma aula para um aluno deletado.");
+            }
 
             newClassSession.setStudent(studentFound);
             newClassSession.setClassSessionClass(null);
@@ -365,6 +378,9 @@ public class ClassSessionService extends AbstractService<ClassSession, ClassSess
 
             if (subjectTeacher == null)
                 throw new DtoException(ExceptionCode.RESOURCE_NOT_FOUND, UNEXISTING_SUBJECT_TEACHER_MESSAGE);
+
+            if (Boolean.TRUE.equals(subjectTeacher.getEmployee().getIsDeleted()))
+            throw new DtoException(ExceptionCode.VALIDATION_ERROR, "Não é possível criar uma aula para um professor inativado.");
 
             classSession.setSubjectTeacher(subjectTeacher);
         }

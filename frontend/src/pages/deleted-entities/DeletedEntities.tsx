@@ -26,7 +26,7 @@ export default function DeletedEntities() {
             inputType: "select",
             placeholder: "Selecione a tabela",
             options: TABLE_NAMES.filter(table => table.value === 'STUDENT'
-                || table.value === 'EMPLOYEE' || table.value === 'CLASS_SESSION'),
+                || table.value === 'EMPLOYEE'),
             width: 100,
         },
     ];

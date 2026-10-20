@@ -18,12 +18,15 @@ import br.com.ifsp.classify.repositories.SubjectRepository;
 import br.com.ifsp.classify.specifications.ClassSessionSpecification;
 import br.com.ifsp.classify.specifications.EmployeeSpecification;
 import br.com.ifsp.classify.specifications.SubjectSpecification;
+import br.com.ifsp.classify.specifications.SubjectTeacherSpecification;
 import br.com.ifsp.classify.utils.Utils;
 import br.com.ifsp.classify.utils.UuidUtils;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class SubjectTeacherService extends AbstractService<SubjectTeacher, SubjectTeacherCreateDTO, SubjectTeacherGetDTO, SubjectTeacherUpdateDTO, SubjectTeacherFilterDTO, Long> {
@@ -151,6 +154,8 @@ public class SubjectTeacherService extends AbstractService<SubjectTeacher, Subje
 
         if (filterDTO == null)
             return conditions;
+
+        conditions = conditions.and(SubjectTeacherSpecification.getByDeleted(false));
 
         return conditions;
     }

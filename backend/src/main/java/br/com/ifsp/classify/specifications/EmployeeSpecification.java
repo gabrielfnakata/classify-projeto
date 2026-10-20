@@ -30,4 +30,9 @@ public class EmployeeSpecification {
                 "%" + email.trim().toUpperCase() + "%"
             );
     }
+
+    public static Specification<Employee> getByDeleted(Boolean deleted) {
+        return (root, query, cb) ->
+                cb.equal(root.get(Employee_.IS_DELETED), deleted);
+    }
 }
