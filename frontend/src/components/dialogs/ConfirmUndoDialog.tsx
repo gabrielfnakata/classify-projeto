@@ -9,7 +9,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface ConfirmDeleteDialogProps {
+interface ConfirmUndoDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onConfirm: () => void | Promise<void>;
@@ -17,13 +17,13 @@ interface ConfirmDeleteDialogProps {
     description?: string;
 }
 
-export default function ConfirmDeleteDialog({
+export default function ConfirmUndoDialog({
         open,
         onOpenChange,
         onConfirm,
         title = "Desfazer ação",
         description = "Tem certeza que deseja desfazer esta ação?",
-    }: ConfirmDeleteDialogProps) {
+    }: ConfirmUndoDialogProps) {
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>

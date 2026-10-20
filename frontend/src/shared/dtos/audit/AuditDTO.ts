@@ -1,3 +1,5 @@
+import type { RestoreStatus } from "@/shared/models/enums/restore-status";
+
 export interface AuditDTO {
     id: number;
     tableName: string;
@@ -9,6 +11,7 @@ export interface AuditDTO {
     date: string;
     oldData: string | null;
     newData: string;
+    restoreStatus?: RestoreStatus;
 }
 
 export interface AuditFilterParams {
